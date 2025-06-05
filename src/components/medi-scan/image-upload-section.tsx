@@ -130,7 +130,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
       `;
       
-      // Using Puter.js default model for vision by not specifying 'model' for this call
+      // Using Puter.js default model for vision (likely gpt-4o-mini or similar) by not specifying 'model' for this call
       const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl);
 
       if (!reportResponse || !reportResponse.message || !reportResponse.message.content) {
@@ -193,9 +193,9 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
 
       if (error instanceof Error) {
         detailedErrorMessage = error.message;
-        console.error('Error name:', error.name);
         console.error('Error message:', error.message);
       } else if (typeof error === 'object' && error !== null) {
+        
         const errObj = error as any; 
 
         if (errObj.success === false && errObj.error && typeof errObj.error === 'object' && errObj.error.message) {
@@ -219,7 +219,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
             console.error('Caught a non-standard object error (stringified):', errorString);
           } catch (e) {
             console.error('Caught a non-standard, non-serializable object error.');
-            // detailedErrorMessage remains "An unknown error occurred..."
           }
         }
       } else if (typeof error === 'string' && error.trim() !== '') {
@@ -340,4 +339,5 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     
 
     
+
 
