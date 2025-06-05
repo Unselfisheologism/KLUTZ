@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ChangeEvent } from 'react';
@@ -71,8 +72,10 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     onAnalysisStart();
     const file = data.image[0];
 
-    if (typeof window.puter === 'undefined') {
-      onAnalysisComplete(null, "Puter.js SDK is not available. Please ensure it's loaded correctly and refresh the page.");
+    if (typeof window.puter === 'undefined' ||
+        typeof window.puter.auth === 'undefined' ||
+        typeof window.puter.ai === 'undefined') {
+      onAnalysisComplete(null, "Puter.js SDK is not fully loaded or initialized. Please refresh the page or try again later.");
       return;
     }
     const puter = window.puter;
@@ -87,7 +90,8 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
             return;
           }
         } catch (authError) {
-          onAnalysisComplete(null, "Authentication failed or was cancelled.");
+          console.error("Puter sign-in error during analysis:", authError);
+          onAnalysisComplete(null, "Authentication failed or was cancelled by user.");
           return;
         }
       }
@@ -106,8 +110,8 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
       `;
       
-      // Use gpt-4o model as specified
-      const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl, { model: 'gpt-4o' });
+      // Vision call: Let Puter.js infer the model for vision, or use its default vision-capable model.
+      const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl);
 
       if (!reportResponse || !reportResponse.message || !reportResponse.message.content) {
         throw new Error('Failed to get a valid response from AI for medical report.');
@@ -139,6 +143,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         The "nextSteps" string can contain newline characters for list formatting (e.g., "1. Step one\n2. Step two").
       `;
 
+      // Text-only call, can specify model explicitly.
       const nextStepsResponse = await puter.ai.chat(nextStepsPrompt, { model: 'gpt-4o' });
 
       if (!nextStepsResponse || !nextStepsResponse.message || !nextStepsResponse.message.content) {
@@ -161,6 +166,13 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
 
     } catch (error) {
       console.error('Error in onSubmit:', error);
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        // console.error('Error stack:', error.stack); // Stack can be very long, optional for client-side toast
+      } else {
+        console.error('Caught a non-Error object during analysis:', error);
+      }
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during analysis.";
       onAnalysisComplete(null, errorMessage);
     }
@@ -266,3 +278,5 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     </Card>
   );
 }
+
+    
