@@ -1,6 +1,2 @@
-import { config } from 'dotenv';
-config();
-
-import '@/ai/flows/generate-medical-report.ts';
-import '@/ai/flows/suggest-next-steps.ts';
-import '@/ai/flows/detect-image-anomalies.ts';
+// This file will be deleted as Genkit is being removed.
+// Placeholder content to allow deletion.

@@ -1,10 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FileText, Lightbulb, ClipboardCheck } from 'lucide-react';
-import type { GenerateMedicalReportOutput } from '@/ai/flows/generate-medical-report';
+import type { MedicalReport } from '@/types/mediscan';
 
 interface MedicalReportCardProps {
-  report: GenerateMedicalReportOutput;
+  report: MedicalReport;
 }
 
 export default function MedicalReportCard({ report }: MedicalReportCardProps) {
@@ -24,7 +24,7 @@ export default function MedicalReportCard({ report }: MedicalReportCardProps) {
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-base prose prose-sm max-w-none">
-              <p>{report.findings}</p>
+              <p>{report.findings || "No findings information available."}</p>
             </AccordionContent>
           </AccordionItem>
 
@@ -43,7 +43,7 @@ export default function MedicalReportCard({ report }: MedicalReportCardProps) {
                   ))}
                 </ul>
               ) : (
-                <p>No specific diagnoses identified.</p>
+                <p>No specific diagnoses identified by the AI.</p>
               )}
             </AccordionContent>
           </AccordionItem>
@@ -56,7 +56,7 @@ export default function MedicalReportCard({ report }: MedicalReportCardProps) {
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-base prose prose-sm max-w-none">
-              <p>{report.recommendations}</p>
+              <p>{report.recommendations || "No recommendations available."}</p>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

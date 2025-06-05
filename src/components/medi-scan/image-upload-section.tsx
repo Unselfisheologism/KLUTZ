@@ -2,12 +2,11 @@
 
 import type { ChangeEvent } from 'react';
 import { useState } from 'react';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,10 +14,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { preprocessImage } from '@/lib/image-utils';
 import { UploadCloud, Loader2 } from 'lucide-react';
 import ImagePreview from './image-preview';
-import type { GenerateMedicalReportOutput } from '@/ai/flows/generate-medical-report';
-import type { SuggestNextStepsOutput } from '@/ai/flows/suggest-next-steps';
+import type { MedicalReport, NextSteps, AnalysisResult } from '@/types/mediscan';
 import { useToast } from "@/hooks/use-toast";
-
 
 const formSchema = z.object({
   image: z.custom<FileList>((val) => val instanceof FileList && val.length > 0, {
@@ -32,7 +29,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface ImageUploadSectionProps {
   onAnalysisStart: () => void;
-  onAnalysisComplete: (results: { report: GenerateMedicalReportOutput | null, nextSteps: SuggestNextStepsOutput | null } | null, error?: string) => void;
+  onAnalysisComplete: (results: AnalysisResult | null, error?: string) => void;
   isLoading: boolean;
 }
 
@@ -53,7 +50,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     if (file) {
       form.setValue('image', event.target.files as FileList);
       try {
-        // Show a lower-quality preview quickly
         const previewDataUrl = URL.createObjectURL(file);
         setImageDataUrl(previewDataUrl);
       } catch (error) {
@@ -75,26 +71,98 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     onAnalysisStart();
     const file = data.image[0];
 
+    if (typeof window.puter === 'undefined') {
+      onAnalysisComplete(null, "Puter.js SDK is not available. Please ensure it's loaded correctly and refresh the page.");
+      return;
+    }
+    const puter = window.puter;
+
     try {
-      const preprocessedDataUrl = await preprocessImage(file, 1024); // Resize to 1024px width
-
-      // This dynamic import is required by Genkit for server actions.
-      const { handleImageAnalysis } = await import('@/app/actions');
-      const result = await handleImageAnalysis(
-        preprocessedDataUrl,
-        data.modality,
-        data.patientDetails
-      );
-
-      if (result.error) {
-        onAnalysisComplete(null, result.error);
-      } else {
-        onAnalysisComplete({ report: result.report, nextSteps: result.nextSteps });
+      const isSignedIn = await puter.auth.isSignedIn();
+      if (!isSignedIn) {
+        try {
+          await puter.auth.signIn();
+          if (!await puter.auth.isSignedIn()) {
+            onAnalysisComplete(null, "Authentication required to proceed.");
+            return;
+          }
+        } catch (authError) {
+          onAnalysisComplete(null, "Authentication failed or was cancelled.");
+          return;
+        }
       }
+
+      const preprocessedDataUrl = await preprocessImage(file, 1024);
+
+      const reportPrompt = `
+        You are an AI assistant specialized in analyzing medical images.
+        The user has uploaded a ${data.modality} image.
+        Patient details: ${data.patientDetails || 'Not provided'}.
+        Analyze the provided image and generate a structured medical report.
+        The report MUST be in JSON format with the following keys:
+        - "findings": (string) A detailed description of the key findings, any abnormalities, or notable anatomical features.
+        - "possibleDiagnoses": (array of strings) A list of possible differential diagnoses based on the findings.
+        - "recommendations": (string) Relevant recommendations for further investigation or treatment.
+        If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
+      `;
+      
+      // Use gpt-4o model as specified
+      const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl, { model: 'gpt-4o' });
+
+      if (!reportResponse || !reportResponse.message || !reportResponse.message.content) {
+        throw new Error('Failed to get a valid response from AI for medical report.');
+      }
+
+      let parsedReportData;
+      try {
+        parsedReportData = JSON.parse(reportResponse.message.content);
+      } catch (parseError) {
+        console.error("Failed to parse AI report response:", reportResponse.message.content, parseError);
+        throw new Error(`AI response for report was not valid JSON. Raw response: ${reportResponse.message.content}`);
+      }
+
+      if (parsedReportData.error) {
+        throw new Error(`AI analysis error: ${parsedReportData.error}`);
+      }
+
+      const typedReport: MedicalReport = {
+        findings: parsedReportData.findings || "No specific findings provided by AI.",
+        possibleDiagnoses: Array.isArray(parsedReportData.possibleDiagnoses) ? parsedReportData.possibleDiagnoses : [],
+        recommendations: parsedReportData.recommendations || "No specific recommendations provided by AI."
+      };
+
+      const nextStepsPrompt = `
+        Based on the following medical findings: "${typedReport.findings}",
+        and possible diagnoses: "${typedReport.possibleDiagnoses.join(', ')}",
+        suggest a list of actionable next steps for the medical professional.
+        Return the next steps as a JSON object with a single key "nextSteps" (string).
+        The "nextSteps" string can contain newline characters for list formatting (e.g., "1. Step one\n2. Step two").
+      `;
+
+      const nextStepsResponse = await puter.ai.chat(nextStepsPrompt, { model: 'gpt-4o' });
+
+      if (!nextStepsResponse || !nextStepsResponse.message || !nextStepsResponse.message.content) {
+        throw new Error('Failed to get a valid response from AI for next steps.');
+      }
+      
+      let parsedNextStepsData;
+      try {
+        parsedNextStepsData = JSON.parse(nextStepsResponse.message.content);
+      } catch (parseError) {
+        console.error("Failed to parse AI next steps response:", nextStepsResponse.message.content, parseError);
+        throw new Error(`AI response for next steps was not valid JSON. Raw response: ${nextStepsResponse.message.content}`);
+      }
+
+      const typedNextSteps: NextSteps = {
+        nextSteps: parsedNextStepsData.nextSteps || "No specific next steps provided by AI."
+      };
+
+      onAnalysisComplete({ report: typedReport, nextSteps: typedNextSteps });
+
     } catch (error) {
-      console.error('Error processing image or calling AI:', error);
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-      onAnalysisComplete(null, `Image processing or AI analysis failed: ${errorMessage}`);
+      console.error('Error in onSubmit:', error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during analysis.";
+      onAnalysisComplete(null, errorMessage);
     }
   };
 
@@ -106,7 +174,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
           Upload Medical Image
         </CardTitle>
         <CardDescription>
-          Securely upload an X-ray, MRI, or CT scan for AI analysis.
+          Securely upload an X-ray, MRI, or CT scan for AI analysis using Puter.js.
         </CardDescription>
       </CardHeader>
       <Form {...form}>

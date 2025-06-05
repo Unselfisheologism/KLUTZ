@@ -1,18 +1,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListChecks } from 'lucide-react';
-import type { SuggestNextStepsOutput } from '@/ai/flows/suggest-next-steps';
+import type { NextSteps } from '@/types/mediscan';
 
 interface NextStepsCardProps {
-  nextSteps: SuggestNextStepsOutput;
+  nextSteps: NextSteps;
 }
 
 export default function NextStepsCard({ nextSteps }: NextStepsCardProps) {
-  // Simple formatting for next steps if they are a list in a string
-  const formattedSteps = nextSteps.nextSteps
+  const rawSteps = nextSteps.nextSteps || "";
+  const formattedSteps = rawSteps
     .split('\n')
     .map(step => step.trim())
-    .filter(step => step.length > 0 && !step.match(/^Actionable Next Steps:?$/i)) // Remove title if present
-    .map(step => step.replace(/^- /, '')); // Remove leading hyphens
+    .filter(step => step.length > 0 && !step.match(/^(Actionable Next Steps:?|Next Steps:?)$/i)) 
+    .map(step => step.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '')); // Remove leading list markers
 
   return (
     <Card className="shadow-xl">
@@ -36,7 +36,7 @@ export default function NextStepsCard({ nextSteps }: NextStepsCardProps) {
             ))}
           </ul>
         ) : (
-          <p className="text-muted-foreground">No specific next steps provided by the AI.</p>
+          <p className="text-muted-foreground">No specific next steps provided by the AI, or the format was not recognized.</p>
         )}
       </CardContent>
     </Card>

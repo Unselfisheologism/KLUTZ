@@ -3,12 +3,12 @@ import NextStepsCard from './next-steps-card';
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
-import type { GenerateMedicalReportOutput } from '@/ai/flows/generate-medical-report';
-import type { SuggestNextStepsOutput } from '@/ai/flows/suggest-next-steps';
+import { Card, CardHeader, CardContent } from '@/components/ui/card'; // Import Card components
+import type { MedicalReport, NextSteps } from '@/types/mediscan';
 
 interface ResultsSectionProps {
-  report: GenerateMedicalReportOutput | null;
-  nextSteps: SuggestNextStepsOutput | null;
+  report: MedicalReport | null;
+  nextSteps: NextSteps | null;
   isLoading: boolean;
   error?: string | null;
 }

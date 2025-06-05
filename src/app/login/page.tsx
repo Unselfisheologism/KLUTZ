@@ -1,21 +1,53 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import LoginButton from '@/components/auth/login-button';
-import { ScanLine } from 'lucide-react';
-
-const AUTH_KEY = 'mediscan_authenticated';
+import { ScanLine, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (localStorage.getItem(AUTH_KEY) === 'true') {
-      router.push('/');
+    // Ensure puter.js is loaded
+    if (typeof window.puter === 'undefined') {
+      // Optional: add a small delay or a listener for puter.js load event
+      const checkPuterInterval = setInterval(() => {
+        if (typeof window.puter !== 'undefined') {
+          clearInterval(checkPuterInterval);
+          checkAuthStatus();
+        }
+      }, 100);
+      return () => clearInterval(checkPuterInterval);
+    } else {
+      checkAuthStatus();
     }
   }, [router]);
+
+  const checkAuthStatus = async () => {
+    try {
+      const signedIn = await window.puter.auth.isSignedIn();
+      if (signedIn) {
+        router.push('/');
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error checking Puter auth status:", error);
+      // Stay on login page, allow manual login
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
@@ -29,12 +61,9 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="flex flex-col items-center space-y-6">
           <p className="text-center text-muted-foreground">
-            Please log in using your Puter.js account to continue.
+            Please log in using your Puter account to continue.
           </p>
           <LoginButton />
-          <p className="text-xs text-muted-foreground text-center px-4">
-            This is a placeholder for Puter.js authentication. Clicking the button will simulate login.
-          </p>
         </CardContent>
       </Card>
     </div>
