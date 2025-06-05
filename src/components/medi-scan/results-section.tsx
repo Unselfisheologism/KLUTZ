@@ -1,0 +1,83 @@
+import MedicalReportCard from './medical-report-card';
+import NextStepsCard from './next-steps-card';
+import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from '@/components/ui/skeleton';
+import type { GenerateMedicalReportOutput } from '@/ai/flows/generate-medical-report';
+import type { SuggestNextStepsOutput } from '@/ai/flows/suggest-next-steps';
+
+interface ResultsSectionProps {
+  report: GenerateMedicalReportOutput | null;
+  nextSteps: SuggestNextStepsOutput | null;
+  isLoading: boolean;
+  error?: string | null;
+}
+
+export default function ResultsSection({ report, nextSteps, isLoading, error }: ResultsSectionProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="shadow-xl">
+          <CardHeader>
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+         <Card className="shadow-xl">
+          <CardHeader>
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="shadow-lg">
+        <AlertCircle className="h-5 w-5" />
+        <AlertTitle className="font-headline">Analysis Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!report && !nextSteps && !isLoading && !error) {
+     return (
+      <Alert className="shadow-md bg-card">
+        <Info className="h-5 w-5 text-primary" />
+        <AlertTitle className="font-headline text-primary">Ready for Analysis</AlertTitle>
+        <AlertDescription>
+          Upload a medical image and provide details to start the AI analysis. Results will appear here.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  return (
+    <div className="space-y-8">
+      {report && <MedicalReportCard report={report} />}
+      {nextSteps && <NextStepsCard nextSteps={nextSteps} />}
+      {report && nextSteps && (
+         <Alert variant="default" className="bg-green-50 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-300 shadow-md">
+          <CheckCircle2 className="h-5 w-5 text-green-500 dark:text-green-400" />
+          <AlertTitle className="font-headline text-green-600 dark:text-green-300">Analysis Complete</AlertTitle>
+          <AlertDescription>
+            The AI analysis has finished. Review the report and suggested next steps.
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+}
