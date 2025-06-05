@@ -121,6 +121,8 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
       `;
       
+      // For vision tasks, Puter.js often infers the model.
+      // If issues persist with gpt-4o, try removing the model option for the vision call.
       const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl);
 
 
@@ -154,6 +156,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         The "nextSteps" string can contain newline characters for list formatting (e.g., "1. Step one\\n2. Step two").
       `;
 
+      // Explicitly use gpt-4o for the text-based "next steps" generation
       const nextStepsResponse = await puter.ai.chat(nextStepsPrompt, { model: 'gpt-4o' });
 
       if (!nextStepsResponse || !nextStepsResponse.message || !nextStepsResponse.message.content) {
@@ -185,7 +188,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
       } else if (typeof error === 'object' && error !== null) {
-        // Removed the general console.error('Error type: Object')
         
         const errObj = error as any; 
 
@@ -197,7 +199,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
           } else if (puterErrorDetails.message.toLowerCase().includes('permission denied')){
             detailedErrorMessage = `AI analysis failed: Permission denied by Puter AI service. (${puterErrorDetails.message}). Please check your Puter account permissions.`;
           }
-          console.error('Puter API Error Details (raw):', puterErrorDetails, '(stringified):', JSON.stringify(puterErrorDetails, null, 2));
+          console.error('Puter API Error Details: ' + JSON.stringify(puterErrorDetails, null, 2));
         } else if (Object.keys(errObj).length === 0 && errObj.constructor === Object) {
           detailedErrorMessage = "The AI analysis service returned an unexpected empty error. This might indicate an issue with authorization or the Puter AI service. Please ensure you are correctly logged in with Puter and try again. If the problem persists, check your Puter account or service status.";
           console.error('Caught an empty object {} as error.');
