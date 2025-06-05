@@ -10,7 +10,7 @@ export default function AppHeader() {
         <Link href="/" className="flex items-center gap-2">
           <ScanLine className="h-8 w-8 text-primary" />
           <h1 className="text-2xl font-headline font-semibold text-foreground">
-            MediScan AI
+            Klutz
           </h1>
         </Link>
         <div className="flex items-center gap-4">
