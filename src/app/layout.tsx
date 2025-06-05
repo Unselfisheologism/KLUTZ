@@ -6,6 +6,9 @@ import AppHeader from '@/components/layout/app-header';
 export const metadata: Metadata = {
   title: 'MediScan AI',
   description: 'AI-powered medical image analysis',
+  icons: {
+    icon: 'https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749123324/Image_fx__7_-removebg-preview_bxjg0s.png',
+  },
 };
 
 export default function RootLayout({
