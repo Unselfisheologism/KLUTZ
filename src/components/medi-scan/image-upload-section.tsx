@@ -259,7 +259,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
                     />
                   </FormControl>
                   <FormDescription>
-                    Supported formats: PNG, JPG, DICOM. Max size: 10MB.
+                    Max Size: 10MB
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -336,6 +336,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     
 
     
+
 
 
 
