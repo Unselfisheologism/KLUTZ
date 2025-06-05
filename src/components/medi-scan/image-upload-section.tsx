@@ -34,6 +34,17 @@ interface ImageUploadSectionProps {
   isLoading: boolean;
 }
 
+const cleanJsonString = (rawString: string): string => {
+  let cleanedString = rawString.trim();
+  if (cleanedString.startsWith("```json") && cleanedString.endsWith("```")) {
+    cleanedString = cleanedString.substring(7, cleanedString.length - 3).trim();
+  } else if (cleanedString.startsWith("```") && cleanedString.endsWith("```")) {
+    // Fallback for just triple backticks without "json"
+    cleanedString = cleanedString.substring(3, cleanedString.length - 3).trim();
+  }
+  return cleanedString;
+};
+
 export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete, isLoading }: ImageUploadSectionProps) {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const { toast } = useToast();
@@ -129,11 +140,13 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
       }
 
       let parsedReportData;
+      const rawReportContent = reportResponse.message.content;
       try {
-        parsedReportData = JSON.parse(reportResponse.message.content);
+        const cleanedReportContent = cleanJsonString(rawReportContent);
+        parsedReportData = JSON.parse(cleanedReportContent);
       } catch (parseError) {
-        console.error("Failed to parse AI report response:", reportResponse.message.content, parseError);
-        throw new Error(`AI response for report was not valid JSON. Raw response: ${reportResponse.message.content}`);
+        console.error("Failed to parse AI report response:", rawReportContent, parseError);
+        throw new Error(`AI response for report was not valid JSON. Raw response: ${rawReportContent}`);
       }
 
       if (parsedReportData.error) {
@@ -161,11 +174,13 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
       }
       
       let parsedNextStepsData;
+      const rawNextStepsContent = nextStepsResponse.message.content;
       try {
-        parsedNextStepsData = JSON.parse(nextStepsResponse.message.content);
+        const cleanedNextStepsContent = cleanJsonString(rawNextStepsContent);
+        parsedNextStepsData = JSON.parse(cleanedNextStepsContent);
       } catch (parseError) {
-        console.error("Failed to parse AI next steps response:", nextStepsResponse.message.content, parseError);
-        throw new Error(`AI response for next steps was not valid JSON. Raw response: ${nextStepsResponse.message.content}`);
+        console.error("Failed to parse AI next steps response:", rawNextStepsContent, parseError);
+        throw new Error(`AI response for next steps was not valid JSON. Raw response: ${rawNextStepsContent}`);
       }
 
       const typedNextSteps: NextSteps = {
@@ -180,7 +195,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
 
       if (error instanceof Error) {
         detailedErrorMessage = error.message;
-        console.error('Error type: Standard Error');
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
       } else if (typeof error === 'object' && error !== null) {
@@ -212,7 +226,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         }
       } else if (typeof error === 'string' && error.trim() !== '') {
         detailedErrorMessage = error;
-        console.error('Error type: String');
         console.error('Caught a string error during analysis:', error);
       } else {
           console.error('Caught an error of unknown type during analysis. Type:', typeof error, 'Error details:', error);
@@ -322,6 +335,8 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     </Card>
   );
 }
+    
+
     
 
     
