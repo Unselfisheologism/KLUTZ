@@ -10,57 +10,63 @@ import { ScanLine, Loader2 } from 'lucide-react';
 export default function LoginPage() {
   const router = useRouter();
   const [isPuterReady, setIsPuterReady] = useState(false);
-  const [authCheckComplete, setAuthCheckComplete] = useState(false); // To track if the initial auth check has run
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   useEffect(() => {
-    // Function to check Puter SDK availability
+    console.log("[LoginPage] useEffect for Puter availability check triggered.");
     const checkPuterAvailability = () => {
       if (typeof window.puter !== 'undefined' && typeof window.puter.auth !== 'undefined') {
+        console.log("[LoginPage] Puter SDK is available.");
         setIsPuterReady(true);
         return true;
       }
+      console.log("[LoginPage] Puter SDK not yet available.");
       return false;
     };
 
-    // Initial check
     if (checkPuterAvailability()) {
       // If Puter is ready, proceed to check auth status in the next useEffect
     } else {
-      // If not ready, set an interval to check periodically
       const intervalId = setInterval(() => {
+        console.log("[LoginPage] Interval: Checking Puter SDK availability...");
         if (checkPuterAvailability()) {
           clearInterval(intervalId);
-          // setIsPuterReady(true) is called inside checkPuterAvailability
         }
-      }, 100); // Check every 100ms
-      return () => clearInterval(intervalId); // Cleanup interval on component unmount
+      }, 100);
+      return () => {
+        console.log("[LoginPage] Cleanup: Clearing Puter availability check interval.");
+        clearInterval(intervalId);
+      };
     }
   }, []);
 
   useEffect(() => {
     if (!isPuterReady) {
-      // Wait for Puter SDK to be ready
+      console.log("[LoginPage] Auth check useEffect: Waiting for Puter SDK to be ready.");
       return;
     }
 
+    console.log("[LoginPage] Auth check useEffect: Puter SDK is ready. Starting auth status check and redirect logic.");
     const checkAuthAndRedirect = async () => {
       try {
         const isSignedIn = await window.puter.auth.isSignedIn();
+        console.log("[LoginPage] Auth check useEffect: Puter isSignedIn() returned:", isSignedIn);
         if (isSignedIn) {
-          router.replace('/'); // Redirect to main page if already signed in
+          console.log("[LoginPage] Auth check useEffect: User is signed in, redirecting to /");
+          router.replace('/'); 
         } else {
-          setAuthCheckComplete(true); // Allow login form to render if not signed in
+          console.log("[LoginPage] Auth check useEffect: User is not signed in. Auth check complete.");
+          setAuthCheckComplete(true); 
         }
       } catch (error) {
-        console.error("Error checking auth status on login page:", error);
-        setAuthCheckComplete(true); // Allow login form to render even on error
+        console.error("[LoginPage] Auth check useEffect: Error checking auth status:", error);
+        setAuthCheckComplete(true); 
       }
     };
 
     checkAuthAndRedirect();
-  }, [isPuterReady, router]); // Rerun when Puter SDK is ready or router changes
+  }, [isPuterReady, router]); 
 
-  // Show loading indicator until Puter SDK is ready AND initial auth check is complete (or decided not to redirect)
   if (!isPuterReady || !authCheckComplete) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
@@ -70,7 +76,6 @@ export default function LoginPage() {
     );
   }
 
-  // Render login form
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl">
