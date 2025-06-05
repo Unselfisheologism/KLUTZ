@@ -5,78 +5,94 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 export default function LoginButton() {
+  const [isPuterReady, setIsPuterReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); 
-  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // For initial auth check
+  const [isActionLoading, setIsActionLoading] = useState(false); // For login/logout process
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter
 
   useEffect(() => {
-    const checkPuterReadyAndAuth = async () => {
-      if (typeof window.puter === 'undefined') {
-        const intervalId = setInterval(async () => {
-          if (typeof window.puter !== 'undefined') {
-            clearInterval(intervalId);
-            await updateAuthState();
-          }
-        }, 100);
-        return () => clearInterval(intervalId);
-      } else {
-        await updateAuthState();
+    const checkPuterAvailability = () => {
+      if (typeof window.puter !== 'undefined' && typeof window.puter.auth !== 'undefined') {
+        setIsPuterReady(true);
+        return true;
       }
+      return false;
     };
-    checkPuterReadyAndAuth();
-  }, []); 
+
+    if (checkPuterAvailability()) {
+      updateAuthState();
+    } else {
+      const intervalId = setInterval(() => {
+        if (checkPuterAvailability()) {
+          clearInterval(intervalId);
+          // updateAuthState will be called via the isPuterReady useEffect
+        }
+      }, 100);
+      return () => clearInterval(intervalId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isPuterReady) {
+      updateAuthState();
+    }
+  }, [isPuterReady]);
 
   const updateAuthState = async () => {
-    setIsLoading(true); // Ensure loading state while checking
+    if (!isPuterReady) {
+      setIsLoading(true); // Not ready, so still "loading" auth state
+      return;
+    }
+    setIsLoading(true);
     try {
       const authStatus = await window.puter.auth.isSignedIn();
       setIsAuthenticated(authStatus);
     } catch (error) {
       console.error("Error checking Puter auth status:", error);
       setIsAuthenticated(false);
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "Could not verify login status with Puter.",
-      });
+      // Don't toast here, as it can be annoying on every load if Puter is temporarily unavailable
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
   const handleLogin = async () => {
-    if (typeof window.puter === 'undefined') {
-      toast({ variant: "destructive", title: "Error", description: "Puter.js SDK not loaded." });
+    if (!isPuterReady) {
+      toast({ variant: "destructive", title: "Error", description: "Puter SDK not ready. Please try again in a moment." });
       return;
     }
     setIsActionLoading(true);
     try {
       await window.puter.auth.signIn();
+      // Crucially, re-check auth status directly from Puter after signIn completes
       const newAuthStatus = await window.puter.auth.isSignedIn();
-      setIsAuthenticated(newAuthStatus);
+      setIsAuthenticated(newAuthStatus); // Update internal state
+
       if (newAuthStatus) {
         toast({ title: "Login Successful", description: "Welcome to MediScan AI!" });
-        // Only redirect if currently on the login page.
         if (window.location.pathname === '/login') {
-          window.location.assign('/');
+          router.replace('/'); // Use router.replace for better history management
         }
       } else {
+        // This case means signIn resolved, but user is still not signed in (e.g., popup closed early)
         toast({
             variant: "default",
             title: "Login Incomplete",
-            description: "Puter login process was not completed.",
+            description: "Puter login process was not completed or was cancelled.",
         });
       }
     } catch (error) {
       console.error("Puter login error:", error);
-      setIsAuthenticated(false);
+      setIsAuthenticated(false); // Ensure state reflects failure
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Puter.js login was unsuccessful or cancelled.",
+        description: "Puter login was unsuccessful or cancelled. Please try again.",
       });
     } finally {
       setIsActionLoading(false);
@@ -84,19 +100,17 @@ export default function LoginButton() {
   };
 
   const handleLogout = async () => {
-    if (typeof window.puter === 'undefined') {
-      toast({ variant: "destructive", title: "Error", description: "Puter.js SDK not loaded." });
+    if (!isPuterReady) {
+      toast({ variant: "destructive", title: "Error", description: "Puter SDK not ready. Please try again in a moment." });
       return;
     }
     setIsActionLoading(true);
     try {
       await window.puter.auth.signOut();
-      setIsAuthenticated(false);
+      setIsAuthenticated(false); // Update internal state
       toast({ title: "Logout Successful", description: "You have been logged out." });
-      // If on any page other than /login, redirect to /login after logout.
-      // If already on /login, no redirect needed.
       if (window.location.pathname !== '/login') {
-        window.location.assign('/login');
+        router.replace('/login'); // Use router.replace
       }
     } catch (error) {
       console.error("Puter logout error:", error);
@@ -110,8 +124,8 @@ export default function LoginButton() {
     }
   };
 
-  if (isLoading) {
-    return <Button variant="outline" size="default" disabled><Loader2 className="animate-spin h-4 w-4 mr-2" />Loading...</Button>;
+  if (!isPuterReady || isLoading) { // Show loading if Puter not ready OR initial auth check is happening
+    return <Button variant="outline" size="default" disabled><Loader2 className="animate-spin h-4 w-4 mr-2" />Loading Auth...</Button>;
   }
 
   if (isAuthenticated) {

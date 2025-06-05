@@ -9,51 +9,68 @@ import { ScanLine, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const [isPuterReady, setIsPuterReady] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false); // To track if the initial auth check has run
 
   useEffect(() => {
-    if (typeof window.puter !== 'undefined' && typeof window.puter.auth !== 'undefined') {
-      setIsPuterReady(true);
+    // Function to check Puter SDK availability
+    const checkPuterAvailability = () => {
+      if (typeof window.puter !== 'undefined' && typeof window.puter.auth !== 'undefined') {
+        setIsPuterReady(true);
+        return true;
+      }
+      return false;
+    };
+
+    // Initial check
+    if (checkPuterAvailability()) {
+      // If Puter is ready, proceed to check auth status in the next useEffect
     } else {
+      // If not ready, set an interval to check periodically
       const intervalId = setInterval(() => {
-        if (typeof window.puter !== 'undefined' && typeof window.puter.auth !== 'undefined') {
+        if (checkPuterAvailability()) {
           clearInterval(intervalId);
-          setIsPuterReady(true);
+          // setIsPuterReady(true) is called inside checkPuterAvailability
         }
-      }, 100);
-      return () => clearInterval(intervalId);
+      }, 100); // Check every 100ms
+      return () => clearInterval(intervalId); // Cleanup interval on component unmount
     }
   }, []);
 
   useEffect(() => {
-    if (!isPuterReady) return;
+    if (!isPuterReady) {
+      // Wait for Puter SDK to be ready
+      return;
+    }
 
     const checkAuthAndRedirect = async () => {
       try {
         const isSignedIn = await window.puter.auth.isSignedIn();
         if (isSignedIn) {
-          router.replace('/'); // Use router.replace to avoid adding to history
-          // No need to setAuthCheckComplete here as redirect will happen
-          return; 
+          router.replace('/'); // Redirect to main page if already signed in
+        } else {
+          setAuthCheckComplete(true); // Allow login form to render if not signed in
         }
       } catch (error) {
         console.error("Error checking auth status on login page:", error);
-        // Stay on login page if error, allow form to render
+        setAuthCheckComplete(true); // Allow login form to render even on error
       }
-      setAuthCheckComplete(true); // Only set if not redirecting
     };
-    checkAuthAndRedirect();
-  }, [isPuterReady, router]);
 
+    checkAuthAndRedirect();
+  }, [isPuterReady, router]); // Rerun when Puter SDK is ready or router changes
+
+  // Show loading indicator until Puter SDK is ready AND initial auth check is complete (or decided not to redirect)
   if (!isPuterReady || !authCheckComplete) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <span className="ml-4 text-lg">Initializing...</span>
       </div>
     );
   }
 
+  // Render login form
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl">
