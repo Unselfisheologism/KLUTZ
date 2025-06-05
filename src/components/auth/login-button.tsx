@@ -79,12 +79,22 @@ export default function LoginButton() {
       toast({ variant: "destructive", title: "Error", description: "Puter SDK not ready. Please try again in a moment." });
       return;
     }
+
+    toast({
+      title: "Puter Login Initiated",
+      description: "The Puter login window is opening. Please wait a few moments for it to fully load before clicking your account.",
+      variant: "default", 
+      // Consider if a longer duration or specific class is needed for visibility
+    });
+
     console.log("[LoginButton] handleLogin: Attempting Puter sign-in...");
     setIsActionLoading(true);
     try {
+      // This call opens the Puter login popup.
       const signInResult = await window.puter.auth.signIn(); 
       console.log("[LoginButton] handleLogin: Puter signIn() call resolved. Result:", signInResult);
 
+      // Crucially, re-check auth status *after* signIn promise resolves.
       const newAuthStatus = await window.puter.auth.isSignedIn();
       console.log("[LoginButton] handleLogin: Auth status after signIn and explicit check:", newAuthStatus);
       setIsAuthenticated(newAuthStatus);
@@ -96,16 +106,19 @@ export default function LoginButton() {
           router.replace('/');
         }
       } else {
-        console.warn("[LoginButton] handleLogin: Login process did not result in authenticated state.");
+        // This case might indicate the popup closed without successful auth, or communication failed.
+        console.warn("[LoginButton] handleLogin: Login process did not result in authenticated state after signIn() resolved and was re-checked.");
         toast({
-            variant: "default",
+            variant: "default", // Not necessarily destructive, could be user cancellation.
             title: "Login Incomplete",
             description: "Puter login process was not completed or was cancelled.",
         });
       }
     } catch (error) {
+      // This catch block handles errors from puter.auth.signIn() itself,
+      // e.g., if the popup couldn't be opened, or if Puter SDK throws an error.
       console.error("[LoginButton] handleLogin: Puter login error caught:", error);
-      setIsAuthenticated(false);
+      setIsAuthenticated(false); // Ensure auth state is false on error.
       toast({
         variant: "destructive",
         title: "Login Failed",
