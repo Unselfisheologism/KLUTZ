@@ -72,31 +72,41 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     onAnalysisStart();
     const file = data.image[0];
 
-    if (typeof window.puter === 'undefined' ||
-        typeof window.puter.auth === 'undefined' ||
-        typeof window.puter.ai === 'undefined') {
-      onAnalysisComplete(null, "Puter.js SDK is not fully loaded or initialized. Please refresh the page or try again later.");
-      return;
-    }
-    const puter = window.puter;
-
     try {
-      const isSignedIn = await puter.auth.isSignedIn();
+      if (typeof window.puter === 'undefined' ||
+          typeof window.puter.auth === 'undefined' ||
+          typeof window.puter.ai === 'undefined') {
+        onAnalysisComplete(null, "Puter.js SDK is not fully loaded or initialized. Please refresh the page or try again later.");
+        return;
+      }
+      const puter = window.puter;
+
+      let isSignedIn = await puter.auth.isSignedIn();
       if (!isSignedIn) {
         try {
           await puter.auth.signIn();
-          if (!await puter.auth.isSignedIn()) {
-            onAnalysisComplete(null, "Authentication required to proceed.");
+          isSignedIn = await puter.auth.isSignedIn();
+          if (!isSignedIn) {
+            onAnalysisComplete(null, "Authentication is required to proceed. The login process was not completed or was cancelled by the user.");
             return;
           }
         } catch (authError) {
-          console.error("Puter sign-in error during analysis:", authError);
-          onAnalysisComplete(null, "Authentication failed or was cancelled by user.");
+          console.error("Puter sign-in attempt error:", authError);
+          let authErrorMessage = "Authentication failed or was cancelled by user.";
+          if (authError instanceof Error) authErrorMessage = authError.message;
+          else if (typeof authError === 'string') authErrorMessage = authError;
+          onAnalysisComplete(null, authErrorMessage);
           return;
         }
       }
 
       const preprocessedDataUrl = await preprocessImage(file, 1024);
+
+      const isStillAuthedForAICalls = await puter.auth.isSignedIn();
+      if (!isStillAuthedForAICalls) {
+        onAnalysisComplete(null, "Your session seems to have expired or is invalid. Please try logging out and logging back in, then attempt the analysis again.");
+        return;
+      }
 
       const reportPrompt = `
         You are an AI assistant specialized in analyzing medical images.
@@ -110,11 +120,10 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
       `;
       
-      // Vision call: Let Puter.js infer the model for vision, or use its default vision-capable model.
       const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl);
 
       if (!reportResponse || !reportResponse.message || !reportResponse.message.content) {
-        throw new Error('Failed to get a valid response from AI for medical report.');
+        throw new Error('Failed to get a valid response from AI for medical report. The response was empty or malformed.');
       }
 
       let parsedReportData;
@@ -140,14 +149,13 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         and possible diagnoses: "${typedReport.possibleDiagnoses.join(', ')}",
         suggest a list of actionable next steps for the medical professional.
         Return the next steps as a JSON object with a single key "nextSteps" (string).
-        The "nextSteps" string can contain newline characters for list formatting (e.g., "1. Step one\n2. Step two").
+        The "nextSteps" string can contain newline characters for list formatting (e.g., "1. Step one\\n2. Step two").
       `;
 
-      // Text-only call, can specify model explicitly.
       const nextStepsResponse = await puter.ai.chat(nextStepsPrompt, { model: 'gpt-4o' });
 
       if (!nextStepsResponse || !nextStepsResponse.message || !nextStepsResponse.message.content) {
-        throw new Error('Failed to get a valid response from AI for next steps.');
+        throw new Error('Failed to get a valid response from AI for next steps. The response was empty or malformed.');
       }
       
       let parsedNextStepsData;
@@ -165,16 +173,43 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
       onAnalysisComplete({ report: typedReport, nextSteps: typedNextSteps });
 
     } catch (error) {
-      console.error('Error in onSubmit:', error);
+      console.error('Error in onSubmit:', error); // Log the raw error structure
+      
+      let detailedErrorMessage = "An unknown error occurred during analysis.";
+
       if (error instanceof Error) {
+        detailedErrorMessage = error.message;
+        console.error('Error type: Standard Error');
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
-        // console.error('Error stack:', error.stack); // Stack can be very long, optional for client-side toast
+      } else if (typeof error === 'string' && error.trim() !== '') {
+        detailedErrorMessage = error;
+        console.error('Error type: String');
+        console.error('Caught a string error during analysis:', error);
+      } else if (typeof error === 'object' && error !== null) {
+        console.error('Error type: Object');
+        if (Object.keys(error).length === 0 && error.constructor === Object) {
+          detailedErrorMessage = "The AI analysis service returned an unexpected empty error. This might indicate an issue with authorization or the Puter AI service. Please ensure you are correctly logged in with Puter and try again. If the problem persists, check your Puter account or service status.";
+          console.error('Caught an empty object {} as error. This often signifies an issue with the AI service call, possibly related to authentication or an unhandled Puter SDK case.');
+        } else if ('message' in error && typeof (error as {message: any}).message === 'string') {
+          detailedErrorMessage = (error as {message: string}).message;
+          console.error('Caught an object error with a message property:', detailedErrorMessage);
+        } else {
+          try {
+            const errorString = JSON.stringify(error);
+            detailedErrorMessage = `An unexpected error structure was received: ${errorString}`;
+            console.error('Caught a non-standard object error (stringified):', errorString);
+          } catch (e) {
+            console.error('Caught a non-standard, non-serializable object error.');
+            // detailedErrorMessage remains "An unknown error occurred..."
+          }
+        }
       } else {
-        console.error('Caught a non-Error object during analysis:', error);
+          console.error('Error type: Unknown');
+          console.error('Caught an error of unknown type:', typeof error, error);
       }
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during analysis.";
-      onAnalysisComplete(null, errorMessage);
+      
+      onAnalysisComplete(null, detailedErrorMessage);
     }
   };
 
@@ -278,5 +313,4 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     </Card>
   );
 }
-
     
