@@ -121,8 +121,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
       `;
       
-      // For vision tasks with Puter.js, it's often best not to specify the model,
-      // allowing Puter to pick the appropriate vision-capable model.
       const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl);
 
 
@@ -187,9 +185,9 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
       } else if (typeof error === 'object' && error !== null) {
-        console.error('Error type: Object');
+        // Removed the general console.error('Error type: Object')
         
-        const errObj = error as any; // Type assertion for easier access
+        const errObj = error as any; 
 
         if (errObj.success === false && errObj.error && typeof errObj.error === 'object' && errObj.error.message) {
           const puterErrorDetails = errObj.error;
@@ -199,7 +197,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
           } else if (puterErrorDetails.message.toLowerCase().includes('permission denied')){
             detailedErrorMessage = `AI analysis failed: Permission denied by Puter AI service. (${puterErrorDetails.message}). Please check your Puter account permissions.`;
           }
-          console.error('Puter API Error Details:', puterErrorDetails);
+          console.error('Puter API Error Details (raw):', puterErrorDetails, '(stringified):', JSON.stringify(puterErrorDetails, null, 2));
         } else if (Object.keys(errObj).length === 0 && errObj.constructor === Object) {
           detailedErrorMessage = "The AI analysis service returned an unexpected empty error. This might indicate an issue with authorization or the Puter AI service. Please ensure you are correctly logged in with Puter and try again. If the problem persists, check your Puter account or service status.";
           console.error('Caught an empty object {} as error.');
