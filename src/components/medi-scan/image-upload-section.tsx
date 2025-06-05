@@ -120,17 +120,17 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
 
       const reportPrompt = `
         You are an AI assistant specialized in analyzing medical images.
-        The user has uploaded a ${data.modality} image.
+        The user has uploaded what they assert is a ${data.modality} image.
         Patient details: ${data.patientDetails || 'Not provided'}.
-        Analyze the provided image and generate a structured medical report.
+        Your task is to analyze the provided image, assuming it is a ${data.modality} scan, and generate a structured medical report.
+        Even if the image quality is suboptimal or presents challenges, attempt to extract as much information as possible.
         The report MUST be in JSON format with the following keys:
-        - "findings": (string) A detailed description of the key findings, any abnormalities, or notable anatomical features.
-        - "possibleDiagnoses": (array of strings) A list of possible differential diagnoses based on the findings.
-        - "recommendations": (string) Relevant recommendations for further investigation or treatment.
-        If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
+        - "findings": (string) A detailed description of key findings, any abnormalities, or notable anatomical features. If analysis is severely limited due to image quality, describe the limitations.
+        - "possibleDiagnoses": (array of strings) A list of possible differential diagnoses based on the findings. If not possible, state clearly.
+        - "recommendations": (string) Relevant recommendations for further investigation or treatment. If not possible, state clearly.
+        If, after attempting analysis, you genuinely cannot provide any meaningful medical interpretation (e.g., it's clearly not a medical image, or completely uninterpretable), then provide a concise error message within the JSON structure under a key "error". Example: {"error": "Image is not a recognizable medical scan."}
       `;
       
-      // Using Puter.js default model for vision (likely gpt-4o-mini or similar) by not specifying 'model' for this call
       const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl);
 
       if (!reportResponse || !reportResponse.message || !reportResponse.message.content) {
@@ -165,7 +165,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         The "nextSteps" string can contain newline characters for list formatting (e.g., "1. Step one\\n2. Step two").
       `;
 
-      // Using gpt-4o for text-only generation of next steps
       const nextStepsResponse = await puter.ai.chat(nextStepsPrompt, { model: 'gpt-4o' });
 
       if (!nextStepsResponse || !nextStepsResponse.message || !nextStepsResponse.message.content) {
@@ -195,9 +194,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         detailedErrorMessage = error.message;
         console.error('Error message:', error.message);
       } else if (typeof error === 'object' && error !== null) {
-        
         const errObj = error as any; 
-
         if (errObj.success === false && errObj.error && typeof errObj.error === 'object' && errObj.error.message) {
           const puterErrorDetails = errObj.error;
           if (puterErrorDetails.delegate === 'usage-limited-chat' && puterErrorDetails.message.toLowerCase().includes('permission denied')) {
@@ -339,5 +336,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     
 
     
+
 
 
