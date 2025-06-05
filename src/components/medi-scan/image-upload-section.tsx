@@ -99,14 +99,15 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
           return;
         }
       }
-
-      const preprocessedDataUrl = await preprocessImage(file, 1024);
-
+      
       const isStillAuthedForAICalls = await puter.auth.isSignedIn();
       if (!isStillAuthedForAICalls) {
         onAnalysisComplete(null, "Your session seems to have expired or is invalid. Please try logging out and logging back in, then attempt the analysis again.");
         return;
       }
+
+      const preprocessedDataUrl = await preprocessImage(file, 1024);
+
 
       const reportPrompt = `
         You are an AI assistant specialized in analyzing medical images.
@@ -120,7 +121,10 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
       `;
       
+      // For vision tasks with Puter.js, it's often best not to specify the model,
+      // allowing Puter to pick the appropriate vision-capable model.
       const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl);
+
 
       if (!reportResponse || !reportResponse.message || !reportResponse.message.content) {
         throw new Error('Failed to get a valid response from AI for medical report. The response was empty or malformed.');
@@ -173,8 +177,8 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
       onAnalysisComplete({ report: typedReport, nextSteps: typedNextSteps });
 
     } catch (error) {
-      console.error('Error in onSubmit:', error); // Log the raw error structure
-      
+      console.error('Error in onSubmit (raw):', error); 
+
       let detailedErrorMessage = "An unknown error occurred during analysis.";
 
       if (error instanceof Error) {
@@ -182,28 +186,40 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         console.error('Error type: Standard Error');
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
+      } else if (typeof error === 'object' && error !== null) {
+        console.error('Error type: Object');
+        
+        const errObj = error as any; // Type assertion for easier access
+
+        if (errObj.success === false && errObj.error && typeof errObj.error === 'object' && errObj.error.message) {
+          const puterErrorDetails = errObj.error;
+          detailedErrorMessage = `AI Service Error: ${puterErrorDetails.message}`;
+          if (puterErrorDetails.delegate === 'usage-limited-chat' && puterErrorDetails.message.toLowerCase().includes('permission denied')) {
+            detailedErrorMessage = "AI analysis failed due to a Puter account restriction. Your account may have reached its usage limit for the AI service, or it lacks the necessary permissions. Please check your Puter account dashboard for more details or contact Puter support.";
+          } else if (puterErrorDetails.message.toLowerCase().includes('permission denied')){
+            detailedErrorMessage = `AI analysis failed: Permission denied by Puter AI service. (${puterErrorDetails.message}). Please check your Puter account permissions.`;
+          }
+          console.error('Puter API Error Details:', puterErrorDetails);
+        } else if (Object.keys(errObj).length === 0 && errObj.constructor === Object) {
+          detailedErrorMessage = "The AI analysis service returned an unexpected empty error. This might indicate an issue with authorization or the Puter AI service. Please ensure you are correctly logged in with Puter and try again. If the problem persists, check your Puter account or service status.";
+          console.error('Caught an empty object {} as error.');
+        } else if (errObj.message && typeof errObj.message === 'string') {
+          detailedErrorMessage = errObj.message;
+          console.error('Caught an object error with a message property:', detailedErrorMessage);
+        } else {
+          try {
+            const errorString = JSON.stringify(errObj);
+            detailedErrorMessage = `An unexpected error structure was received from the AI service. Details: ${errorString}`;
+            console.error('Caught a non-standard object error (stringified):', errorString);
+          } catch (e) {
+            console.error('Caught a non-standard, non-serializable object error.');
+            detailedErrorMessage = "A non-serializable error object was received from the AI service.";
+          }
+        }
       } else if (typeof error === 'string' && error.trim() !== '') {
         detailedErrorMessage = error;
         console.error('Error type: String');
         console.error('Caught a string error during analysis:', error);
-      } else if (typeof error === 'object' && error !== null) {
-        console.error('Error type: Object');
-        if (Object.keys(error).length === 0 && error.constructor === Object) {
-          detailedErrorMessage = "The AI analysis service returned an unexpected empty error. This might indicate an issue with authorization or the Puter AI service. Please ensure you are correctly logged in with Puter and try again. If the problem persists, check your Puter account or service status.";
-          console.error('Caught an empty object {} as error. This often signifies an issue with the AI service call, possibly related to authentication or an unhandled Puter SDK case.');
-        } else if ('message' in error && typeof (error as {message: any}).message === 'string') {
-          detailedErrorMessage = (error as {message: string}).message;
-          console.error('Caught an object error with a message property:', detailedErrorMessage);
-        } else {
-          try {
-            const errorString = JSON.stringify(error);
-            detailedErrorMessage = `An unexpected error structure was received: ${errorString}`;
-            console.error('Caught a non-standard object error (stringified):', errorString);
-          } catch (e) {
-            console.error('Caught a non-standard, non-serializable object error.');
-            // detailedErrorMessage remains "An unknown error occurred..."
-          }
-        }
       } else {
           console.error('Error type: Unknown');
           console.error('Caught an error of unknown type:', typeof error, error);
