@@ -6,48 +6,18 @@ import ImageUploadSection from '@/components/medi-scan/image-upload-section';
 import ResultsSection from '@/components/medi-scan/results-section';
 import type { MedicalReport, NextSteps, AnalysisResult } from '@/types/mediscan';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from 'lucide-react';
-
+// Loader2 is removed as authLoading is removed. It might be needed if other loading states are introduced.
 
 export default function MediScanPage() {
   const [report, setReport] = useState<MedicalReport | null>(null);
   const [nextSteps, setNextSteps] = useState<NextSteps | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // This is for AI analysis loading
   const [error, setError] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const { toast } = useToast();
-  const router = useRouter();
+  const router = useRouter(); // Keep router if other navigation is needed
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (typeof window.puter === 'undefined') {
-        const intervalId = setInterval(async () => {
-          if (typeof window.puter !== 'undefined') {
-            clearInterval(intervalId);
-            await verifyAuth();
-          }
-        }, 100);
-        return () => clearInterval(intervalId);
-      } else {
-        await verifyAuth();
-      }
-    };
-    checkAuth();
-  }, [router]);
-
-  const verifyAuth = async () => {
-    try {
-      const signedIn = await window.puter.auth.isSignedIn();
-      if (!signedIn) {
-        router.push('/login');
-      } else {
-        setAuthLoading(false);
-      }
-    } catch (e) {
-      console.error("Error checking auth status on page load:", e);
-      router.push('/login'); // Redirect on error
-    }
-  };
+  // Removed useEffect for initial auth check.
+  // Authentication will be handled by ImageUploadSection or LoginButton.
 
   const handleAnalysisStart = () => {
     setIsLoading(true);
@@ -87,16 +57,7 @@ export default function MediScanPage() {
     }
   };
   
-  if (authLoading) {
-    return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Verifying authentication...</p>
-      </div>
-    );
-  }
-
-
+  // Removed authLoading condition and its UI. Page renders directly.
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -104,13 +65,13 @@ export default function MediScanPage() {
           <ImageUploadSection 
             onAnalysisStart={handleAnalysisStart}
             onAnalysisComplete={handleAnalysisComplete}
-            isLoading={isLoading}
+            isLoading={isLoading} // This isLoading is for the AI analysis
           />
         </div>
         <ResultsSection 
           report={report} 
           nextSteps={nextSteps} 
-          isLoading={isLoading} 
+          isLoading={isLoading} // This isLoading is for the AI analysis
           error={error} 
         />
       </div>

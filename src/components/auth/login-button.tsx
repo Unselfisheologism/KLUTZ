@@ -3,25 +3,27 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, UserCircle, Loader2 } from 'lucide-react';
+import { LogIn, LogOut, Loader2 } from 'lucide-react'; // UserCircle removed
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginButton() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // True initially for the auth status check
+  const [isActionLoading, setIsActionLoading] = useState(false); // For login/logout actions
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
     const checkPuterReadyAndAuth = async () => {
+      setIsLoading(true); // Start loading for initial auth check
       if (typeof window.puter === 'undefined') {
-        // Wait for puter to be defined
         const intervalId = setInterval(async () => {
           if (typeof window.puter !== 'undefined') {
             clearInterval(intervalId);
             await updateAuthState();
           }
         }, 100);
+        // Cleanup interval if component unmounts before puter is ready
         return () => clearInterval(intervalId);
       } else {
         await updateAuthState();
@@ -31,20 +33,19 @@ export default function LoginButton() {
   }, []);
 
   const updateAuthState = async () => {
-    setIsLoading(true);
     try {
       const authStatus = await window.puter.auth.isSignedIn();
       setIsAuthenticated(authStatus);
     } catch (error) {
       console.error("Error checking Puter auth status:", error);
-      setIsAuthenticated(false); // Assume not authenticated on error
+      setIsAuthenticated(false); 
       toast({
         variant: "destructive",
         title: "Authentication Error",
         description: "Could not verify login status with Puter.",
       });
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Finish loading for initial auth check
     }
   };
 
@@ -53,13 +54,23 @@ export default function LoginButton() {
       toast({ variant: "destructive", title: "Error", description: "Puter.js SDK not loaded." });
       return;
     }
-    setIsLoading(true);
+    setIsActionLoading(true); // Start loading for login action
     try {
       await window.puter.auth.signIn();
-      setIsAuthenticated(true);
-      toast({ title: "Login Successful", description: "Welcome to MediScan AI!" });
-      router.push('/');
-      router.refresh(); // Ensure page re-renders with new auth state
+      const newAuthStatus = await window.puter.auth.isSignedIn();
+      setIsAuthenticated(newAuthStatus);
+      if (newAuthStatus) {
+        toast({ title: "Login Successful", description: "Welcome to MediScan AI!" });
+        router.push('/');
+        router.refresh();
+      } else {
+        // This case might happen if user closes Puter's dialog without signing in
+        toast({
+            variant: "default", // Not necessarily an error
+            title: "Login Incomplete",
+            description: "Puter login process was not completed.",
+        });
+      }
     } catch (error) {
       console.error("Puter login error:", error);
       setIsAuthenticated(false);
@@ -69,7 +80,7 @@ export default function LoginButton() {
         description: "Puter.js login was unsuccessful or cancelled.",
       });
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false); // Finish loading for login action
     }
   };
 
@@ -78,7 +89,7 @@ export default function LoginButton() {
       toast({ variant: "destructive", title: "Error", description: "Puter.js SDK not loaded." });
       return;
     }
-    setIsLoading(true);
+    setIsActionLoading(true); // Start loading for logout action
     try {
       await window.puter.auth.signOut();
       setIsAuthenticated(false);
@@ -93,25 +104,27 @@ export default function LoginButton() {
         description: "Could not log out from Puter.",
       });
     } finally {
-      setIsLoading(false);
+      setIsActionLoading(false); // Finish loading for logout action
     }
   };
 
-  if (isLoading) {
-    return <Button variant="ghost" size="icon" disabled><Loader2 className="animate-spin" /></Button>;
+  if (isLoading) { // This is for the initial auth check to show the correct button
+    return <Button variant="outline" size="default" disabled><Loader2 className="animate-spin h-4 w-4 mr-2" />Loading...</Button>;
   }
 
   if (isAuthenticated) {
     return (
-      <Button variant="outline" onClick={handleLogout}>
-        <LogOut className="mr-2 h-4 w-4" /> Logout
+      <Button variant="outline" onClick={handleLogout} disabled={isActionLoading}>
+        {isActionLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <LogOut className="mr-2 h-4 w-4" />}
+         Logout
       </Button>
     );
   }
 
   return (
-    <Button onClick={handleLogin}>
-      <LogIn className="mr-2 h-4 w-4" /> Login with Puter
+    <Button onClick={handleLogin} disabled={isActionLoading}>
+      {isActionLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <LogIn className="mr-2 h-4 w-4" />}
+      Login with Puter
     </Button>
   );
 }
