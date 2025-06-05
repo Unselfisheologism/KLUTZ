@@ -2,22 +2,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-// useRouter removed as we are using window.location for navigation post-auth
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginButton() {
+  // Initialize to a non-authenticated, loading state for SSR consistency
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Start in loading state
   const [isActionLoading, setIsActionLoading] = useState(false);
-  // const router = useRouter(); // Removed
   const { toast } = useToast();
 
   useEffect(() => {
+    // isLoading is true initially, so the Loader2 button will be rendered first on client,
+    // matching a potential server-render if it also assumes loading.
+    // Then, this effect runs.
     const checkPuterReadyAndAuth = async () => {
-      setIsLoading(true);
+      // No need to setIsLoading(true) here, it's already true by default.
       if (typeof window.puter === 'undefined') {
+        // Wait for Puter.js to load
         const intervalId = setInterval(async () => {
           if (typeof window.puter !== 'undefined') {
             clearInterval(intervalId);
@@ -30,22 +33,23 @@ export default function LoginButton() {
       }
     };
     checkPuterReadyAndAuth();
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   const updateAuthState = async () => {
     try {
+      // This is where the actual client-side auth status is determined
       const authStatus = await window.puter.auth.isSignedIn();
       setIsAuthenticated(authStatus);
     } catch (error) {
       console.error("Error checking Puter auth status:", error);
-      setIsAuthenticated(false); 
+      setIsAuthenticated(false);
       toast({
         variant: "destructive",
         title: "Authentication Error",
         description: "Could not verify login status with Puter.",
       });
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Set loading to false after check
     }
   };
 
@@ -61,7 +65,7 @@ export default function LoginButton() {
       setIsAuthenticated(newAuthStatus);
       if (newAuthStatus) {
         toast({ title: "Login Successful", description: "Welcome to MediScan AI!" });
-        window.location.assign('/'); // Force full page navigation
+        window.location.assign('/');
       } else {
         toast({
             variant: "default",
@@ -92,7 +96,7 @@ export default function LoginButton() {
       await window.puter.auth.signOut();
       setIsAuthenticated(false);
       toast({ title: "Logout Successful", description: "You have been logged out." });
-      window.location.assign('/login'); // Force full page navigation
+      window.location.assign('/login');
     } catch (error) {
       console.error("Puter logout error:", error);
        toast({
@@ -105,10 +109,13 @@ export default function LoginButton() {
     }
   };
 
+  // Initial render: If isLoading is true, show Loader2.
+  // This should match server if server also assumes loading, or if server renders nothing specific here.
   if (isLoading) {
     return <Button variant="outline" size="default" disabled><Loader2 className="animate-spin h-4 w-4 mr-2" />Loading...</Button>;
   }
 
+  // After useEffect, isLoading is false, and isAuthenticated reflects actual state.
   if (isAuthenticated) {
     return (
       <Button variant="outline" onClick={handleLogout} disabled={isActionLoading}>

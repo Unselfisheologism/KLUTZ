@@ -22,8 +22,8 @@ export default function ImagePreview({ imageDataUrl }: ImagePreviewProps) {
             <Image
               src={imageDataUrl}
               alt="Uploaded medical scan"
-              fill={true} // Changed from layout="fill"
-              style={{ objectFit: 'contain' }} // Changed from objectFit="contain"
+              fill={true} // Ensures the image fills the parent div
+              style={{ objectFit: 'contain' }} // Ensures the image content is contained within aspect ratio
               data-ai-hint="medical scan"
             />
           </div>
