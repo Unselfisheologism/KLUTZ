@@ -39,7 +39,6 @@ const cleanJsonString = (rawString: string): string => {
   if (cleanedString.startsWith("```json") && cleanedString.endsWith("```")) {
     cleanedString = cleanedString.substring(7, cleanedString.length - 3).trim();
   } else if (cleanedString.startsWith("```") && cleanedString.endsWith("```")) {
-    // Fallback for just triple backticks without "json"
     cleanedString = cleanedString.substring(3, cleanedString.length - 3).trim();
   }
   return cleanedString;
@@ -119,7 +118,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
 
       const preprocessedDataUrl = await preprocessImage(file, 1024);
 
-
       const reportPrompt = `
         You are an AI assistant specialized in analyzing medical images.
         The user has uploaded a ${data.modality} image.
@@ -132,8 +130,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         If you cannot perform the analysis or there are issues with the image, provide an error message within the JSON structure under a key "error".
       `;
       
-      const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl);
-
+      const reportResponse = await puter.ai.chat(reportPrompt, preprocessedDataUrl, { model: 'gpt-4o' });
 
       if (!reportResponse || !reportResponse.message || !reportResponse.message.content) {
         throw new Error('Failed to get a valid response from AI for medical report. The response was empty or malformed.');
@@ -190,7 +187,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
       onAnalysisComplete({ report: typedReport, nextSteps: typedNextSteps });
 
     } catch (error) {
-
       let detailedErrorMessage = "An unknown error occurred during analysis.";
 
       if (error instanceof Error) {
@@ -198,7 +194,6 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
       } else if (typeof error === 'object' && error !== null) {
-        
         const errObj = error as any; 
 
         if (errObj.success === false && errObj.error && typeof errObj.error === 'object' && errObj.error.message) {
@@ -208,7 +203,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
           } else if (puterErrorDetails.message.toLowerCase().includes('permission denied')){
             detailedErrorMessage = `AI analysis failed: Permission denied by Puter AI service. (${puterErrorDetails.message}). Please check your Puter account permissions.`;
           }
-          console.error('Puter API Error (stringified):', JSON.stringify(puterErrorDetails, null, 2));
+           console.error('Puter API Error (stringified):', JSON.stringify(puterErrorDetails, null, 2));
         } else if (Object.keys(errObj).length === 0 && errObj.constructor === Object) {
           detailedErrorMessage = "The AI analysis service returned an unexpected empty error. This might indicate an issue with authorization or the Puter AI service. Please ensure you are correctly logged in with Puter and try again. If the problem persists, check your Puter account or service status.";
           console.error('Caught an empty object {} as an error. The error object was:', errObj);
@@ -222,6 +217,7 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
             console.error('Caught a non-standard object error (stringified):', errorString);
           } catch (e) {
             console.error('Caught a non-standard, non-serializable object error.');
+            // detailedErrorMessage remains "An unknown error occurred..."
           }
         }
       } else if (typeof error === 'string' && error.trim() !== '') {
