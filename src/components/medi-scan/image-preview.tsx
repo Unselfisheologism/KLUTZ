@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImageIcon } from 'lucide-react';
@@ -21,8 +22,8 @@ export default function ImagePreview({ imageDataUrl }: ImagePreviewProps) {
             <Image
               src={imageDataUrl}
               alt="Uploaded medical scan"
-              layout="fill"
-              objectFit="contain"
+              fill={true} // Changed from layout="fill"
+              style={{ objectFit: 'contain' }} // Changed from objectFit="contain"
               data-ai-hint="medical scan"
             />
           </div>
