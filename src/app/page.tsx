@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car } from 'lucide-react'; 
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Sparkles } from 'lucide-react'; 
 
 interface Feature {
   icon: React.ElementType;
@@ -62,6 +62,13 @@ const features: Feature[] = [
     title: 'Vehicle Troubleshooter',
     description: 'AI-powered analysis of vehicle issues and malfunctions for diagnostic assistance.',
     href: '/vehicle-troubleshooter',
+    isImplemented: true,
+  },
+  {
+    icon: Sparkles,
+    title: 'AI Meme Generator',
+    description: 'Generate unique and engaging memes using AI trained on popular meme styles.',
+    href: '/meme-generator',
     isImplemented: true,
   },
 ];
