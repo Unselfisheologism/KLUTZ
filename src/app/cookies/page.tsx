@@ -67,17 +67,6 @@ export default function CookiesPage() {
             <Separator />
 
             <section>
-              <h2 className="font-headline text-2xl text-primary mb-4">Cookie Consent</h2>
-              <p>
-                By using KLUTZ, you consent to our use of essential cookies necessary for the service to function. 
-                Functional cookies that enhance your experience are used with your implied consent through continued 
-                use of the service. You can withdraw consent by adjusting your browser settings or contacting us.
-              </p>
-            </section>
-
-            <Separator />
-
-            <section>
               <h2 className="font-headline text-2xl text-primary mb-4">Updates to Cookie Policy</h2>
               <p>
                 We may update this Cookie Policy periodically to reflect changes in our practices or for legal reasons. 
