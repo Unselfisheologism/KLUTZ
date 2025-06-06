@@ -5,12 +5,12 @@ import { Separator } from '@/components/ui/separator';
 import { Mail, Calendar, Package, ExternalLink } from 'lucide-react';
 
 export default function ThirdPartyLicensesPage() {
-  return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="max-w-4xl mx-auto" >
-        <Card className="shadow-xl">
-          <CardHeader className="text-center">
-            <CardTitle className="font-headline text-4xl text-primary flex items-center justify-center">
+ return (
+ <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+ <div className="max-w-4xl mx-auto">
+ <Card className="shadow-xl">
+ <CardHeader className="text-center">
+ <CardTitle className="font-headline text-4xl text-primary flex items-center justify-center">
               <Package className="mr-3 h-8 w-8" />
               Third-Party Licenses
             </CardTitle>
