@@ -25,6 +25,13 @@ const cleanJsonString = (rawString: string): string => {
   return cleanedString;
 };
 
+// Helper function to ensure arrays are properly formatted
+const ensureArray = (value: any): string[] => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') return [value];
+  return [];
+};
+
 export default function IngredientsCheckerPage() {
   const [inputType, setInputType] = useState<'image' | 'text'>('image');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -118,31 +125,37 @@ export default function IngredientsCheckerPage() {
           4. Dietary considerations
           5. Potential concerns or allergens
 
-          Return the analysis in a JSON format with these keys:
-          - "product_name": (string, if visible in image)
-          - "manufacturer": (string, if provided or visible)
-          - "ingredients_list": Array of ingredients, each with:
-            - name
-            - description
-            - safety_rating ("Safe", "Caution", "Warning", "Unknown")
-            - common_uses
-            - potential_concerns
-            - alternatives (optional)
-          - "overall_assessment": Object with:
-            - safety_rating
-            - summary
-            - key_concerns
-            - recommendations
-          - "dietary_flags": Object with:
-            - vegan (boolean)
-            - vegetarian (boolean)
-            - gluten_free (boolean)
-            - common_allergens (array)
-          - "confidence": ("High", "Medium", "Low", "Not Applicable")
-          - "disclaimer": (string)
+          IMPORTANT: Return ONLY a valid JSON object with these exact keys and data types:
+          {
+            "product_name": "string or null",
+            "manufacturer": "string or null",
+            "ingredients_list": [
+              {
+                "name": "string",
+                "description": "string",
+                "safety_rating": "Safe|Caution|Warning|Unknown",
+                "common_uses": ["array", "of", "strings"],
+                "potential_concerns": ["array", "of", "strings"],
+                "alternatives": ["array", "of", "strings"]
+              }
+            ],
+            "overall_assessment": {
+              "safety_rating": "Safe|Moderate Concern|High Concern|Insufficient Data",
+              "summary": "string",
+              "key_concerns": ["array", "of", "strings"],
+              "recommendations": ["array", "of", "strings"]
+            },
+            "dietary_flags": {
+              "vegan": true,
+              "vegetarian": true,
+              "gluten_free": true,
+              "common_allergens": ["array", "of", "strings"]
+            },
+            "confidence": "High|Medium|Low|Not Applicable",
+            "disclaimer": "string"
+          }
         `;
       } else if (inputType === 'text' && textInput.trim()) {
-        aiInput = textInput;
         prompt = `
           You are an AI assistant specialized in analyzing food ingredients.
           Analyze these ingredients: "${textInput}"
@@ -155,28 +168,35 @@ export default function IngredientsCheckerPage() {
           4. Dietary considerations
           5. Potential concerns or allergens
 
-          Return the analysis in a JSON format with these keys:
-          - "product_name": (string, if provided)
-          - "manufacturer": (string, if provided)
-          - "ingredients_list": Array of ingredients, each with:
-            - name
-            - description
-            - safety_rating ("Safe", "Caution", "Warning", "Unknown")
-            - common_uses
-            - potential_concerns
-            - alternatives (optional)
-          - "overall_assessment": Object with:
-            - safety_rating
-            - summary
-            - key_concerns
-            - recommendations
-          - "dietary_flags": Object with:
-            - vegan (boolean)
-            - vegetarian (boolean)
-            - gluten_free (boolean)
-            - common_allergens (array)
-          - "confidence": ("High", "Medium", "Low", "Not Applicable")
-          - "disclaimer": (string)
+          IMPORTANT: Return ONLY a valid JSON object with these exact keys and data types:
+          {
+            "product_name": "string or null",
+            "manufacturer": "string or null",
+            "ingredients_list": [
+              {
+                "name": "string",
+                "description": "string",
+                "safety_rating": "Safe|Caution|Warning|Unknown",
+                "common_uses": ["array", "of", "strings"],
+                "potential_concerns": ["array", "of", "strings"],
+                "alternatives": ["array", "of", "strings"]
+              }
+            ],
+            "overall_assessment": {
+              "safety_rating": "Safe|Moderate Concern|High Concern|Insufficient Data",
+              "summary": "string",
+              "key_concerns": ["array", "of", "strings"],
+              "recommendations": ["array", "of", "strings"]
+            },
+            "dietary_flags": {
+              "vegan": true,
+              "vegetarian": true,
+              "gluten_free": true,
+              "common_allergens": ["array", "of", "strings"]
+            },
+            "confidence": "High|Medium|Low|Not Applicable",
+            "disclaimer": "string"
+          }
         `;
       } else {
         throw new Error("No valid input provided for analysis.");
@@ -190,8 +210,42 @@ export default function IngredientsCheckerPage() {
         throw new Error("AI analysis did not return content.");
       }
 
-      const parsedResponse: IngredientsAnalysisReport = JSON.parse(cleanJsonString(response.message.content));
-      setAnalysisReport(parsedResponse);
+      const rawResponse = JSON.parse(cleanJsonString(response.message.content));
+      
+      // Normalize the response to ensure all arrays are properly formatted
+      const normalizedResponse: IngredientsAnalysisReport = {
+        product_name: rawResponse.product_name || null,
+        manufacturer: rawResponse.manufacturer || manufacturer || null,
+        ingredients_list: (rawResponse.ingredients_list || []).map((ingredient: any) => ({
+          name: ingredient.name || 'Unknown',
+          description: ingredient.description || 'No description available',
+          safety_rating: ingredient.safety_rating || 'Unknown',
+          common_uses: ensureArray(ingredient.common_uses),
+          potential_concerns: ensureArray(ingredient.potential_concerns),
+          alternatives: ensureArray(ingredient.alternatives)
+        })),
+        overall_assessment: {
+          safety_rating: rawResponse.overall_assessment?.safety_rating || 'Insufficient Data',
+          summary: rawResponse.overall_assessment?.summary || 'No summary available',
+          key_concerns: ensureArray(rawResponse.overall_assessment?.key_concerns),
+          recommendations: ensureArray(rawResponse.overall_assessment?.recommendations)
+        },
+        dietary_flags: rawResponse.dietary_flags ? {
+          vegan: Boolean(rawResponse.dietary_flags.vegan),
+          vegetarian: Boolean(rawResponse.dietary_flags.vegetarian),
+          gluten_free: Boolean(rawResponse.dietary_flags.gluten_free),
+          common_allergens: ensureArray(rawResponse.dietary_flags.common_allergens)
+        } : {
+          vegan: false,
+          vegetarian: false,
+          gluten_free: false,
+          common_allergens: []
+        },
+        confidence: rawResponse.confidence || 'Low',
+        disclaimer: rawResponse.disclaimer || 'AI-generated analysis. Verify with manufacturers and consult healthcare professionals.'
+      };
+
+      setAnalysisReport(normalizedResponse);
       toast({ title: "Analysis Complete", variant: "default", className: "bg-green-500 text-white dark:bg-green-600" });
 
     } catch (err: any) {
