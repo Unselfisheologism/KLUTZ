@@ -114,8 +114,8 @@ export default function IngredientsCheckerPage() {
       if (inputType === 'image' && imageFile) {
         aiInput = await preprocessImage(imageFile, 1024);
         prompt = `
-          You are an AI assistant specialized in analyzing food ingredients.
-          
+          You are an AI assistant specialized in analyzing food ingredients. You must be EXTREMELY CAREFUL and HONEST about your limitations.
+
           Analyze this image which could be either:
           1. An ingredients label/nutrition facts panel on food packaging
           2. An actual food item (prepared dish, snack, beverage, etc.)
@@ -123,20 +123,22 @@ export default function IngredientsCheckerPage() {
           
           ${manufacturer ? `Manufacturer: ${manufacturer}` : ''}
 
-          For INGREDIENTS LABELS: Extract and analyze the listed ingredients.
-          For ACTUAL FOOD ITEMS: Identify the food item and determine its likely ingredients based on:
-          - Visual appearance and components you can see
-          - Common recipes and preparation methods for this type of food
-          - Typical ingredients used in commercial versions of this food
-          - Any visible additives, preservatives, or processing indicators
+          CRITICAL INSTRUCTIONS:
+          - If this is an INGREDIENTS LABEL: Extract and analyze the listed ingredients accurately
+          - If this is an ACTUAL FOOD ITEM: Be VERY CAUTIOUS about making assumptions
+            * Only identify ingredients you can CLEARLY see and are CERTAIN about
+            * For complex, unfamiliar, or culturally specific dishes, acknowledge your limitations
+            * Do NOT make assumptions about ingredients based on appearance alone
+            * If you cannot reliably identify the food or its ingredients, say so clearly
+            * Be especially careful with dishes that may look similar but have different ingredients
+            * Consider that the same-looking dish can be made with completely different ingredients in different cultures
 
-          Provide a comprehensive analysis including:
-          1. Identify what type of food/product this is
-          2. List all visible or likely ingredients and their properties
-          3. Safety assessment for each ingredient
-          4. Overall product safety evaluation
-          5. Dietary considerations and allergen information
-          6. Note if analysis is based on visible ingredients vs. typical recipe ingredients
+          ACCURACY REQUIREMENTS:
+          - Set confidence to "Low" for actual food items unless you are absolutely certain
+          - Include detailed limitations about visual analysis accuracy
+          - Acknowledge when you cannot reliably determine ingredients
+          - Do not guess at ingredients for unfamiliar dishes
+          - Be honest about cultural and regional variations in recipes
 
           IMPORTANT: Return ONLY a valid JSON object with these exact keys and data types:
           {
@@ -151,7 +153,8 @@ export default function IngredientsCheckerPage() {
                 "common_uses": ["array", "of", "strings"],
                 "potential_concerns": ["array", "of", "strings"],
                 "alternatives": ["array", "of", "strings"],
-                "source": "visible|typical_recipe|likely_additive"
+                "source": "visible|typical_recipe|likely_additive|uncertain",
+                "confidence_note": "string explaining certainty level for this ingredient"
               }
             ],
             "overall_assessment": {
@@ -164,8 +167,12 @@ export default function IngredientsCheckerPage() {
               "vegan": true,
               "vegetarian": true,
               "gluten_free": true,
-              "common_allergens": ["array", "of", "strings"]
+              "common_allergens": ["array", "of", "strings"],
+              "reliability_note": "string explaining how reliable these flags are"
             },
+            "analysis_limitations": [
+              "Detailed list of limitations specific to this analysis"
+            ],
             "confidence": "High|Medium|Low|Not Applicable",
             "disclaimer": "string"
           }
@@ -196,7 +203,8 @@ export default function IngredientsCheckerPage() {
                 "common_uses": ["array", "of", "strings"],
                 "potential_concerns": ["array", "of", "strings"],
                 "alternatives": ["array", "of", "strings"],
-                "source": "provided"
+                "source": "provided",
+                "confidence_note": "string"
               }
             ],
             "overall_assessment": {
@@ -209,8 +217,10 @@ export default function IngredientsCheckerPage() {
               "vegan": true,
               "vegetarian": true,
               "gluten_free": true,
-              "common_allergens": ["array", "of", "strings"]
+              "common_allergens": ["array", "of", "strings"],
+              "reliability_note": "string"
             },
+            "analysis_limitations": ["array", "of", "strings"],
             "confidence": "High|Medium|Low|Not Applicable",
             "disclaimer": "string"
           }
@@ -241,7 +251,8 @@ export default function IngredientsCheckerPage() {
           common_uses: ensureArray(ingredient.common_uses),
           potential_concerns: ensureArray(ingredient.potential_concerns),
           alternatives: ensureArray(ingredient.alternatives),
-          source: ingredient.source || 'unknown'
+          source: ingredient.source || 'unknown',
+          confidence_note: ingredient.confidence_note || ''
         })),
         overall_assessment: {
           safety_rating: rawResponse.overall_assessment?.safety_rating || 'Insufficient Data',
@@ -253,13 +264,16 @@ export default function IngredientsCheckerPage() {
           vegan: Boolean(rawResponse.dietary_flags.vegan),
           vegetarian: Boolean(rawResponse.dietary_flags.vegetarian),
           gluten_free: Boolean(rawResponse.dietary_flags.gluten_free),
-          common_allergens: ensureArray(rawResponse.dietary_flags.common_allergens)
+          common_allergens: ensureArray(rawResponse.dietary_flags.common_allergens),
+          reliability_note: rawResponse.dietary_flags.reliability_note || ''
         } : {
           vegan: false,
           vegetarian: false,
           gluten_free: false,
-          common_allergens: []
+          common_allergens: [],
+          reliability_note: 'Unable to determine dietary flags reliably'
         },
+        analysis_limitations: ensureArray(rawResponse.analysis_limitations),
         confidence: rawResponse.confidence || 'Low',
         disclaimer: rawResponse.disclaimer || 'AI-generated analysis. Verify with manufacturers and consult healthcare professionals.'
       };
@@ -316,6 +330,15 @@ export default function IngredientsCheckerPage() {
     });
     reportString += "\n";
 
+    if (analysisReport.analysis_limitations && analysisReport.analysis_limitations.length > 0) {
+      reportString += "Analysis Limitations:\n";
+      reportString += "--------------------\n";
+      analysisReport.analysis_limitations.forEach(limitation => {
+        reportString += `- ${limitation}\n`;
+      });
+      reportString += "\n";
+    }
+
     reportString += "Ingredients Analysis:\n";
     reportString += "--------------------\n";
     analysisReport.ingredients_list.forEach(ingredient => {
@@ -324,6 +347,9 @@ export default function IngredientsCheckerPage() {
       reportString += `Description: ${ingredient.description}\n`;
       if (ingredient.source) {
         reportString += `Source: ${ingredient.source.replace('_', ' ')}\n`;
+      }
+      if (ingredient.confidence_note) {
+        reportString += `Confidence Note: ${ingredient.confidence_note}\n`;
       }
       reportString += "Common Uses:\n";
       ingredient.common_uses.forEach(use => reportString += `- ${use}\n`);
@@ -344,6 +370,9 @@ export default function IngredientsCheckerPage() {
       reportString += `Vegan: ${analysisReport.dietary_flags.vegan ? 'Yes' : 'No'}\n`;
       reportString += `Vegetarian: ${analysisReport.dietary_flags.vegetarian ? 'Yes' : 'No'}\n`;
       reportString += `Gluten-Free: ${analysisReport.dietary_flags.gluten_free ? 'Yes' : 'No'}\n`;
+      if (analysisReport.dietary_flags.reliability_note) {
+        reportString += `Reliability Note: ${analysisReport.dietary_flags.reliability_note}\n`;
+      }
       if (analysisReport.dietary_flags.common_allergens.length > 0) {
         reportString += "\nCommon Allergens Present:\n";
         analysisReport.dietary_flags.common_allergens.forEach(allergen => {
@@ -379,6 +408,7 @@ export default function IngredientsCheckerPage() {
       case 'visible': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
       case 'typical_recipe': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       case 'likely_additive': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+      case 'uncertain': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
       default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300';
     }
   };
@@ -396,11 +426,12 @@ export default function IngredientsCheckerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert variant="default" className="bg-yellow-50 border-yellow-400 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
-            <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            <AlertTitle className="font-semibold">Important Note</AlertTitle>
+          <Alert variant="default" className="bg-red-50 border-red-400 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <AlertTitle className="font-semibold">Important Accuracy Warning</AlertTitle>
             <AlertDescription>
-              This tool can analyze both ingredient labels and actual food items. For food items, the AI will identify likely ingredients based on visual analysis and common recipes. Always verify with manufacturers and consult healthcare professionals for specific dietary needs or concerns.
+              <strong>For ingredient labels:</strong> High accuracy expected.<br/>
+              <strong>For actual food items:</strong> Analysis is HIGHLY UNCERTAIN, especially for complex, unfamiliar, or culturally specific dishes. The AI may make incorrect assumptions about ingredients. Always verify with the actual recipe or manufacturer.
             </AlertDescription>
           </Alert>
 
@@ -424,7 +455,10 @@ export default function IngredientsCheckerPage() {
                     className="file:text-primary file:font-semibold file:bg-primary/10 hover:file:bg-primary/20"
                     disabled={isLoading}
                   />
-                  <p className="text-sm text-muted-foreground mt-1">Upload an image of a food item, ingredients label, or nutrition facts panel.</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    <strong>Best results:</strong> Clear images of ingredient labels or nutrition facts panels.<br/>
+                    <strong>Limited accuracy:</strong> Actual food items (especially complex or unfamiliar dishes).
+                  </p>
                 </div>
                 {imageDataUrl && <ImagePreview imageDataUrl={imageDataUrl} dataAiHint="food item or ingredients label"/>}
               </div>
@@ -504,6 +538,24 @@ export default function IngredientsCheckerPage() {
                   </span>
                 </div>
 
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-md">AI Confidence:</h4>
+                  <span className={`font-bold ${analysisReport.confidence === 'Low' ? 'text-red-600' : analysisReport.confidence === 'Medium' ? 'text-yellow-600' : 'text-green-600'}`}>
+                    {analysisReport.confidence}
+                  </span>
+                </div>
+
+                {analysisReport.analysis_limitations && analysisReport.analysis_limitations.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-md mb-1 text-red-600 dark:text-red-400">⚠️ Analysis Limitations:</h4>
+                    <ul className="list-disc pl-5 space-y-1 bg-red-50 dark:bg-red-900/20 p-3 rounded-md border-2 border-red-200 dark:border-red-800">
+                      {analysisReport.analysis_limitations.map((limitation, index) => (
+                        <li key={index} className="text-red-700 dark:text-red-300">{limitation}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div>
                   <h4 className="font-semibold text-md mb-1">Summary:</h4>
                   <p className="bg-muted/30 p-3 rounded-md">{analysisReport.overall_assessment.summary}</p>
@@ -541,6 +593,11 @@ export default function IngredientsCheckerPage() {
                         Gluten-Free: {analysisReport.dietary_flags.gluten_free ? 'Yes' : 'No'}
                       </div>
                     </div>
+                    {analysisReport.dietary_flags.reliability_note && (
+                      <div className="bg-yellow-50 p-2 rounded-md mb-2">
+                        <p className="text-sm text-yellow-700"><strong>Reliability:</strong> {analysisReport.dietary_flags.reliability_note}</p>
+                      </div>
+                    )}
                     {analysisReport.dietary_flags.common_allergens.length > 0 && (
                       <div className="bg-yellow-50 p-3 rounded-md">
                         <h5 className="font-medium text-yellow-700 mb-1">Common Allergens Present:</h5>
@@ -573,6 +630,11 @@ export default function IngredientsCheckerPage() {
                           </span>
                         </div>
                         <p className="text-sm mb-2">{ingredient.description}</p>
+                        {ingredient.confidence_note && (
+                          <div className="bg-yellow-50 p-2 rounded text-sm mb-2">
+                            <strong>Confidence Note:</strong> {ingredient.confidence_note}
+                          </div>
+                        )}
                         <div className="text-sm">
                           <strong>Common Uses:</strong>
                           <ul className="list-disc pl-5 mt-1">

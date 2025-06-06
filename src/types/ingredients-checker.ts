@@ -12,7 +12,8 @@ export interface Ingredient {
   common_uses: string[];
   potential_concerns: string[];
   alternatives?: string[];
-  source?: 'visible' | 'typical_recipe' | 'likely_additive' | 'provided' | 'unknown';
+  source?: 'visible' | 'typical_recipe' | 'likely_additive' | 'provided' | 'uncertain' | 'unknown';
+  confidence_note?: string;
 }
 
 export interface IngredientsAnalysisReport {
@@ -31,7 +32,9 @@ export interface IngredientsAnalysisReport {
     vegetarian: boolean;
     gluten_free: boolean;
     common_allergens: string[];
+    reliability_note?: string;
   };
+  analysis_limitations?: string[];
   confidence: 'High' | 'Medium' | 'Low' | 'Not Applicable';
   disclaimer: string;
 }
