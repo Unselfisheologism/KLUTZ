@@ -85,7 +85,7 @@ export default function HomePage() {
             >
               {/* Light mode badge */}
               <Image
-                src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1748429478/1000160714-removebg-preview_zrso2j.png"
+                src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185392/images-removebg-preview_j17by7.png"
                 alt="Made in Bolt.new (light mode)"
                 width={120}
                 height={40}
@@ -94,7 +94,7 @@ export default function HomePage() {
               /> 
               {/* Dark mode badge */}
               <Image
-                src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1748428905/1000160700-removebg-preview_em3pue.png"
+                src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185170/images_karyms.png"
                 alt="Made in Bolt.new (dark mode)"
                 width={120}
                 height={40}
