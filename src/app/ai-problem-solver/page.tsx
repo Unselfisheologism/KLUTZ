@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ImageUp, Type, Calculator, AlertTriangle, Info, Copy, Download, BookOpen, Lightbulb } from 'lucide-react';
+import { Loader2, ImageUp, Type, Calculator, AlertTriangle, Info, Copy, Download, BookOpen, Lightbulb, CheckCircle } from 'lucide-react';
 import { preprocessImage } from '@/lib/image-utils';
 import { downloadTextFile } from '@/lib/utils';
 import ImagePreview from '@/components/medi-scan/image-preview';
@@ -48,6 +48,67 @@ const ensureStringArray = (arr: any): string[] => {
   return arr.map(item => safeStringify(item));
 };
 
+// Helper function to parse AI response into sections
+const parseAIResponse = (response: string) => {
+  const sections = {
+    problemAnalysis: '',
+    solutionSteps: '',
+    finalAnswer: '',
+    keyConcepts: '',
+    explanation: '',
+    fullResponse: response
+  };
+
+  // Split by common section headers
+  const lines = response.split('\n');
+  let currentSection = 'explanation';
+  let sectionContent: string[] = [];
+
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase().trim();
+    
+    if (lowerLine.includes('problem') && (lowerLine.includes('analysis') || lowerLine.includes('description'))) {
+      if (sectionContent.length > 0) {
+        sections[currentSection as keyof typeof sections] = sectionContent.join('\n').trim();
+        sectionContent = [];
+      }
+      currentSection = 'problemAnalysis';
+    } else if (lowerLine.includes('solution') || lowerLine.includes('step')) {
+      if (sectionContent.length > 0) {
+        sections[currentSection as keyof typeof sections] = sectionContent.join('\n').trim();
+        sectionContent = [];
+      }
+      currentSection = 'solutionSteps';
+    } else if (lowerLine.includes('final') && lowerLine.includes('answer')) {
+      if (sectionContent.length > 0) {
+        sections[currentSection as keyof typeof sections] = sectionContent.join('\n').trim();
+        sectionContent = [];
+      }
+      currentSection = 'finalAnswer';
+    } else if (lowerLine.includes('key') && lowerLine.includes('concept')) {
+      if (sectionContent.length > 0) {
+        sections[currentSection as keyof typeof sections] = sectionContent.join('\n').trim();
+        sectionContent = [];
+      }
+      currentSection = 'keyConcepts';
+    } else {
+      sectionContent.push(line);
+    }
+  }
+
+  // Add remaining content to current section
+  if (sectionContent.length > 0) {
+    sections[currentSection as keyof typeof sections] = sectionContent.join('\n').trim();
+  }
+
+  // If no specific sections were found, put everything in explanation
+  if (!sections.problemAnalysis && !sections.solutionSteps && !sections.finalAnswer) {
+    sections.explanation = response;
+  }
+
+  return sections;
+};
+
 const PROBLEM_TYPES = [
   { value: 'algebra', label: 'Algebra' },
   { value: 'calculus', label: 'Calculus' },
@@ -74,6 +135,7 @@ export default function AIProblemSolverPage() {
   const [additionalContext, setAdditionalContext] = useState<string>('');
   
   const [solutionReport, setSolutionReport] = useState<ProblemSolverReport | null>(null);
+  const [parsedSections, setParsedSections] = useState<any>(null);
   const [rawResponse, setRawResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +160,7 @@ export default function AIProblemSolverPage() {
         const previewDataUrl = URL.createObjectURL(file);
         setImageDataUrl(previewDataUrl);
         setSolutionReport(null);
+        setParsedSections(null);
         setRawResponse('');
         setError(null);
       } catch (error) {
@@ -113,6 +176,7 @@ export default function AIProblemSolverPage() {
   const handleTextInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextInput(event.target.value);
     setSolutionReport(null);
+    setParsedSections(null);
     setRawResponse('');
     setError(null);
   };
@@ -133,6 +197,7 @@ export default function AIProblemSolverPage() {
 
     setIsLoading(true);
     setSolutionReport(null);
+    setParsedSections(null);
     setRawResponse('');
     setError(null);
     toast({ title: "Analysis Started", description: "AI is analyzing and solving your problem..." });
@@ -164,8 +229,19 @@ export default function AIProblemSolverPage() {
           Problem type: ${problemTypeName}
           Additional context: "${additionalContext || 'None provided'}"
           
-          Please provide a comprehensive step-by-step solution. Focus on clarity and educational value.
-          Include the problem description, solution steps, final answer, and key concepts.
+          Please structure your response with clear sections:
+          
+          ## Problem Analysis
+          [Describe what the problem is asking and identify key information]
+          
+          ## Solution Steps
+          [Provide detailed step-by-step solution with explanations]
+          
+          ## Final Answer
+          [State the final answer clearly]
+          
+          ## Key Concepts
+          [List the main concepts used in solving this problem]
           
           Make sure to explain each step clearly and provide the reasoning behind each calculation or decision.
         `;
@@ -176,8 +252,19 @@ export default function AIProblemSolverPage() {
           Solve this ${problemTypeName} problem: "${textInput}"
           Additional context: "${additionalContext || 'None provided'}"
           
-          Please provide a comprehensive step-by-step solution. Focus on clarity and educational value.
-          Include the problem description, solution steps, final answer, and key concepts.
+          Please structure your response with clear sections:
+          
+          ## Problem Analysis
+          [Describe what the problem is asking and identify key information]
+          
+          ## Solution Steps
+          [Provide detailed step-by-step solution with explanations]
+          
+          ## Final Answer
+          [State the final answer clearly]
+          
+          ## Key Concepts
+          [List the main concepts used in solving this problem]
           
           Make sure to explain each step clearly and provide the reasoning behind each calculation or decision.
         `;
@@ -196,6 +283,10 @@ export default function AIProblemSolverPage() {
       const rawContent = response.message.content;
       setRawResponse(rawContent);
 
+      // Parse the response into sections
+      const sections = parseAIResponse(rawContent);
+      setParsedSections(sections);
+
       // Create a structured response from the AI's natural language response
       const structuredResponse: ProblemSolverReport = {
         problem_description: inputType === 'image' ? "Problem extracted from uploaded image" : textInput,
@@ -208,8 +299,8 @@ export default function AIProblemSolverPage() {
             formula_used: undefined
           }
         ],
-        final_answer: "Please see the detailed solution below.",
-        key_concepts: [problemTypeName],
+        final_answer: sections.finalAnswer || "Please see the detailed solution above.",
+        key_concepts: sections.keyConcepts ? [sections.keyConcepts] : [problemTypeName],
         difficulty_level: 'Intermediate',
         alternative_methods: [],
         common_mistakes: [],
@@ -414,72 +505,117 @@ export default function AIProblemSolverPage() {
             </Alert>
           )}
 
-          {solutionReport && rawResponse && !isLoading && !error && (
+          {solutionReport && parsedSections && !isLoading && !error && (
             <Card className="mt-6 shadow-md">
               <CardHeader>
                 <CardTitle className="font-headline text-xl flex items-center">
                   <Calculator className="mr-2 h-6 w-6 text-primary" />
                   Problem Solution
                 </CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-center">
+                      <p className="text-sm text-muted-foreground">Problem Type</p>
+                      <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{safeStringify(solutionReport.problem_type)}</p>
+                    </div>
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-md text-center">
+                      <p className="text-sm text-muted-foreground">Difficulty</p>
+                      <p className={`text-lg font-bold ${getDifficultyColor(solutionReport.difficulty_level)}`}>
+                        {safeStringify(solutionReport.difficulty_level)}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-md text-center">
+                      <p className="text-sm text-muted-foreground">AI Confidence</p>
+                      <p className="text-lg font-bold text-green-600 dark:text-green-400">{safeStringify(solutionReport.confidence)}</p>
+                    </div>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 {solutionReport.image_description && (
                   <div>
-                    <h4 className="font-semibold text-md mb-1">Image Description:</h4>
-                    <p className="bg-muted/30 p-3 rounded-md">{safeStringify(solutionReport.image_description)}</p>
+                    <h4 className="font-semibold text-md mb-2 flex items-center">
+                      <Info className="mr-2 h-4 w-4 text-accent" />
+                      Image Analysis:
+                    </h4>
+                    <div className="bg-muted/30 p-4 rounded-md">
+                      <p className="text-sm">{safeStringify(solutionReport.image_description)}</p>
+                    </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-center">
-                    <p className="text-sm text-muted-foreground">Problem Type</p>
-                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{safeStringify(solutionReport.problem_type)}</p>
-                  </div>
-                  <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-md text-center">
-                    <p className="text-sm text-muted-foreground">Difficulty</p>
-                    <p className={`text-lg font-bold ${getDifficultyColor(solutionReport.difficulty_level)}`}>
-                      {safeStringify(solutionReport.difficulty_level)}
-                    </p>
-                  </div>
-                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-md text-center">
-                    <p className="text-sm text-muted-foreground">AI Confidence</p>
-                    <p className="text-lg font-bold text-green-600 dark:text-green-400">{safeStringify(solutionReport.confidence)}</p>
-                  </div>
-                </div>
-
                 <div>
-                  <h4 className="font-semibold text-md mb-1">Problem:</h4>
+                  <h4 className="font-semibold text-md mb-2 flex items-center">
+                    <BookOpen className="mr-2 h-4 w-4 text-accent" />
+                    Problem Statement:
+                  </h4>
                   <div className="bg-muted/30 p-4 rounded-md">
                     <p className="text-sm">{safeStringify(solutionReport.problem_description)}</p>
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-md">AI Solution:</h4>
-                    <Button onClick={handleCopySolution} variant="outline" size="sm">
-                      <Copy className="mr-1 h-3 w-3" />
-                      Copy Solution
-                    </Button>
+                {parsedSections.problemAnalysis && (
+                  <div>
+                    <h4 className="font-semibold text-md mb-2 flex items-center">
+                      <Lightbulb className="mr-2 h-4 w-4 text-yellow-500" />
+                      Problem Analysis:
+                    </h4>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-md border-l-4 border-yellow-500">
+                      <pre className="text-sm whitespace-pre-wrap font-sans">{parsedSections.problemAnalysis}</pre>
+                    </div>
                   </div>
-                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border-l-4 border-green-500 max-h-96 overflow-y-auto">
-                    <pre className="text-sm whitespace-pre-wrap font-sans">{rawResponse}</pre>
-                  </div>
-                </div>
+                )}
 
-                <div>
-                  <h4 className="font-semibold text-md mb-1 flex items-center">
-                    <BookOpen className="mr-2 h-4 w-4 text-accent" />
-                    Key Concepts:
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {ensureStringArray(solutionReport.key_concepts).map((concept, index) => (
-                      <span key={index} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
-                        {concept}
-                      </span>
-                    ))}
+                {parsedSections.solutionSteps && (
+                  <div>
+                    <h4 className="font-semibold text-md mb-2 flex items-center">
+                      <Calculator className="mr-2 h-4 w-4 text-blue-500" />
+                      Solution Steps:
+                    </h4>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md border-l-4 border-blue-500">
+                      <pre className="text-sm whitespace-pre-wrap font-sans">{parsedSections.solutionSteps}</pre>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {parsedSections.finalAnswer && (
+                  <div>
+                    <h4 className="font-semibold text-md mb-2 flex items-center">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                      Final Answer:
+                    </h4>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border-l-4 border-green-500">
+                      <pre className="text-sm whitespace-pre-wrap font-sans font-medium">{parsedSections.finalAnswer}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {parsedSections.keyConcepts && (
+                  <div>
+                    <h4 className="font-semibold text-md mb-2 flex items-center">
+                      <BookOpen className="mr-2 h-4 w-4 text-purple-500" />
+                      Key Concepts:
+                    </h4>
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-md border-l-4 border-purple-500">
+                      <pre className="text-sm whitespace-pre-wrap font-sans">{parsedSections.keyConcepts}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {parsedSections.explanation && !parsedSections.problemAnalysis && !parsedSections.solutionSteps && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-md">Complete Solution:</h4>
+                      <Button onClick={handleCopySolution} variant="outline" size="sm">
+                        <Copy className="mr-1 h-3 w-3" />
+                        Copy Solution
+                      </Button>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border-l-4 border-green-500 max-h-96 overflow-y-auto">
+                      <pre className="text-sm whitespace-pre-wrap font-sans">{parsedSections.explanation}</pre>
+                    </div>
+                  </div>
+                )}
 
                 <Alert variant="default" className="text-xs bg-blue-50 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300">
                   <Info className="h-4 w-4 text-blue-500" />
@@ -487,10 +623,16 @@ export default function AIProblemSolverPage() {
                   <AlertDescription>{safeStringify(solutionReport.disclaimer)}</AlertDescription>
                 </Alert>
 
-                <Button onClick={handleDownloadReport} variant="outline" className="w-full mt-4">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Solution Report
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={handleCopySolution} variant="outline" className="flex-1">
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy Complete Solution
+                  </Button>
+                  <Button onClick={handleDownloadReport} variant="outline" className="flex-1">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Report
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
