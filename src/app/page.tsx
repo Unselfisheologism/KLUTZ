@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText } from 'lucide-react'; 
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages } from 'lucide-react'; 
 
 interface Feature {
   icon: React.ElementType;
@@ -20,6 +20,13 @@ const features: Feature[] = [
     title: 'Image to Text Converter',
     description: 'Extract and analyze all text content from images using AI-powered text recognition.',
     href: '/image-to-text',
+    isImplemented: true,
+  },
+  {
+    icon: Languages,
+    title: 'AI Translator',
+    description: 'Translate text from images or typed input with support for 60+ languages and cultural context.',
+    href: '/ai-translator',
     isImplemented: true,
   },
   {
