@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap } from 'lucide-react'; 
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car } from 'lucide-react'; 
 
 interface Feature {
   icon: React.ElementType;
@@ -55,6 +55,13 @@ const features: Feature[] = [
     title: 'Electronic Appliance Troubleshooter',
     description: 'AI-powered analysis of malfunctioning electronic devices for troubleshooting assistance.',
     href: '/appliance-troubleshooter',
+    isImplemented: true,
+  },
+  {
+    icon: Car,
+    title: 'Vehicle Troubleshooter',
+    description: 'AI-powered analysis of vehicle issues and malfunctions for diagnostic assistance.',
+    href: '/vehicle-troubleshooter',
     isImplemented: true,
   },
 ];
