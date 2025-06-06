@@ -44,7 +44,7 @@ export default function ThirdPartyLicensesPage() {
                   <p className="text-sm mt-2">
                     <strong>License:</strong> MIT License<br/>
                     <strong>Copyright:</strong> Vercel, Inc.<br/>
-                    <strong>Website:</strong> <a href="https://nextjs.org" className="text-primary hover:underline">https://nextjs.org</a>
+                    <strong>Website:</strong> <a href="https://nextjs.org" className=\"text-primary hover:underline">https://nextjs.org</a>
                   </p>
                 </div>
 
@@ -58,7 +58,7 @@ export default function ThirdPartyLicensesPage() {
                   <p className="text-sm mt-2">
                     <strong>License:</strong> MIT License<br/>
                     <strong>Copyright:</strong> Meta Platforms, Inc.<br/>
-                    <strong>Website:</strong> <a href="https://react.dev" className="text-primary hover:underline">https://react.dev</a>
+                    <strong>Website:</strong> <a href="https://react.dev" className=\"text-primary hover:underline">https://react.dev</a>
                   </p>
                 </div>
               </div>
@@ -82,7 +82,7 @@ export default function ThirdPartyLicensesPage() {
                   </p>
                   <p className="text-sm mt-2">
                     <strong>Service:</strong> Puter Cloud Platform<br/>
-                    <strong>Website:</strong> <a href="https://puter.com" className="text-primary hover:underline">https://puter.com</a><br/>
+                    <strong>Website:</strong> <a href="https://puter.com" className=\"text-primary hover:underline">https://puter.com</a><br/>
                     <strong>Used in:</strong> All KLUTZ AI tools
                   </p>
                 </div>
@@ -101,7 +101,7 @@ export default function ThirdPartyLicensesPage() {
                   <p>A utility-first CSS framework for rapid UI development.</p>
                   <p className="text-sm mt-2">
                     <strong>License:</strong> MIT License<br/>
-                    <strong>Website:</strong> <a href="https://tailwindcss.com" className="text-primary hover:underline">https://tailwindcss.com</a>
+                    <strong>Website:</strong> <a href="https://tailwindcss.com" className=\"text-primary hover:underline">https://tailwindcss.com</a>
                   </p>
                 </div>
 
@@ -111,7 +111,7 @@ export default function ThirdPartyLicensesPage() {
                   <p>Low-level UI primitives with accessibility built-in.</p>
                   <p className="text-sm mt-2">
                     <strong>License:</strong> MIT License<br/>
-                    <strong>Website:</strong> <a href="https://radix-ui.com" className="text-primary hover:underline">https://radix-ui.com</a><br/>
+                    <strong>Website:</strong> <a href="https://radix-ui.com" className=\"text-primary hover:underline">https://radix-ui.com</a><br/>
                     <strong>Components:</strong> Dialog, Accordion, Select, Tabs, Toast, and more
                   </p>
                 </div>
@@ -122,7 +122,7 @@ export default function ThirdPartyLicensesPage() {
                   <p>Beautiful & consistent icon toolkit.</p>
                   <p className="text-sm mt-2">
                     <strong>License:</strong> ISC License<br/>
-                    <strong>Website:</strong> <a href="https://lucide.dev" className="text-primary hover:underline">https://lucide.dev</a>
+                    <strong>Website:</strong> <a href="https://lucide.dev" className=\"text-primary hover:underline">https://lucide.dev</a>
                   </p>
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function ThirdPartyLicensesPage() {
                   <div className="text-sm mt-2 space-y-1">
                     <p><strong>PT Sans:</strong> Body text font - SIL Open Font License</p>
                     <p><strong>Space Grotesk:</strong> Headline font - SIL Open Font License</p>
-                    <p><strong>Website:</strong> <a href="https://fonts.google.com" className="text-primary hover:underline">https://fonts.google.com</a></p>
+                    <p><strong>Website:</strong> <a href="https://fonts.google.com" className=\"text-primary hover:underline">https://fonts.google.com</a></p>
                   </div>
                 </div>
               </div>
