@@ -108,9 +108,9 @@ const features: Feature[] = [
   },
   {
     icon: Sparkles,
-    title: 'AI Meme Generator',
-    description: 'Generate unique and engaging memes using AI trained on popular meme styles.',
-    href: '/meme-generator',
+    title: 'AI Text-to-Image Generator',
+    description: 'Generate high-quality images from text descriptions using advanced AI technology.',
+    href: '/text-to-image-generator',
     isImplemented: true,
   },
 ];

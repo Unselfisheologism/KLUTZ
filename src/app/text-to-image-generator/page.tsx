@@ -10,17 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, AlertTriangle, Info, Download, ImageIcon } from 'lucide-react';
-import type { MemeGenerationReport } from '@/types/meme-generator';
+import type { TextToImageGenerationReport } from '@/types/text-to-image-generator';
 import { downloadTextFile } from '@/lib/utils';
-
-// Training images for the AI
-const MEME_TRAINING_IMAGES = [
-  "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749186685/hgnbtnmvvnqggpqzfvta.jpg",
-  "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749186719/images_hlbdy9.jpg",
-  "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749186744/images_xs96tf.jpg",
-  "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749186776/images_igluvw.jpg",
-  "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749186822/images_nagwga.jpg"
-];
 
 const cleanJsonString = (rawString: string): string => {
   let cleanedString = rawString.trim();
@@ -32,13 +23,13 @@ const cleanJsonString = (rawString: string): string => {
   return cleanedString;
 };
 
-export default function MemeGeneratorPage() {
+export default function TextToImageGeneratorPage() {
   const [description, setDescription] = useState<string>('');
   const [style, setStyle] = useState<string>('');
-  const [textPlacement, setTextPlacement] = useState<string>('');
+  const [aspectRatio, setAspectRatio] = useState<string>('');
   const [additionalContext, setAdditionalContext] = useState<string>('');
   
-  const [generatedMeme, setGeneratedMeme] = useState<MemeGenerationReport | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<TextToImageGenerationReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,16 +45,16 @@ export default function MemeGeneratorPage() {
     }
   }, [toast]);
 
-  const generateMeme = async () => {
+  const generateImage = async () => {
     if (!description.trim()) {
-      toast({ variant: "destructive", title: "Missing Input", description: "Please provide a description of the meme you want to generate." });
+      toast({ variant: "destructive", title: "Missing Input", description: "Please provide a description of the image you want to generate." });
       return;
     }
 
     setIsLoading(true);
-    setGeneratedMeme(null);
+    setGeneratedImage(null);
     setError(null);
-    toast({ title: "Generation Started", description: "AI is analyzing your request and generating the meme..." });
+    toast({ title: "Generation Started", description: "AI is analyzing your request and generating the image..." });
 
     try {
       if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
@@ -78,57 +69,48 @@ export default function MemeGeneratorPage() {
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
 
-      // First, analyze training images to understand meme style
-      const styleAnalysisPromises = MEME_TRAINING_IMAGES.map(imageUrl => 
-        puter.ai.chat("Analyze this meme image. Focus on: 1) Visual style 2) Text placement 3) Humor elements 4) Overall composition. Provide insights in a concise format.", imageUrl)
-      );
-
-      const styleAnalyses = await Promise.all(styleAnalysisPromises);
-      
       // Process user's request with GPT-4
       const requestPrompt = `
-        Based on the user's meme request: "${description}"
+        Based on the user's image generation request: "${description}"
         Style preference: "${style || 'Not specified'}"
-        Text placement preference: "${textPlacement || 'Not specified'}"
+        Aspect ratio preference: "${aspectRatio || 'Not specified'}"
         Additional context: "${additionalContext || 'None provided'}"
 
-        Create a DALL-E 3 prompt that will generate a meme image matching these requirements.
-        The prompt should be clear, specific, and focus on visual elements.
-        Avoid any text in the image itself - we'll add that separately.
+        Create a detailed DALL-E 3 prompt that will generate a high-quality image matching these requirements.
+        The prompt should be clear, specific, and focus on visual elements that will create an impressive result.
         
         Return a JSON object with:
         {
-          "dalle_prompt": "Your detailed prompt for DALL-E 3 (focus on visual elements only)",
-          "style_notes": "Brief description of the chosen style",
-          "text_placement": "Specific instructions for text placement"
+          "dalle_prompt": "Your detailed prompt for DALL-E 3",
+          "style_notes": "Brief description of the chosen style and approach"
         }
       `;
 
       const requestResponse = await puter.ai.chat(requestPrompt, { model: 'gpt-4o' });
       if (!requestResponse?.message?.content) {
-        throw new Error("Failed to process meme request.");
+        throw new Error("Failed to process image generation request.");
       }
 
       const parsedRequest = JSON.parse(cleanJsonString(requestResponse.message.content));
 
-      // Generate the meme image using DALL-E 3
+      // Generate the image using DALL-E 3
       try {
         const imageResponse = await puter.ai.txt2img(parsedRequest.dalle_prompt);
         if (!imageResponse) {
           throw new Error("Image generation returned empty response");
         }
 
-        const generatedReport: MemeGenerationReport = {
+        const generatedReport: TextToImageGenerationReport = {
           generated_image: imageResponse.src,
           prompt_used: parsedRequest.dalle_prompt,
           style_applied: parsedRequest.style_notes,
           confidence: 'High',
-          disclaimer: "AI-generated meme. Results may vary. For entertainment purposes only."
+          disclaimer: "AI-generated image. Results may vary. For creative and educational purposes."
         };
 
-        setGeneratedMeme(generatedReport);
+        setGeneratedImage(generatedReport);
         toast({ 
-          title: "Meme Generated!", 
+          title: "Image Generated!", 
           variant: "default", 
           className: "bg-green-500 text-white dark:bg-green-600" 
         });
@@ -139,7 +121,7 @@ export default function MemeGeneratorPage() {
 
     } catch (err: any) {
       console.error("Generation error:", err);
-      let errorMessage = "An error occurred during meme generation.";
+      let errorMessage = "An error occurred during image generation.";
       if (err instanceof Error) errorMessage = err.message;
       else if (typeof err === 'string') errorMessage = err;
       else if (err.error && err.error.message) errorMessage = err.error.message;
@@ -154,17 +136,17 @@ export default function MemeGeneratorPage() {
     }
   };
 
-  const handleDownloadMeme = async () => {
-    if (!generatedMeme) return;
+  const handleDownloadImage = async () => {
+    if (!generatedImage) return;
 
     // Download the image
     try {
-      const response = await fetch(generatedMeme.generated_image);
+      const response = await fetch(generatedImage.generated_image);
       const blob = await response.blob();
       const imageUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = imageUrl;
-      link.download = `KLUTZ_Meme_${new Date().toISOString().replace(/[:.-]/g, '').slice(0, 14)}.png`;
+      link.download = `KLUTZ_Generated_Image_${new Date().toISOString().replace(/[:.-]/g, '').slice(0, 14)}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -174,37 +156,37 @@ export default function MemeGeneratorPage() {
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: "Failed to download the meme image. Please try again."
+        description: "Failed to download the generated image. Please try again."
       });
     }
 
     // Download the report
-    let reportString = "KLUTZ AI Meme Generator Report\n";
-    reportString += "================================\n\n";
+    let reportString = "KLUTZ AI Text-to-Image Generator Report\n";
+    reportString += "======================================\n\n";
 
-    reportString += "Meme Details:\n";
-    reportString += "-------------\n";
+    reportString += "Image Generation Details:\n";
+    reportString += "-------------------------\n";
     reportString += `Description: ${description}\n`;
     if (style) reportString += `Style: ${style}\n`;
-    if (textPlacement) reportString += `Text Placement: ${textPlacement}\n`;
+    if (aspectRatio) reportString += `Aspect Ratio: ${aspectRatio}\n`;
     if (additionalContext) reportString += `Additional Context: ${additionalContext}\n\n`;
 
     reportString += "Generation Details:\n";
     reportString += "-----------------\n";
-    reportString += `Prompt Used: ${generatedMeme.prompt_used}\n`;
-    reportString += `Style Applied: ${generatedMeme.style_applied}\n`;
-    reportString += `AI Confidence: ${generatedMeme.confidence}\n\n`;
+    reportString += `Prompt Used: ${generatedImage.prompt_used}\n`;
+    reportString += `Style Applied: ${generatedImage.style_applied}\n`;
+    reportString += `AI Confidence: ${generatedImage.confidence}\n\n`;
 
     reportString += "Generated Image:\n";
     reportString += "---------------\n";
-    reportString += `${generatedMeme.generated_image}\n\n`;
+    reportString += `${generatedImage.generated_image}\n\n`;
 
     reportString += "Disclaimer:\n";
     reportString += "-----------\n";
-    reportString += generatedMeme.disclaimer;
+    reportString += generatedImage.disclaimer;
 
     const timestamp = new Date().toISOString().replace(/[:.-]/g, '').slice(0, 14);
-    downloadTextFile(reportString, `KLUTZ_MemeGenerator_Report_${timestamp}.txt`);
+    downloadTextFile(reportString, `KLUTZ_TextToImageGenerator_Report_${timestamp}.txt`);
   };
 
   return (
@@ -213,27 +195,27 @@ export default function MemeGeneratorPage() {
         <CardHeader>
           <CardTitle className="font-headline text-3xl text-primary flex items-center">
             <Sparkles className="mr-3 h-8 w-8" />
-            AI Meme Generator
+            AI Text-to-Image Generator
           </CardTitle>
           <CardDescription>
-            Generate unique and engaging memes using AI trained on popular meme styles.
+            Generate high-quality images from text descriptions using advanced AI technology.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Alert variant="default" className="bg-yellow-50 border-yellow-400 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
-            <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            <AlertTitle className="font-semibold">Important Note</AlertTitle>
+          <Alert variant="default" className="bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+            <Info className="h-5 w-5 text-blue-500" />
+            <AlertTitle className="font-semibold">How it works</AlertTitle>
             <AlertDescription>
-              The AI will generate a meme based on your description. For best results, be specific about the visual elements and humor you want to incorporate.
+              Describe the image you want to create in detail. The AI will generate a unique, high-quality image based on your description. Be specific about colors, style, composition, and mood for best results.
             </AlertDescription>
           </Alert>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="description" className="text-lg font-medium">Meme Description</Label>
+              <Label htmlFor="description" className="text-lg font-medium">Image Description</Label>
               <Textarea
                 id="description"
-                placeholder="Describe the meme you want to generate in detail..."
+                placeholder="Describe the image you want to generate in detail..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="min-h-[100px]"
@@ -241,33 +223,38 @@ export default function MemeGeneratorPage() {
             </div>
 
             <div>
-              <Label htmlFor="style" className="text-lg font-medium">Meme Style (Optional)</Label>
+              <Label htmlFor="style" className="text-lg font-medium">Art Style (Optional)</Label>
               <Select value={style} onValueChange={setStyle}>
                 <SelectTrigger id="style" className="w-full">
-                  <SelectValue placeholder="Choose a meme style" />
+                  <SelectValue placeholder="Choose an art style" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="classic">Classic Format</SelectItem>
-                  <SelectItem value="modern">Modern/Minimalist</SelectItem>
-                  <SelectItem value="dramatic">Dramatic/Intense</SelectItem>
-                  <SelectItem value="wholesome">Wholesome</SelectItem>
-                  <SelectItem value="surreal">Surreal/Abstract</SelectItem>
+                  <SelectItem value="photorealistic">Photorealistic</SelectItem>
+                  <SelectItem value="digital-art">Digital Art</SelectItem>
+                  <SelectItem value="oil-painting">Oil Painting</SelectItem>
+                  <SelectItem value="watercolor">Watercolor</SelectItem>
+                  <SelectItem value="sketch">Pencil Sketch</SelectItem>
+                  <SelectItem value="cartoon">Cartoon Style</SelectItem>
+                  <SelectItem value="anime">Anime Style</SelectItem>
+                  <SelectItem value="abstract">Abstract Art</SelectItem>
+                  <SelectItem value="vintage">Vintage Style</SelectItem>
+                  <SelectItem value="minimalist">Minimalist</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label htmlFor="text-placement" className="text-lg font-medium">Text Placement (Optional)</Label>
-              <Select value={textPlacement} onValueChange={setTextPlacement}>
-                <SelectTrigger id="text-placement" className="w-full">
-                  <SelectValue placeholder="Choose text placement" />
+              <Label htmlFor="aspect-ratio" className="text-lg font-medium">Aspect Ratio (Optional)</Label>
+              <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                <SelectTrigger id="aspect-ratio" className="w-full">
+                  <SelectValue placeholder="Choose aspect ratio" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="top">Top Text</SelectItem>
-                  <SelectItem value="bottom">Bottom Text</SelectItem>
-                  <SelectItem value="both">Top and Bottom</SelectItem>
-                  <SelectItem value="overlay">Text Overlay</SelectItem>
-                  <SelectItem value="none">No Text</SelectItem>
+                  <SelectItem value="square">Square (1:1)</SelectItem>
+                  <SelectItem value="landscape">Landscape (16:9)</SelectItem>
+                  <SelectItem value="portrait">Portrait (9:16)</SelectItem>
+                  <SelectItem value="wide">Wide (21:9)</SelectItem>
+                  <SelectItem value="classic">Classic (4:3)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -276,7 +263,7 @@ export default function MemeGeneratorPage() {
               <Label htmlFor="additional-context" className="text-lg font-medium">Additional Context (Optional)</Label>
               <Textarea
                 id="additional-context"
-                placeholder="Any additional context or specific requirements..."
+                placeholder="Any additional details, mood, lighting, or specific requirements..."
                 value={additionalContext}
                 onChange={(e) => setAdditionalContext(e.target.value)}
               />
@@ -284,19 +271,19 @@ export default function MemeGeneratorPage() {
           </div>
 
           <Button 
-            onClick={generateMeme} 
+            onClick={generateImage} 
             disabled={isLoading || !description.trim()} 
             className="w-full"
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating Meme...
+                Generating Image...
               </>
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Generate Meme
+                Generate Image
               </>
             )}
           </Button>
@@ -309,57 +296,57 @@ export default function MemeGeneratorPage() {
             </Alert>
           )}
 
-          {generatedMeme && !isLoading && !error && (
+          {generatedImage && !isLoading && !error && (
             <Card className="mt-6 shadow-md">
               <CardHeader>
                 <CardTitle className="font-headline text-xl flex items-center">
                   <ImageIcon className="mr-2 h-6 w-6 text-primary" />
-                  Generated Meme
+                  Generated Image
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-lg overflow-hidden">
                   <img 
-                    src={generatedMeme.generated_image} 
-                    alt="Generated meme"
+                    src={generatedImage.generated_image} 
+                    alt="Generated image"
                     className="w-full h-auto"
                   />
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-md mb-1">Style Notes:</h4>
-                  <p className="bg-muted/30 p-3 rounded-md">{generatedMeme.style_applied}</p>
+                  <h4 className="font-semibold text-md mb-1">Style & Approach:</h4>
+                  <p className="bg-muted/30 p-3 rounded-md">{generatedImage.style_applied}</p>
                 </div>
 
                 <Alert variant="default" className="text-xs bg-blue-50 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300">
                   <Info className="h-4 w-4 text-blue-500" />
                   <AlertTitle className="font-medium">AI Note</AlertTitle>
-                  <AlertDescription>{generatedMeme.disclaimer}</AlertDescription>
+                  <AlertDescription>{generatedImage.disclaimer}</AlertDescription>
                 </Alert>
 
                 <div className="flex flex-col gap-2">
-                  <Button onClick={handleDownloadMeme} variant="outline" className="w-full">
+                  <Button onClick={handleDownloadImage} variant="outline" className="w-full">
                     <Download className="mr-2 h-4 w-4" />
-                    Download Meme & Report
+                    Download Image & Report
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    Downloads both the meme image and generation report
+                    Downloads both the generated image and generation report
                   </p>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {!generatedMeme && !isLoading && !error && (
+          {!generatedImage && !isLoading && !error && (
             <div className="mt-6 p-4 border border-dashed rounded-md text-center text-muted-foreground">
               <Info className="mx-auto h-8 w-8 mb-2"/>
-              <p>Describe your meme idea and click "Generate" to create a unique AI-generated meme.</p>
+              <p>Describe your image idea and click "Generate" to create a unique AI-generated image.</p>
             </div>
           )}
         </CardContent>
         <CardFooter>
           <p className="text-xs text-muted-foreground w-full text-center">
-            This tool uses AI for meme generation. Results may vary and are intended for entertainment purposes only.
+            This tool uses AI for image generation. Results may vary and are intended for creative and educational purposes.
           </p>
         </CardFooter>
       </Card>

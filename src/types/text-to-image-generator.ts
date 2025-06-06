@@ -1,11 +1,11 @@
-export interface MemeGenerationInput {
+export interface TextToImageGenerationInput {
   description: string;
   style?: string;
-  textPlacement?: string;
+  aspectRatio?: string;
   additionalContext?: string;
 }
 
-export interface MemeGenerationReport {
+export interface TextToImageGenerationReport {
   generated_image: string;
   prompt_used: string;
   style_applied: string;
@@ -13,9 +13,9 @@ export interface MemeGenerationReport {
   disclaimer: string;
 }
 
-export interface MemeGeneratorFormValues {
+export interface TextToImageGeneratorFormValues {
   description: string;
   style?: string;
-  textPlacement?: string;
+  aspectRatio?: string;
   additionalContext?: string;
 }
