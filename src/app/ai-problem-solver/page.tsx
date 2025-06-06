@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ImageUp, Type, Calculator, AlertTriangle, Info, Copy, Download, BookOpen, Lightbulb, CheckCircle, Star } from 'lucide-react';
 import { preprocessImage } from '@/lib/image-utils';
+import { getLaymanErrorMessage } from '@/lib/error-utils';
 import { downloadTextFile } from '@/lib/utils';
 import ImagePreview from '@/components/medi-scan/image-preview';
 import type { ProblemSolverReport } from '@/types/ai-problem-solver';
@@ -315,12 +316,9 @@ export default function AIProblemSolverPage() {
 
     } catch (err: any) {
       console.error("Problem solving error:", err);
-      let errorMessage = "An error occurred during problem solving.";
-      if (err instanceof Error) errorMessage = err.message;
-      else if (typeof err === 'string') errorMessage = err;
-      else if (err.error && err.error.message) errorMessage = err.error.message;
-      setError(errorMessage);
-      toast({ variant: "destructive", title: "Problem Solving Failed", description: errorMessage });
+      const friendlyErrorMessage = getLaymanErrorMessage(err);
+      setError(friendlyErrorMessage);
+      toast({ variant: "destructive", title: "Problem Solving Failed", description: friendlyErrorMessage });
     } finally {
       setIsLoading(false);
     }

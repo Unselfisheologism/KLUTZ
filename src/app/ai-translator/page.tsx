@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ImageUp, Type, Languages, AlertTriangle, Info, Copy, Download, ArrowRight } from 'lucide-react';
 import { preprocessImage } from '@/lib/image-utils';
+import { getLaymanErrorMessage } from '@/lib/error-utils';
 import { downloadTextFile } from '@/lib/utils';
 import ImagePreview from '@/components/medi-scan/image-preview';
 import type { TranslationReport } from '@/types/ai-translator';
@@ -242,12 +243,9 @@ export default function AITranslatorPage() {
 
     } catch (err: any) {
       console.error("Translation error:", err);
-      let errorMessage = "An error occurred during translation.";
-      if (err instanceof Error) errorMessage = err.message;
-      else if (typeof err === 'string') errorMessage = err;
-      else if (err.error && err.error.message) errorMessage = err.error.message;
-      setError(errorMessage);
-      toast({ variant: "destructive", title: "Translation Failed", description: errorMessage });
+      const friendlyErrorMessage = getLaymanErrorMessage(err);
+      setError(friendlyErrorMessage);
+      toast({ variant: "destructive", title: "Translation Failed", description: friendlyErrorMessage });
     } finally {
       setIsLoading(false);
     }

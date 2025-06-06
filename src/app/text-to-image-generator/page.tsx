@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, AlertTriangle, Info, Download, ImageIcon } from 'lucide-react';
 import type { TextToImageGenerationReport } from '@/types/text-to-image-generator';
+import { getLaymanErrorMessage } from '@/lib/error-utils';
 import { downloadTextFile } from '@/lib/utils';
 
 const cleanJsonString = (rawString: string): string => {
@@ -121,15 +122,12 @@ export default function TextToImageGeneratorPage() {
 
     } catch (err: any) {
       console.error("Generation error:", err);
-      let errorMessage = "An error occurred during image generation.";
-      if (err instanceof Error) errorMessage = err.message;
-      else if (typeof err === 'string') errorMessage = err;
-      else if (err.error && err.error.message) errorMessage = err.error.message;
-      setError(errorMessage);
+      const friendlyErrorMessage = getLaymanErrorMessage(err);
+      setError(friendlyErrorMessage);
       toast({ 
         variant: "destructive", 
         title: "Generation Failed", 
-        description: errorMessage 
+        description: friendlyErrorMessage 
       });
     } finally {
       setIsLoading(false);

@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { preprocessImage } from '@/lib/image-utils';
+import { getLaymanErrorMessage } from '@/lib/error-utils';
 import { UploadCloud, Loader2 } from 'lucide-react';
 import ImagePreview from './image-preview';
 import type { MedicalReport, NextSteps, AnalysisResult } from '@/types/mediscan';
@@ -99,10 +100,8 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
           }
         } catch (authError) {
           console.error("Puter sign-in attempt error:", authError);
-          let authErrorMessage = "Authentication failed or was cancelled by user.";
-          if (authError instanceof Error) authErrorMessage = authError.message;
-          else if (typeof authError === 'string') authErrorMessage = authError;
-          onAnalysisComplete(null, authErrorMessage);
+          const friendlyAuthError = getLaymanErrorMessage(authError);
+          onAnalysisComplete(null, friendlyAuthError);
           return;
         }
       }
@@ -206,44 +205,9 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
       onAnalysisComplete({ report: typedReport, nextSteps: typedNextSteps });
 
     } catch (error) {
-      let detailedErrorMessage = "An unknown error occurred during analysis.";
-
-      if (error instanceof Error) {
-        detailedErrorMessage = error.message;
-        console.error('Error message:', error.message);
-      } else if (typeof error === 'object' && error !== null) {
-        const errObj = error as any; 
-        if (errObj.success === false && errObj.error && typeof errObj.error === 'object' && errObj.error.message) {
-          const puterErrorDetails = errObj.error;
-          if (puterErrorDetails.delegate === 'usage-limited-chat' && puterErrorDetails.message.toLowerCase().includes('permission denied')) {
-            detailedErrorMessage = "AI analysis failed due to a Puter account restriction. Your account may have reached its usage limit for the AI service, or it lacks the necessary permissions. Please check your Puter account dashboard for more details or contact Puter support.";
-          } else if (puterErrorDetails.message.toLowerCase().includes('permission denied')){
-            detailedErrorMessage = `AI analysis failed: Permission denied by Puter AI service. (${puterErrorDetails.message}). Please check your Puter account permissions.`;
-          }
-          console.error('Puter API Error (stringified):', JSON.stringify(puterErrorDetails, null, 2));
-        } else if (Object.keys(errObj).length === 0 && errObj.constructor === Object) {
-          detailedErrorMessage = "The AI analysis service returned an unexpected empty error. This might indicate an issue with authorization or the Puter AI service. Please ensure you are correctly logged in with Puter and try again. If the problem persists, check your Puter account or service status.";
-          console.error('Caught an empty object {} as an error. The error object was:', errObj);
-        } else if (errObj.message && typeof errObj.message === 'string') {
-          detailedErrorMessage = errObj.message;
-          console.error('Caught an object error with a message property:', detailedErrorMessage);
-        } else {
-          try {
-            const errorString = JSON.stringify(errObj);
-            detailedErrorMessage = `An unexpected error structure was received from the AI service. Details: ${errorString}`;
-            console.error('Caught a non-standard object error (stringified):', errorString);
-          } catch (e) {
-            console.error('Caught a non-standard, non-serializable object error.');
-          }
-        }
-      } else if (typeof error === 'string' && error.trim() !== '') {
-        detailedErrorMessage = error;
-        console.error('Caught a string error during analysis:', error);
-      } else {
-          console.error('Caught an error of unknown type during analysis. Type:', typeof error, 'Error details:', error);
-      }
-      
-      onAnalysisComplete(null, detailedErrorMessage);
+      console.error('Error during analysis:', error);
+      const friendlyErrorMessage = getLaymanErrorMessage(error);
+      onAnalysisComplete(null, friendlyErrorMessage);
     }
   };
 
