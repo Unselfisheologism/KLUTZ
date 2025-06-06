@@ -154,9 +154,31 @@ export default function MemeGeneratorPage() {
     }
   };
 
-  const handleDownloadMeme = () => {
+  const handleDownloadMeme = async () => {
     if (!generatedMeme) return;
 
+    // Download the image
+    try {
+      const response = await fetch(generatedMeme.generated_image);
+      const blob = await response.blob();
+      const imageUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = `KLUTZ_Meme_${new Date().toISOString().replace(/[:.-]/g, '').slice(0, 14)}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(imageUrl);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Failed to download the meme image. Please try again."
+      });
+    }
+
+    // Download the report
     let reportString = "KLUTZ AI Meme Generator Report\n";
     reportString += "================================\n\n";
 
@@ -315,10 +337,15 @@ export default function MemeGeneratorPage() {
                   <AlertDescription>{generatedMeme.disclaimer}</AlertDescription>
                 </Alert>
 
-                <Button onClick={handleDownloadMeme} variant="outline" className="w-full mt-4">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Generation Report
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={handleDownloadMeme} variant="outline" className="w-full">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Meme & Report
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Downloads both the meme image and generation report
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}
