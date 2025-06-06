@@ -138,23 +138,30 @@ export default function AIProblemSolverPage() {
           Problem type: ${problemTypeName}
           Additional context: "${additionalContext || 'None provided'}"
           
-          Provide a comprehensive solution in JSON format with these keys:
-          - "problem_description": (string) Clear description of the problem from the image
-          - "problem_type": (string) The type/category of problem
-          - "solution_steps": (array) Each step as an object with:
-            * "step_number": (number) Step number
-            * "description": (string) What is being done in this step
-            * "explanation": (string) Why this step is necessary
-            * "formula_used": (string, optional) Any formula or theorem used
-          - "final_answer": (string) The final answer with appropriate units/format
-          - "key_concepts": (array of strings) Important concepts used in the solution
-          - "difficulty_level": (string, one of "Beginner", "Intermediate", "Advanced", "Expert")
-          - "alternative_methods": (array of strings, optional) Other ways to solve this problem
-          - "common_mistakes": (array of strings, optional) Common errors students make
-          - "related_topics": (array of strings, optional) Related topics to study
-          - "image_description": (string) Brief description of what you see in the image
-          - "confidence": (string, one of "High", "Medium", "Low", "Not Applicable")
-          - "disclaimer": (string) Standard disclaimer about AI problem-solving limitations
+          CRITICAL: You MUST respond with ONLY a valid JSON object. Do not include any explanatory text before or after the JSON.
+          
+          Provide a comprehensive solution in JSON format with these exact keys:
+          {
+            "problem_description": "Clear description of the problem from the image",
+            "problem_type": "The type/category of problem",
+            "solution_steps": [
+              {
+                "step_number": 1,
+                "description": "What is being done in this step",
+                "explanation": "Why this step is necessary",
+                "formula_used": "Any formula or theorem used (optional)"
+              }
+            ],
+            "final_answer": "The final answer with appropriate units/format",
+            "key_concepts": ["Important concepts used in the solution"],
+            "difficulty_level": "Beginner|Intermediate|Advanced|Expert",
+            "alternative_methods": ["Other ways to solve this problem (optional)"],
+            "common_mistakes": ["Common errors students make (optional)"],
+            "related_topics": ["Related topics to study (optional)"],
+            "image_description": "Brief description of what you see in the image",
+            "confidence": "High|Medium|Low|Not Applicable",
+            "disclaimer": "Standard disclaimer about AI problem-solving limitations"
+          }
         `;
       } else if (inputType === 'text' && textInput.trim()) {
         prompt = `
@@ -163,22 +170,29 @@ export default function AIProblemSolverPage() {
           Solve this ${problemTypeName} problem: "${textInput}"
           Additional context: "${additionalContext || 'None provided'}"
           
-          Provide a comprehensive solution in JSON format with these keys:
-          - "problem_description": (string) Restatement of the problem
-          - "problem_type": (string) The type/category of problem
-          - "solution_steps": (array) Each step as an object with:
-            * "step_number": (number) Step number
-            * "description": (string) What is being done in this step
-            * "explanation": (string) Why this step is necessary
-            * "formula_used": (string, optional) Any formula or theorem used
-          - "final_answer": (string) The final answer with appropriate units/format
-          - "key_concepts": (array of strings) Important concepts used in the solution
-          - "difficulty_level": (string, one of "Beginner", "Intermediate", "Advanced", "Expert")
-          - "alternative_methods": (array of strings, optional) Other ways to solve this problem
-          - "common_mistakes": (array of strings, optional) Common errors students make
-          - "related_topics": (array of strings, optional) Related topics to study
-          - "confidence": (string, one of "High", "Medium", "Low", "Not Applicable")
-          - "disclaimer": (string) Standard disclaimer about AI problem-solving limitations
+          CRITICAL: You MUST respond with ONLY a valid JSON object. Do not include any explanatory text before or after the JSON.
+          
+          Provide a comprehensive solution in JSON format with these exact keys:
+          {
+            "problem_description": "Restatement of the problem",
+            "problem_type": "The type/category of problem",
+            "solution_steps": [
+              {
+                "step_number": 1,
+                "description": "What is being done in this step",
+                "explanation": "Why this step is necessary",
+                "formula_used": "Any formula or theorem used (optional)"
+              }
+            ],
+            "final_answer": "The final answer with appropriate units/format",
+            "key_concepts": ["Important concepts used in the solution"],
+            "difficulty_level": "Beginner|Intermediate|Advanced|Expert",
+            "alternative_methods": ["Other ways to solve this problem (optional)"],
+            "common_mistakes": ["Common errors students make (optional)"],
+            "related_topics": ["Related topics to study (optional)"],
+            "confidence": "High|Medium|Low|Not Applicable",
+            "disclaimer": "Standard disclaimer about AI problem-solving limitations"
+          }
         `;
       } else {
         throw new Error("No valid input provided for problem solving.");
@@ -192,7 +206,41 @@ export default function AIProblemSolverPage() {
         throw new Error("AI problem solving did not return content.");
       }
 
-      const parsedResponse: ProblemSolverReport = JSON.parse(cleanJsonString(response.message.content));
+      let parsedResponse: ProblemSolverReport;
+      try {
+        const cleanedContent = cleanJsonString(response.message.content);
+        parsedResponse = JSON.parse(cleanedContent);
+      } catch (parseError) {
+        console.error("JSON parsing failed. Raw response:", response.message.content);
+        
+        // If JSON parsing fails, create a fallback response
+        const fallbackResponse: ProblemSolverReport = {
+          problem_description: inputType === 'image' ? "Problem extracted from uploaded image" : textInput,
+          problem_type: problemTypeName,
+          solution_steps: [
+            {
+              step_number: 1,
+              description: "AI Analysis",
+              explanation: "The AI provided a detailed solution but in an unexpected format.",
+              formula_used: undefined
+            }
+          ],
+          final_answer: "Please see the detailed explanation below.",
+          key_concepts: [problemTypeName],
+          difficulty_level: 'Intermediate',
+          alternative_methods: [],
+          common_mistakes: [],
+          related_topics: [],
+          image_description: inputType === 'image' ? "Image analysis completed" : undefined,
+          confidence: 'Medium',
+          disclaimer: "AI-generated solution. Please verify with teachers or textbooks."
+        };
+        
+        // Store the raw response for display
+        (fallbackResponse as any).raw_response = response.message.content;
+        parsedResponse = fallbackResponse;
+      }
+
       setSolutionReport(parsedResponse);
       toast({ title: "Problem Solved", variant: "default", className: "bg-green-500 text-white dark:bg-green-600" });
 
@@ -295,6 +343,13 @@ export default function AIProblemSolverPage() {
         reportString += `- ${topic}\n`;
       });
       reportString += "\n";
+    }
+
+    // Include raw response if available (for fallback cases)
+    if ((solutionReport as any).raw_response) {
+      reportString += "Detailed AI Response:\n";
+      reportString += "--------------------\n";
+      reportString += `${(solutionReport as any).raw_response}\n\n`;
     }
 
     reportString += "Disclaimer:\n";
@@ -565,6 +620,16 @@ export default function AIProblemSolverPage() {
                           {topic}
                         </span>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Show raw response if it's a fallback case */}
+                {(solutionReport as any).raw_response && (
+                  <div>
+                    <h4 className="font-semibold text-md mb-1">Detailed AI Analysis:</h4>
+                    <div className="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-md max-h-64 overflow-y-auto">
+                      <pre className="text-sm whitespace-pre-wrap">{(solutionReport as any).raw_response}</pre>
                     </div>
                   </div>
                 )}
