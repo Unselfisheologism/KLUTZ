@@ -1,6 +1,3 @@
-
-'use client';
-
 import type { ChangeEvent } from 'react';
 import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
@@ -122,12 +119,33 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
         You are an AI assistant specialized in analyzing medical images.
         The user has uploaded what they assert is a ${data.modality} image.
         Patient details: ${data.patientDetails || 'Not provided'}.
-        Your task is to analyze the provided image, assuming it is a ${data.modality} scan, and generate a structured medical report.
+        
+        Your task is to perform a comprehensive analysis of the provided image, including:
+
+        1. General Analysis:
+        - Provide a detailed description of key findings
+        - Identify any abnormalities or notable anatomical features
+        - Note image quality and any limitations
+
+        2. Specialized Detection:
+        - Tumor Analysis: Identify and describe any potential tumorous masses, their boundaries, and characteristics
+        - Fracture Detection: Look for and describe any bone fractures, including type and severity
+        - Diabetic Retinopathy: For eye-related images, check for signs of diabetes-related vision issues
+        - Cell Analysis: For histopathology images, identify any abnormal cell patterns
+        - Wound Assessment: For wound images, evaluate healing progress and potential complications
+
+        3. Measurements and Mapping:
+        - Provide approximate measurements of any abnormalities
+        - Describe the location and extent of findings
+        - Note any anatomical landmarks for surgical planning
+
         Even if the image quality is suboptimal or presents challenges, attempt to extract as much information as possible.
+        
         The report MUST be in JSON format with the following keys:
-        - "findings": (string) A detailed description of key findings, any abnormalities, or notable anatomical features. If analysis is severely limited due to image quality, describe the limitations.
-        - "possibleDiagnoses": (array of strings) A list of possible differential diagnoses based on the findings. If not possible, state clearly.
-        - "recommendations": (string) Relevant recommendations for further investigation or treatment. If not possible, state clearly.
+        - "findings": (string) A detailed description of key findings, any abnormalities, or notable anatomical features
+        - "possibleDiagnoses": (array of strings) A list of possible differential diagnoses based on the findings
+        - "recommendations": (string) Relevant recommendations for further investigation or treatment
+
         If, after attempting analysis, you genuinely cannot provide any meaningful medical interpretation (e.g., it's clearly not a medical image, or completely uninterpretable), then provide a concise error message within the JSON structure under a key "error". Example: {"error": "Image is not a recognizable medical scan."}
       `;
       
@@ -329,14 +347,3 @@ export default function ImageUploadSection({ onAnalysisStart, onAnalysisComplete
     </Card>
   );
 }
-    
-
-    
-
-    
-
-    
-
-
-
-
