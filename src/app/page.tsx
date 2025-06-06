@@ -123,9 +123,22 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-8">
-              <a href="https://fazier.com/launches/klutz.netlify.app" target="_blank">
-                <img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=neutral" width=250 alt="Fazier badge" />
-              </a>
+              <div className="badge-wrapper-270x54">   
+                <a 
+                  href="https://fazier.com/launches/audiolab" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  title="Fazier badge (opens in a new window)"
+                >
+                  <Image 
+                    src="https://fazier.com/api/v1/public/badges/embed_image.svg?launch_id=4421&badge_type=daily&theme=light" 
+                    width={270} 
+                    height={54}
+                    alt="Fazier badge" 
+                    unoptimized
+                  />
+                </a>
+              </div>  
               <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
                 AI-Powered Content & Image Analysis Suite
               </h1>
