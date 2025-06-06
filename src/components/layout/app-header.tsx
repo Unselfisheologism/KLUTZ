@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { ScanLine, UserCircle } from 'lucide-react';
+import { ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoginButton from '@/components/auth/login-button';
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function AppHeader() {
   return (
@@ -14,7 +15,7 @@ export default function AppHeader() {
           </h1>
         </Link>
         <div className="flex items-center gap-4">
-          {/* Placeholder for user authentication status and actions */}
+          <ThemeToggle />
           <LoginButton />
         </div>
       </div>
