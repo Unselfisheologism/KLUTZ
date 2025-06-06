@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages } from 'lucide-react'; 
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator } from 'lucide-react'; 
 
 interface Feature {
   icon: React.ElementType;
@@ -27,6 +27,13 @@ const features: Feature[] = [
     title: 'AI Translator',
     description: 'Translate text from images or typed input with support for 60+ languages and cultural context.',
     href: '/ai-translator',
+    isImplemented: true,
+  },
+  {
+    icon: Calculator,
+    title: 'AI Problem Solver',
+    description: 'Get step-by-step solutions for math, science, and academic problems with detailed explanations.',
+    href: '/ai-problem-solver',
     isImplemented: true,
   },
   {
