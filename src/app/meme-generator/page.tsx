@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, AlertTriangle, Info, Download, ImageIcon } from 'lucide-react';
 import type { MemeGenerationReport } from '@/types/meme-generator';
+import { downloadTextFile } from '@/lib/utils';
 
 // Training images for the AI
 const MEME_TRAINING_IMAGES = [
