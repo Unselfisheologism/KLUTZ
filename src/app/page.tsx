@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils } from 'lucide-react'; 
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText } from 'lucide-react'; 
 
 interface Feature {
   icon: React.ElementType;
@@ -15,6 +15,13 @@ interface Feature {
 }
 
 const features: Feature[] = [
+  {
+    icon: FileText,
+    title: 'Image to Text Converter',
+    description: 'Extract and analyze all text content from images using AI-powered text recognition.',
+    href: '/image-to-text',
+    isImplemented: true,
+  },
   {
     icon: ScanLine,
     title: 'MediScan AI',
