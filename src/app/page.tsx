@@ -123,7 +123,9 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-8">
-              <a href="https://fazier.com/launches/klutz.netlify.app" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=neutral" width=250 alt="Fazier badge" /></a>
+              <a href="https://fazier.com/launches/klutz.netlify.app" target="_blank">
+                <img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=neutral" width=250 alt="Fazier badge" />
+              </a>
               <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
                 AI-Powered Content & Image Analysis Suite
               </h1>
