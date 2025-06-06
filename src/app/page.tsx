@@ -1,8 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles } from 'lucide-react'; 
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils } from 'lucide-react'; 
 
 interface Feature {
   icon: React.ElementType;
@@ -67,6 +69,13 @@ const features: Feature[] = [
     title: 'AI Measuring Tool',
     description: 'Upload images of physical objects and get AI-powered measurements in your preferred metric system.',
     href: '/measuring-tool',
+    isImplemented: true,
+  },
+  {
+    icon: Utensils,
+    title: 'AI Ingredients Checker',
+    description: 'Analyze food ingredients for safety, dietary considerations, and potential concerns.',
+    href: '/ingredients-checker',
     isImplemented: true,
   },
   {
