@@ -1,7 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight } from 'lucide-react'; 
@@ -48,7 +48,7 @@ const features: Feature[] = [
     title: 'Content Heatmap Generator',
     description: 'Generate heatmaps to visualize user engagement on your content.',
     href: '/heatmap-generator',
-    isImplemented: true, // Marked as implemented
+    isImplemented: true,
   },
 ];
 
@@ -56,9 +56,40 @@ export default function HomePage() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
-        <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
-          AI-Powered Content & Image Analysis Suite
-        </h1>
+        <div className="flex items-center justify-center gap-8">
+          <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
+            AI-Powered Content & Image Analysis Suite
+          </h1>
+          <div className="flex flex-col items-center">
+            <span className="text-sm font-medium mb-1">Made in</span>
+            <a
+              href="https://bolt.new"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Made in Bolt.new (opens in a new window)"
+              className="badge-wrapper-120x40"
+            >
+              {/* Light mode badge */}
+              <Image
+                src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1748429478/1000160714-removebg-preview_zrso2j.png"
+                alt="Made in Bolt.new (light mode)"
+                width={120}
+                height={40}
+                unoptimized
+                className="block dark:hidden"
+              /> 
+              {/* Dark mode badge */}
+              <Image
+                src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1748428905/1000160700-removebg-preview_em3pue.png"
+                alt="Made in Bolt.new (dark mode)"
+                width={120}
+                height={40}
+                unoptimized
+                className="hidden dark:block"
+              />
+            </a>
+          </div>
+        </div>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
           Explore our suite of tools designed to provide insights and enhance your content using advanced AI capabilities.
         </p>
