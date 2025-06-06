@@ -82,7 +82,7 @@ export default function IngredientsCheckerPage() {
 
   const performAnalysis = async () => {
     if (inputType === 'image' && !imageFile) {
-      toast({ variant: "destructive", title: "Missing Input", description: "Please upload an image of the ingredients label." });
+      toast({ variant: "destructive", title: "Missing Input", description: "Please upload an image of the food item or ingredients label." });
       return;
     }
     if (inputType === 'text' && !textInput.trim()) {
@@ -115,20 +115,34 @@ export default function IngredientsCheckerPage() {
         aiInput = await preprocessImage(imageFile, 1024);
         prompt = `
           You are an AI assistant specialized in analyzing food ingredients.
-          Analyze this image of an ingredients label.
+          
+          Analyze this image which could be either:
+          1. An ingredients label/nutrition facts panel on food packaging
+          2. An actual food item (prepared dish, snack, beverage, etc.)
+          3. Raw ingredients or food components
+          
           ${manufacturer ? `Manufacturer: ${manufacturer}` : ''}
 
+          For INGREDIENTS LABELS: Extract and analyze the listed ingredients.
+          For ACTUAL FOOD ITEMS: Identify the food item and determine its likely ingredients based on:
+          - Visual appearance and components you can see
+          - Common recipes and preparation methods for this type of food
+          - Typical ingredients used in commercial versions of this food
+          - Any visible additives, preservatives, or processing indicators
+
           Provide a comprehensive analysis including:
-          1. List all ingredients and their properties
-          2. Safety assessment for each ingredient
-          3. Overall product safety evaluation
-          4. Dietary considerations
-          5. Potential concerns or allergens
+          1. Identify what type of food/product this is
+          2. List all visible or likely ingredients and their properties
+          3. Safety assessment for each ingredient
+          4. Overall product safety evaluation
+          5. Dietary considerations and allergen information
+          6. Note if analysis is based on visible ingredients vs. typical recipe ingredients
 
           IMPORTANT: Return ONLY a valid JSON object with these exact keys and data types:
           {
             "product_name": "string or null",
-            "manufacturer": "string or null",
+            "manufacturer": "string or null", 
+            "analysis_type": "ingredients_label|food_item|raw_ingredients",
             "ingredients_list": [
               {
                 "name": "string",
@@ -136,7 +150,8 @@ export default function IngredientsCheckerPage() {
                 "safety_rating": "Safe|Caution|Warning|Unknown",
                 "common_uses": ["array", "of", "strings"],
                 "potential_concerns": ["array", "of", "strings"],
-                "alternatives": ["array", "of", "strings"]
+                "alternatives": ["array", "of", "strings"],
+                "source": "visible|typical_recipe|likely_additive"
               }
             ],
             "overall_assessment": {
@@ -172,6 +187,7 @@ export default function IngredientsCheckerPage() {
           {
             "product_name": "string or null",
             "manufacturer": "string or null",
+            "analysis_type": "text_input",
             "ingredients_list": [
               {
                 "name": "string",
@@ -179,7 +195,8 @@ export default function IngredientsCheckerPage() {
                 "safety_rating": "Safe|Caution|Warning|Unknown",
                 "common_uses": ["array", "of", "strings"],
                 "potential_concerns": ["array", "of", "strings"],
-                "alternatives": ["array", "of", "strings"]
+                "alternatives": ["array", "of", "strings"],
+                "source": "provided"
               }
             ],
             "overall_assessment": {
@@ -216,13 +233,15 @@ export default function IngredientsCheckerPage() {
       const normalizedResponse: IngredientsAnalysisReport = {
         product_name: rawResponse.product_name || null,
         manufacturer: rawResponse.manufacturer || manufacturer || null,
+        analysis_type: rawResponse.analysis_type || 'unknown',
         ingredients_list: (rawResponse.ingredients_list || []).map((ingredient: any) => ({
           name: ingredient.name || 'Unknown',
           description: ingredient.description || 'No description available',
           safety_rating: ingredient.safety_rating || 'Unknown',
           common_uses: ensureArray(ingredient.common_uses),
           potential_concerns: ensureArray(ingredient.potential_concerns),
-          alternatives: ensureArray(ingredient.alternatives)
+          alternatives: ensureArray(ingredient.alternatives),
+          source: ingredient.source || 'unknown'
         })),
         overall_assessment: {
           safety_rating: rawResponse.overall_assessment?.safety_rating || 'Insufficient Data',
@@ -273,6 +292,9 @@ export default function IngredientsCheckerPage() {
     if (analysisReport.manufacturer) {
       reportString += `Manufacturer: ${analysisReport.manufacturer}\n`;
     }
+    if (analysisReport.analysis_type) {
+      reportString += `Analysis Type: ${analysisReport.analysis_type.replace('_', ' ').toUpperCase()}\n`;
+    }
     reportString += "\n";
 
     reportString += "Overall Assessment:\n";
@@ -300,6 +322,9 @@ export default function IngredientsCheckerPage() {
       reportString += `\n${ingredient.name.toUpperCase()}\n`;
       reportString += `Safety Rating: ${ingredient.safety_rating}\n`;
       reportString += `Description: ${ingredient.description}\n`;
+      if (ingredient.source) {
+        reportString += `Source: ${ingredient.source.replace('_', ' ')}\n`;
+      }
       reportString += "Common Uses:\n";
       ingredient.common_uses.forEach(use => reportString += `- ${use}\n`);
       if (ingredient.potential_concerns.length > 0) {
@@ -349,6 +374,15 @@ export default function IngredientsCheckerPage() {
     }
   };
 
+  const getSourceBadgeColor = (source: string) => {
+    switch (source) {
+      case 'visible': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+      case 'typical_recipe': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+      case 'likely_additive': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300';
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Card className="max-w-3xl mx-auto shadow-xl">
@@ -358,7 +392,7 @@ export default function IngredientsCheckerPage() {
             AI Ingredients Checker
           </CardTitle>
           <CardDescription>
-            Analyze food ingredients from labels or text for safety, dietary considerations, and potential concerns.
+            Analyze food ingredients from labels, actual food items, or text for safety, dietary considerations, and potential concerns.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -366,7 +400,7 @@ export default function IngredientsCheckerPage() {
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
             <AlertTitle className="font-semibold">Important Note</AlertTitle>
             <AlertDescription>
-              This tool provides general information about ingredients. Always verify with manufacturers and consult healthcare professionals for specific dietary needs or concerns.
+              This tool can analyze both ingredient labels and actual food items. For food items, the AI will identify likely ingredients based on visual analysis and common recipes. Always verify with manufacturers and consult healthcare professionals for specific dietary needs or concerns.
             </AlertDescription>
           </Alert>
 
@@ -380,7 +414,7 @@ export default function IngredientsCheckerPage() {
                 <div>
                   <Label htmlFor="image-upload" className="text-lg font-medium flex items-center mb-2">
                     <ImageUp className="mr-2 h-5 w-5 text-accent" />
-                    Upload Ingredients Label
+                    Upload Food Image or Ingredients Label
                   </Label>
                   <Input
                     id="image-upload"
@@ -390,9 +424,9 @@ export default function IngredientsCheckerPage() {
                     className="file:text-primary file:font-semibold file:bg-primary/10 hover:file:bg-primary/20"
                     disabled={isLoading}
                   />
-                  <p className="text-sm text-muted-foreground mt-1">Upload a clear image of the ingredients label.</p>
+                  <p className="text-sm text-muted-foreground mt-1">Upload an image of a food item, ingredients label, or nutrition facts panel.</p>
                 </div>
-                {imageDataUrl && <ImagePreview imageDataUrl={imageDataUrl} dataAiHint="ingredients label"/>}
+                {imageDataUrl && <ImagePreview imageDataUrl={imageDataUrl} dataAiHint="food item or ingredients label"/>}
               </div>
             </TabsContent>
             <TabsContent value="text" className="mt-6">
@@ -455,6 +489,11 @@ export default function IngredientsCheckerPage() {
                 <CardTitle className="font-headline text-xl flex items-center">
                   <FileText className="mr-2 h-6 w-6 text-primary" />
                   Ingredients Analysis Report
+                  {analysisReport.analysis_type && (
+                    <span className="ml-2 text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                      {analysisReport.analysis_type.replace('_', ' ').toUpperCase()}
+                    </span>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -521,7 +560,14 @@ export default function IngredientsCheckerPage() {
                     {analysisReport.ingredients_list.map((ingredient, index) => (
                       <div key={index} className="border rounded-md p-3">
                         <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-medium">{ingredient.name}</h5>
+                          <div className="flex items-center gap-2">
+                            <h5 className="font-medium">{ingredient.name}</h5>
+                            {ingredient.source && (
+                              <span className={`px-2 py-1 rounded text-xs ${getSourceBadgeColor(ingredient.source)}`}>
+                                {ingredient.source.replace('_', ' ')}
+                              </span>
+                            )}
+                          </div>
                           <span className={`px-2 py-1 rounded text-sm ${getSafetyColor(ingredient.safety_rating)}`}>
                             {ingredient.safety_rating}
                           </span>
@@ -577,7 +623,7 @@ export default function IngredientsCheckerPage() {
           {!analysisReport && !isLoading && !error && (
             <div className="mt-6 p-4 border border-dashed rounded-md text-center text-muted-foreground">
               <Info className="mx-auto h-8 w-8 mb-2"/>
-              <p>Upload an ingredients label image or paste ingredients text to get AI-powered analysis.</p>
+              <p>Upload an image of a food item or ingredients label, or paste ingredients text to get AI-powered analysis.</p>
             </div>
           )}
         </CardContent>

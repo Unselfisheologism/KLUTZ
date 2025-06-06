@@ -12,11 +12,13 @@ export interface Ingredient {
   common_uses: string[];
   potential_concerns: string[];
   alternatives?: string[];
+  source?: 'visible' | 'typical_recipe' | 'likely_additive' | 'provided' | 'unknown';
 }
 
 export interface IngredientsAnalysisReport {
   product_name?: string;
   manufacturer?: string;
+  analysis_type?: 'ingredients_label' | 'food_item' | 'raw_ingredients' | 'text_input' | 'unknown';
   ingredients_list: Ingredient[];
   overall_assessment: {
     safety_rating: 'Safe' | 'Moderate Concern' | 'High Concern' | 'Insufficient Data';
