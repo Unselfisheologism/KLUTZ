@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ImageUp, Type, Calculator, AlertTriangle, Info, Copy, Download, BookOpen, Lightbulb, CheckCircle } from 'lucide-react';
+import { Loader2, ImageUp, Type, Calculator, AlertTriangle, Info, Copy, Download, BookOpen, Lightbulb, CheckCircle, Star } from 'lucide-react';
 import { preprocessImage } from '@/lib/image-utils';
 import { downloadTextFile } from '@/lib/utils';
 import ImagePreview from '@/components/medi-scan/image-preview';
@@ -401,6 +401,14 @@ export default function AIProblemSolverPage() {
             <AlertTitle className="font-semibold">How it works</AlertTitle>
             <AlertDescription>
               Upload images of problems or type them directly. Get detailed step-by-step solutions with explanations, key concepts, and alternative methods.
+              <div className="mt-2 p-2 bg-green-100 dark:bg-green-900/30 rounded-md border border-green-300 dark:border-green-700">
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 text-green-600 dark:text-green-400 mr-2 flex-shrink-0" />
+                  <span className="text-green-700 dark:text-green-300 font-medium text-sm">
+                    <strong>Note:</strong> Text analysis is much more reliable and accurate than image analysis for complex problems.
+                  </span>
+                </div>
+              </div>
             </AlertDescription>
           </Alert>
 
