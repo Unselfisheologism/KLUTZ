@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight } from 'lucide-react'; 
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap } from 'lucide-react'; 
 
 interface Feature {
   icon: React.ElementType;
@@ -48,6 +48,13 @@ const features: Feature[] = [
     title: 'Content Heatmap Generator',
     description: 'Generate heatmaps to visualize user engagement on your content.',
     href: '/heatmap-generator',
+    isImplemented: true,
+  },
+  {
+    icon: Zap,
+    title: 'Electronic Appliance Troubleshooter',
+    description: 'AI-powered analysis of malfunctioning electronic devices for troubleshooting assistance.',
+    href: '/appliance-troubleshooter',
     isImplemented: true,
   },
 ];
