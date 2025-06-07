@@ -423,7 +423,7 @@ export default function ImageToTextPage() {
         </CardFooter>
       </Card>
 
- <div className="mt-12 max-w-3xl mx-auto">
+      <div className="mt-12 max-w-3xl mx-auto">
         <div className="prose dark:prose-invert">
           <h1>Complete Guide to Image to Text Converters: Transform Pictures to Text Instantly</h1>
 
