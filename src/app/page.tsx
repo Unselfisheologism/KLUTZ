@@ -125,16 +125,16 @@ export default function HomePage() {
             <div className="flex items-center justify-center gap-8">
               <div className="badge-wrapper-270x54">   
                 <a 
-                  href="https://fazier.com/launches/audiolab" 
+                  href="https://startupfa.me/s/klutz?utm_source=klutz.netlify.app" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  title="Fazier badge (opens in a new window)"
+                  title="Featured on Startup Fame"
                 >
                   <Image 
-                    src="https://fazier.com/api/v1/public/badges/embed_image.svg?launch_id=4421&badge_type=daily&theme=light" 
-                    width={270} 
+                    src="https://startupfa.me/badges/featured-badge.webp" 
+                    width={171} 
                     height={54}
-                    alt="Fazier badge" 
+                    alt="Featured on Startup Fame" 
                     unoptimized
                   />
                 </a>
