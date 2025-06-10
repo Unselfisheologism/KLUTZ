@@ -590,6 +590,41 @@ export default function AIDateTimeCheckerPage() {
           </p>
         </CardFooter>
       </Card>
+
+      <div className="max-w-3xl mx-auto mt-12 space-y-8">
+        <section>
+          <h2 className="font-headline text-3xl text-primary mb-4">Unlocking Time's Secrets: An AI-Powered Date & Time Explorer</h2>
+          <p className="text-muted-foreground text-lg">
+            Have you ever wondered what day of the week your great-great-grandparents were born? Or perhaps you need to find all the Mondays in October of a specific historical year? Our AI Date & Time Checker is designed to pull back the curtain on time, offering insights into dates across centuries and millennia with surprising detail.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="font-semibold text-xl text-primary mb-3">Beyond Basic Calendars</h3>
+          <p className="text-muted-foreground">
+            This isn't just a simple day calculator. Leveraging powerful AI models, the tool can analyze a specific date to provide a wealth of information:
+          </p>
+          <ul className="list-disc pl-5 text-muted-foreground mt-3 space-y-2">
+            <li><strong>Day of the Week:</strong> Instantly know if a date from the past, present, or future falls on a Monday, Friday, or any other day.</li>
+            <li><strong>Historical Context:</strong> Discover notable historical events, cultural significance, and even astronomical information associated with that particular date.</li>
+            <li><strong>Calendar Details:</strong> Get information about the century, millennium, and other calendar system specifics relevant to the date.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="font-semibold text-xl text-primary mb-3">Find Specific Dates by Day</h3>
+          <p className="text-muted-foreground">
+            The tool also offers the reverse capability. If you know the month, year, and the day of the week, the AI can list all the specific dates within that period that match your criteria. Perfect for genealogical research, historical studies, or just satisfying your curiosity about calendar patterns.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="font-semibold text-xl text-primary mb-3">Powered by Cutting-Edge AI</h3>
+          <p className="text-muted-foreground">
+            Our AI Date & Time Checker utilizes advanced AI models to perform complex calendar calculations and access vast amounts of historical and astronomical data. While the AI strives for accuracy across wide date ranges, it's important to remember the inherent complexities of historical calendar systems and potential limitations for extremely distant past or future dates.
+          </p>
+        </section>
+      </div>
     </div>
   );
 }
