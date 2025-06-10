@@ -397,7 +397,6 @@ export default function ApplianceTroubleshooterPage() {
           </p>
         </CardFooter>
       </Card>
-      </div>
 
       <div className="mt-12 max-w-3xl mx-auto prose prose-lg dark:prose-invert">
         <h1>The Ultimate Guide to AI Electronic Appliance Troubleshooters: Transform Your Customer Support Experience</h1>
