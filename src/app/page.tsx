@@ -311,9 +311,6 @@ export default function HomePage() {
                 <a href="https://x.com/Jeff9James" target="_blank" rel="noopener noreferrer" title="X (opens in a new window)">
                   <FaXTwitter className="text-gray-600 hover:text-black transition" size={28} aria-label="X" />
                 </a>
-                <a href="https://www.linkedin.com/in/jeffrin-jeffrin-6b4041345/" target="_blank" rel="noopener noreferrer" title="LinkedIn (opens in a new window)">
-                  <FaLinkedin className="text-gray-600 hover:text-blue-700 transition" size={28} aria-label="LinkedIn" />
-                </a>
                 <a href="https://medium.com/@jeffrinjames99" target="_blank" rel="noopener noreferrer" title="Medium (opens in a new window)">
                   <FaMedium className="text-gray-600 hover:text-green-700 transition" size={28} aria-label="Medium" />
                 </a>
