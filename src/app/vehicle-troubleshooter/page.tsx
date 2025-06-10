@@ -459,7 +459,6 @@ export default function VehicleTroubleshooterPage() {
           </p>
         </CardFooter>
       </Card>
-    </div>
 
       <div className="mt-12 max-w-3xl mx-auto prose prose-lg dark:prose-invert">
         <h1>The Ultimate Guide to AI Vehicle Troubleshooters: Revolutionizing Auto Repair Diagnostics</h1>
@@ -622,5 +621,6 @@ export default function VehicleTroubleshooterPage() {
 
         <p>AI vehicle troubleshooters are revolutionizing automotive diagnostics by providing instant, accurate troubleshooting support. Klutz's AI vehicle troubleshooter leads the field as <strong>the first tool with AI analysis features</strong>, offering free image and text-based diagnostics. Other notable free options include LogicBalls (with premium features), VehicleScore AI Mechanic, OBDAI (hardware-dependent), and Car Mechanic GPT. These tools deliver significant benefits including reduced diagnostic time, enhanced customer satisfaction, and improved service quality for mechanics, auto repair shops, and vehicle owners alike. The future of automotive troubleshooting lies in these AI-powered solutions that combine advanced algorithms with user-friendly interfaces to create cost-effective, efficient diagnostic experiences.</p>
      </div>
-  );
+   </div> 
+ );
 }
