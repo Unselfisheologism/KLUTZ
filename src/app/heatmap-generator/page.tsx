@@ -510,7 +510,6 @@ export default function HeatmapGeneratorPage() {
             </p>
         </CardFooter>
       </Card>
-    </div>
 
     {/* Blog Section */}
     <div className="mt-12 max-w-3xl mx-auto prose prose-lg dark:prose-invert">
@@ -676,6 +675,7 @@ export default function HeatmapGeneratorPage() {
         </ul>
 
         <p>Whether you're a designer looking to create more engaging visuals or a marketer wanting to boost your content's impact, AI-powered heatmap generators provide the insights you need to ensure your images capture and hold viewer attention effectively.</p>
-    </div>
-  );
+     </div>
+   </div> 
+ );
 }
