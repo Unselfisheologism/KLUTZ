@@ -5,7 +5,8 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie } from 'lucide-react'; 
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie } from 'lucide-react';
+import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
 interface Feature {
   icon: React.ElementType;
@@ -297,6 +298,30 @@ export default function HomePage() {
           <Separator className="my-8" />
 
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="container mx-auto text-center">
+              {/* Social Icons */}
+              <div className="flex justify-center gap-4 mb-6">
+                <a href="https://unselfishneologism.substack.com" target="_blank" rel="noopener noreferrer" title="Substack (opens in a new window)">
+                  <FaRegEnvelope className="text-gray-600 hover:text-orange-600 transition" size={28} aria-label="Substack" />
+                  <span className="text-sm font-medium mt-1">Tutorials</span>
+                </a>
+                <a href="https://www.youtube.com/@WhAtNOTif-r4h" target="_blank" rel="noopener noreferrer" title="YouTube (opens in a new window)">
+                  <FaYoutube className="text-gray-600 hover:text-red-600 transition" size={28} aria-label="YouTube" />
+                </a>
+                <a href="https://x.com/Jeff9James" target="_blank" rel="noopener noreferrer" title="X (opens in a new window)">
+                  <FaXTwitter className="text-gray-600 hover:text-black transition" size={28} aria-label="X" />
+                </a>
+                <a href="https://www.linkedin.com/in/jeffrin-jeffrin-6b4041345/" target="_blank" rel="noopener noreferrer" title="LinkedIn (opens in a new window)">
+                  <FaLinkedin className="text-gray-600 hover:text-blue-700 transition" size={28} aria-label="LinkedIn" />
+                </a>
+                <a href="https://medium.com/@jeffrinjames99" target="_blank" rel="noopener noreferrer" title="Medium (opens in a new window)">
+                  <FaMedium className="text-gray-600 hover:text-green-700 transition" size={28} aria-label="Medium" />
+                </a>
+                <a href="https://discordapp.com/users/1293939031620456492" target="_blank" rel="noopener noreferrer" title="Discord (opens in a new window)">
+                  <FaDiscord className="text-gray-600 hover:text-indigo-600 transition" size={28} aria-label="Discord" />
+                </a>
+              </div>
+            </div>
             <div className="text-sm text-muted-foreground">
               © 2025 KLUTZ. All rights reserved.
             </div>
