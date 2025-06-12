@@ -1,5 +1,6 @@
 'use client';
 
+import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -119,6 +120,10 @@ const features: Feature[] = [
 
 export default function HomePage() {
   return (
+    <>
+      <Head>
+        <link rel="canonical" href="https://klutz.netlify.app/" />
+      </Head>
     <div className="min-h-screen flex flex-col">
       <div className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -326,4 +331,5 @@ export default function HomePage() {
       </footer>
     </div>
   );
+    </> 
 }
