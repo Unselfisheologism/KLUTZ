@@ -297,7 +297,7 @@ export default function AIDateTimeCheckerPage() {
   return (
     <>
       <Head>
-        <link rel="canonical" href="https://klutz.netlify.app/" />
+        <link rel="canonical" href="https://klutz.netlify.app/ai-date-time-checker" />
       </Head>
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Card className="max-w-3xl mx-auto shadow-xl">
