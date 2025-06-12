@@ -1,11 +1,16 @@
 'use client';
 
+import Head from 'next/head';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Calendar, Package, ExternalLink } from 'lucide-react';
 
 export default function ThirdPartyLicensesPage() {
   return (
+    <>
+      <Head>
+        <link rel="canonical" href="https://klutz.netlify.app/third-party-licenses" />
+      </Head>
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-4xl mx-auto">
         <Card className="shadow-xl">
@@ -269,4 +274,5 @@ export default function ThirdPartyLicensesPage() {
       </div>
     </div>
   );
-}
+    </>
+)}    

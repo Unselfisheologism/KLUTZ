@@ -1,5 +1,6 @@
 'use client';
 
+import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -414,6 +415,10 @@ export default function IngredientsCheckerPage() {
   };
 
   return (
+    <>
+      <Head>
+        <link rel="canonical" href="https://klutz.netlify.app/ingredients-checker" />
+      </Head>
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Card className="max-w-3xl mx-auto shadow-xl">
         <CardHeader>
@@ -744,4 +749,5 @@ export default function IngredientsCheckerPage() {
       </Card>
     </div>
   );
-}
+    </>
+)}    

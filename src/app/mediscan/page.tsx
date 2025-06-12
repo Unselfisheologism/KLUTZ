@@ -1,6 +1,7 @@
 
 'use client';
 
+import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ImageUploadSection from '@/components/medi-scan/image-upload-section';
@@ -60,6 +61,10 @@ export default function MediScanPage() {
   
   // Removed authLoading condition and its UI. Page renders directly.
   return (
+    <>
+      <Head>
+        <link rel="canonical" href="https://klutz.netlify.app/mediscan" />
+      </Head>
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="lg:sticky lg:top-24">
@@ -140,4 +145,5 @@ export default function MediScanPage() {
       </div>
     </div>
   );
-}
+    </>
+)}

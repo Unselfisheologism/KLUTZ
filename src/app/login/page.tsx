@@ -1,6 +1,7 @@
 
 'use client';
 
+import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,6 +78,10 @@ export default function LoginPage() {
   }
 
   return (
+    <>
+      <Head>
+        <link rel="canonical" href="https://klutz.netlify.app/login" />
+      </Head>
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
@@ -95,4 +100,5 @@ export default function LoginPage() {
       </Card>
     </div>
   );
-}
+    </>
+)}    

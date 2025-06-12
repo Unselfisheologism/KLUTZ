@@ -1,11 +1,16 @@
 'use client';
 
+import Head from 'next/head';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Mail, HelpCircle } from 'lucide-react';
 
 export default function FAQPage() {
   return (
+    <>
+      <Head>
+        <link rel="canonical" href="https://klutz.netlify.app/faq" />
+      </Head>
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-4xl mx-auto">
         <Card className="shadow-xl">
@@ -271,4 +276,5 @@ export default function FAQPage() {
       </div>
     </div>
   );
-}
+    </>
+)}

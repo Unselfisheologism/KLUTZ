@@ -11,12 +11,6 @@ export default function CookiesPage() {
       <Head>
         <link rel="canonical" href="https://klutz.netlify.app/cookies" />
       </Head>
-      <CookiesContent />
-    </>
-  );
-}
-
-const CookiesContent = () => (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-4xl mx-auto">
         <Card className="shadow-xl">
@@ -112,4 +106,5 @@ const CookiesContent = () => (
       </div>
     </div>
   );
-}
+    </>
+)}    
