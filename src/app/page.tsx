@@ -301,7 +301,7 @@ export default function HomePage() {
             <div className="container mx-auto text-center">
               {/* Social Icons */}
               <div className="flex justify-center gap-4 mb-6">
-                <a href="https://github.com/UnselfishNeologism/KLUTZ" target="_blank" rel="noopener noreferrer" title="GitHub (opens in a new window)">
+                <a href="https://github.com/Unselfisheologism/KLUTZ" target="_blank" rel="noopener noreferrer" title="GitHub (opens in a new window)">
                 <Github className="text-gray-600 hover:text-gray-900 transition" size={28} aria-label="GitHub" />
                 </a>
                 <a href="https://x.com/Jeff9James" target="_blank" rel="noopener noreferrer" title="X (opens in a new window)">
