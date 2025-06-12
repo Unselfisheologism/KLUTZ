@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie } from 'lucide-react';
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
 interface Feature {
@@ -301,8 +301,8 @@ export default function HomePage() {
             <div className="container mx-auto text-center">
               {/* Social Icons */}
               <div className="flex justify-center gap-4 mb-6">
-                <a href="https://www.youtube.com/@WhAtNOTif-r4h" target="_blank" rel="noopener noreferrer" title="YouTube (opens in a new window)">
-                  <FaYoutube className="text-gray-600 hover:text-red-600 transition" size={28} aria-label="YouTube" />
+                <a href="https://github.com/UnselfishNeologism/KLUTZ" target="_blank" rel="noopener noreferrer" title="GitHub (opens in a new window)">
+                <Github className="text-gray-600 hover:text-gray-900 transition" size={28} aria-label="GitHub" />
                 </a>
                 <a href="https://x.com/Jeff9James" target="_blank" rel="noopener noreferrer" title="X (opens in a new window)">
                   <FaXTwitter className="text-gray-600 hover:text-black transition" size={28} aria-label="X" />
