@@ -129,21 +129,23 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-8">
-              <div className="badge-wrapper-270x54">   
-                <a 
-                  href="https://startupfa.me/s/klutz?utm_source=klutz.netlify.app" 
-                  target="_blank" 
+              <div className="badge-wrapper-270x54">
+                {/* === PRODUCT HUNT BADGE REPLACEMENT START === */}
+                <a
+                  href="https://www.producthunt.com/products/klutz?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-klutz"
+                  target="_blank"
                   rel="noopener noreferrer"
-                  title="Featured on Startup Fame"
+                  title="Featured on Product Hunt"
                 >
-                  <Image 
-                    src="https://startupfa.me/badges/featured-badge.webp" 
-                    width={171} 
+                  <img
+                    src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=977863&theme=light&t=1749888258779"
+                    alt="KLUTZ - Suite&#0032;of&#0032;AI&#0032;Powered&#0032;Image&#0044;&#0032;Date&#0032;&#0038;&#0032;Text&#0032;Tools | Product Hunt"
+                    style={{ width: '250px', height: '54px' }}
+                    width={250}
                     height={54}
-                    alt="Featured on Startup Fame" 
-                    unoptimized
                   />
                 </a>
+                {/* === PRODUCT HUNT BADGE REPLACEMENT END === */}
               </div>  
               <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
                 AI-Powered Content & Image Analysis Suite
@@ -332,4 +334,5 @@ export default function HomePage() {
     </div>
   );
     </> 
-)}
+)
+      }
