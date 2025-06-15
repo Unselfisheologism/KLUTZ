@@ -148,7 +148,7 @@ export default function HomePage() {
                 {/* === PRODUCT HUNT BADGE REPLACEMENT END === */}
               </div>  
               <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
-                AI-Powered Content & Image Analysis Suite
+                Image generators, Text, Date, Content Analysis, Translating, Problem-solving AI tools 
               </h1>
               <div className="flex flex-col items-center">
                 <span className="text-sm font-medium mb-1">Made in</span>
