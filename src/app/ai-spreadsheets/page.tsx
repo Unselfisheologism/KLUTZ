@@ -364,10 +364,15 @@ export default function AISpreadsheetPage() {
                 // For find_replace: { "find": "text to find", "replace": "replacement text" }
                 // For add_column: { "header": "column name", "position": 3, "values": ["val1", "val2"] }
                 // For update_cell: { "row": 2, "col": 3, "value": "new value" }
+                // For add_row: { "position": 5, "values": ["val1", "val2", "val3"] }
+                // For delete_row: { "row": 3 }
+                // For delete_column: { "col": 2 }
+                // For format_cells: { "cells": [{"row": 1, "col": 2}], "style": {"bold": true, "color": "#ff0000"} }
+                // For add_dummy_data: { "headers": ["Name", "Age", "Email"], "rows": 5 }
               }
             }
           ],
-          "explanation": "A clear explanation of what changes should be made"
+          "explanation": "A clear explanation of what changes were made"
         }
         
         If you can't determine specific operations, just provide an explanation field with your response.
@@ -426,9 +431,11 @@ export default function AISpreadsheetPage() {
             break;
             
           case 'add_column':
-            if (operation.details?.header) {
-              const header = operation.details.header;
-              const position = operation.details.position || updatedSpreadsheet.rows[0].length;
+            if (operation.details) {
+              const header = operation.details.header || 'New Column';
+              const position = operation.details.position !== undefined 
+                ? operation.details.position 
+                : updatedSpreadsheet.rows[0].length;
               const values = operation.details.values || [];
               
               // Add a new column
@@ -443,7 +450,7 @@ export default function AISpreadsheetPage() {
                 } else {
                   // Add value or empty cell
                   const value = rowIndex - 1 < values.length ? values[rowIndex - 1] : '';
-                  newRow.splice(position, 0, { value: String(value) });
+                  newRow.splice(position, 0, { value: String(value || '') });
                 }
                 return newRow;
               });
@@ -451,6 +458,30 @@ export default function AISpreadsheetPage() {
               // Update column widths
               if (updatedSpreadsheet.columnWidths) {
                 updatedSpreadsheet.columnWidths.splice(position, 0, 120);
+              }
+              
+              operationsPerformed = true;
+            }
+            break;
+            
+          case 'add_row':
+            if (operation.details) {
+              const position = operation.details.position !== undefined 
+                ? operation.details.position 
+                : updatedSpreadsheet.rows.length;
+              const values = operation.details.values || [];
+              
+              // Create a new row with the provided values
+              const newRow = Array(updatedSpreadsheet.rows[0].length).fill(null).map((_, index) => ({
+                value: index < values.length ? String(values[index] || '') : ''
+              }));
+              
+              // Add the row at the specified position
+              updatedSpreadsheet.rows.splice(position, 0, newRow);
+              
+              // Update row heights
+              if (updatedSpreadsheet.rowHeights) {
+                updatedSpreadsheet.rowHeights.splice(position, 0, 30);
               }
               
               operationsPerformed = true;
@@ -480,6 +511,67 @@ export default function AISpreadsheetPage() {
             }
             break;
             
+          case 'delete_row':
+            if (operation.details?.row !== undefined) {
+              const row = operation.details.row;
+              
+              // Make sure the row exists
+              if (row >= 0 && row < updatedSpreadsheet.rows.length) {
+                // Remove the row
+                updatedSpreadsheet.rows.splice(row, 1);
+                
+                // Update row heights
+                if (updatedSpreadsheet.rowHeights) {
+                  updatedSpreadsheet.rowHeights.splice(row, 1);
+                }
+                
+                // Add an empty row at the end to maintain the total number of rows
+                updatedSpreadsheet.rows.push(
+                  Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
+                );
+                
+                if (updatedSpreadsheet.rowHeights) {
+                  updatedSpreadsheet.rowHeights.push(30);
+                }
+                
+                operationsPerformed = true;
+              }
+            }
+            break;
+            
+          case 'delete_column':
+            if (operation.details?.col !== undefined) {
+              const col = operation.details.col;
+              
+              // Make sure the column exists
+              if (col >= 0 && col < updatedSpreadsheet.rows[0].length) {
+                // Remove the column from each row
+                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => {
+                  const newRow = [...row];
+                  newRow.splice(col, 1);
+                  return newRow;
+                });
+                
+                // Update column widths
+                if (updatedSpreadsheet.columnWidths) {
+                  updatedSpreadsheet.columnWidths.splice(col, 1);
+                }
+                
+                // Add an empty column at the end to maintain the total number of columns
+                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => {
+                  row.push({ value: '' });
+                  return row;
+                });
+                
+                if (updatedSpreadsheet.columnWidths) {
+                  updatedSpreadsheet.columnWidths.push(120);
+                }
+                
+                operationsPerformed = true;
+              }
+            }
+            break;
+            
           case 'format_cells':
             if (operation.details?.cells && operation.details?.style) {
               const cells = operation.details.cells;
@@ -500,6 +592,74 @@ export default function AISpreadsheetPage() {
                     }
                   };
                 }
+              }
+              
+              operationsPerformed = true;
+            }
+            break;
+            
+          case 'add_dummy_data':
+            if (operation.details) {
+              const headers = operation.details.headers || ['Name', 'Age', 'Email'];
+              const rowCount = operation.details.rows || 4;
+              
+              // Generate dummy data
+              const dummyData = generateDummyData(headers, rowCount);
+              
+              // Clear existing data if needed
+              if (operation.details.clear) {
+                updatedSpreadsheet.rows = Array(20).fill(null).map(() => 
+                  Array(10).fill(null).map(() => ({ value: '' }))
+                );
+              }
+              
+              // Add headers
+              headers.forEach((header, index) => {
+                if (index < updatedSpreadsheet.rows[0].length) {
+                  updatedSpreadsheet.rows[0][index] = {
+                    value: header,
+                    style: { bold: true, backgroundColor: '#f0f0f0' }
+                  };
+                }
+              });
+              
+              // Add data rows
+              dummyData.forEach((row, rowIndex) => {
+                if (rowIndex + 1 < updatedSpreadsheet.rows.length) {
+                  row.forEach((value, colIndex) => {
+                    if (colIndex < updatedSpreadsheet.rows[0].length) {
+                      updatedSpreadsheet.rows[rowIndex + 1][colIndex] = { value };
+                    }
+                  });
+                }
+              });
+              
+              operationsPerformed = true;
+            }
+            break;
+            
+          case 'clear_cells':
+            if (operation.details) {
+              const range = operation.details.range;
+              
+              if (range) {
+                const { startRow, endRow, startCol, endCol } = range;
+                
+                // Clear the specified range
+                for (let r = startRow; r <= endRow; r++) {
+                  if (r < updatedSpreadsheet.rows.length) {
+                    for (let c = startCol; c <= endCol; c++) {
+                      if (c < updatedSpreadsheet.rows[r].length) {
+                        updatedSpreadsheet.rows[r][c] = { value: '' };
+                      }
+                    }
+                  }
+                }
+              } else if (operation.details.all) {
+                // Clear all cells
+                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
+                  row.map(() => ({ value: '' }))
+                );
               }
               
               operationsPerformed = true;
@@ -573,6 +733,42 @@ export default function AISpreadsheetPage() {
             explanation = `I've added a new column titled "${columnName}" to your spreadsheet.`;
           }
         }
+        
+        // Handle adding dummy data
+        else if (userInput.toLowerCase().includes('add dummy') || 
+                 userInput.toLowerCase().includes('add sample') ||
+                 userInput.toLowerCase().includes('add test data')) {
+          
+          // Default headers
+          const headers = ['Name', 'Age', 'Email'];
+          
+          // Add headers
+          headers.forEach((header, index) => {
+            if (index < updatedSpreadsheet.rows[0].length) {
+              updatedSpreadsheet.rows[0][index] = {
+                value: header,
+                style: { bold: true, backgroundColor: '#f0f0f0' }
+              };
+            }
+          });
+          
+          // Generate dummy data
+          const dummyData = generateDummyData(headers, 4);
+          
+          // Add data rows
+          dummyData.forEach((row, rowIndex) => {
+            if (rowIndex + 1 < updatedSpreadsheet.rows.length) {
+              row.forEach((value, colIndex) => {
+                if (colIndex < updatedSpreadsheet.rows[0].length) {
+                  updatedSpreadsheet.rows[rowIndex + 1][colIndex] = { value };
+                }
+              });
+            }
+          });
+          
+          operationsPerformed = true;
+          explanation = "I've added a header row with columns for Name, Age, and Email, followed by four rows of dummy data.";
+        }
       }
       
       // Update the spreadsheet if operations were performed
@@ -611,6 +807,47 @@ export default function AISpreadsheetPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Generate dummy data for the spreadsheet
+  const generateDummyData = (headers: string[], rowCount: number): string[][] => {
+    const dummyData: string[][] = [];
+    
+    // Sample data for different column types
+    const names = ['John Smith', 'Emily Johnson', 'Michael Brown', 'Sarah Davis', 'David Wilson', 'Jennifer Miller', 'Robert Taylor', 'Jessica Anderson', 'Christopher Thomas', 'Amanda Martinez'];
+    const ages = ['25', '32', '41', '28', '35', '29', '45', '31', '38', '27'];
+    const emails = ['john@example.com', 'emily@example.com', 'michael@example.com', 'sarah@example.com', 'david@example.com', 'jennifer@example.com', 'robert@example.com', 'jessica@example.com', 'chris@example.com', 'amanda@example.com'];
+    const departments = ['Marketing', 'Sales', 'Engineering', 'HR', 'Finance', 'Product', 'Support', 'Legal', 'Operations', 'Research'];
+    const dates = ['2023-01-15', '2023-02-28', '2023-03-10', '2023-04-22', '2023-05-05', '2023-06-18', '2023-07-30', '2023-08-12', '2023-09-25', '2023-10-07'];
+    
+    // Generate rows
+    for (let i = 0; i < Math.min(rowCount, 10); i++) {
+      const row: string[] = [];
+      
+      // Add data based on header names
+      headers.forEach(header => {
+        const headerLower = header.toLowerCase();
+        
+        if (headerLower.includes('name')) {
+          row.push(names[i]);
+        } else if (headerLower.includes('age')) {
+          row.push(ages[i]);
+        } else if (headerLower.includes('email')) {
+          row.push(emails[i]);
+        } else if (headerLower.includes('department') || headerLower.includes('dept')) {
+          row.push(departments[i]);
+        } else if (headerLower.includes('date')) {
+          row.push(dates[i]);
+        } else {
+          // Generic data for other headers
+          row.push(`Data ${i+1}`);
+        }
+      });
+      
+      dummyData.push(row);
+    }
+    
+    return dummyData;
   };
 
   const generateSpreadsheetContext = (): string => {
