@@ -463,6 +463,20 @@ export default function AISpreadsheetPage() {
             </div>
           </div>
           
+          {/* Tips alert - moved above the main content */}
+          <Alert variant="default" className="bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+            <Info className="h-5 w-5 text-blue-500" />
+            <AlertTitle className="font-semibold">Spreadsheet Assistant Tips</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc list-inside space-y-1 mt-1">
+                <li>Ask the AI to create tables, charts, or perform calculations</li>
+                <li>Request data formatting or styling changes</li>
+                <li>Ask for analysis or insights about your data</li>
+                <li>The AI can modify your spreadsheet based on your instructions</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+          
           {/* Main content area with spreadsheet and chat */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-12rem)]">
             {/* Spreadsheet area - takes up 2/3 on large screens */}
@@ -611,19 +625,6 @@ export default function AISpreadsheetPage() {
               </div>
             </div>
           </div>
-          
-          <Alert variant="default" className="bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-            <Info className="h-5 w-5 text-blue-500" />
-            <AlertTitle className="font-semibold">Spreadsheet Assistant Tips</AlertTitle>
-            <AlertDescription>
-              <ul className="list-disc list-inside space-y-1 mt-1">
-                <li>Ask the AI to create tables, charts, or perform calculations</li>
-                <li>Request data formatting or styling changes</li>
-                <li>Ask for analysis or insights about your data</li>
-                <li>The AI can modify your spreadsheet based on your instructions</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
         </div>
       </div>
     </>
