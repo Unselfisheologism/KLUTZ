@@ -8,10 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Download, Upload, FileSpreadsheet, Trash2, Plus, Info, Image } from 'lucide-react';
+import { Loader2, Send, Download, Upload, FileSpreadsheet, Trash2, Plus, Info, Image, Paperclip } from 'lucide-react';
 import { SpreadsheetData, ChatMessage, AISpreadsheetResponse, SpreadsheetOperation } from '@/types/ai-spreadsheets';
 import * as XLSX from 'xlsx';
 import { preprocessImage } from '@/lib/image-utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function AISpreadsheets() {
   const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetData>({
@@ -36,6 +37,7 @@ export default function AISpreadsheets() {
   const [contextSpreadsheetData, setContextSpreadsheetData] = useState<any | null>(null);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const contextFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
   // Auto-scroll chat to bottom when messages change
@@ -549,6 +551,11 @@ export default function AISpreadsheets() {
       
       setChatMessages(prev => [...prev, aiMessage]);
       
+      // Clear context after successful processing
+      if (contextFile || contextSpreadsheetFile) {
+        clearContext();
+      }
+      
     } catch (error) {
       console.error("Error processing request:", error);
       
@@ -600,6 +607,12 @@ export default function AISpreadsheets() {
     }
   };
   
+  const handleAttachmentClick = () => {
+    if (contextFileInputRef.current) {
+      contextFileInputRef.current.click();
+    }
+  };
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col lg:flex-row gap-6">
@@ -643,7 +656,7 @@ export default function AISpreadsheets() {
                               type="text"
                               value={cell.value}
                               onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                              className="w-full h-full p-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                              className="w-full h-full p-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-transparent"
                             />
                           </td>
                         ))}
@@ -728,66 +741,38 @@ export default function AISpreadsheets() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden flex flex-col">
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium">Spreadsheet Context</h3>
-                  {(contextFile || contextSpreadsheetFile) && (
+              {/* Context display */}
+              {(contextImageUrl || contextSpreadsheetFile) && (
+                <div className="mb-4 border rounded-md p-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium">Context</h3>
                     <Button variant="ghost" size="sm" onClick={clearContext}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                  </div>
+                  
+                  {contextImageUrl ? (
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Image context:</div>
+                      <img 
+                        src={contextImageUrl} 
+                        alt="Spreadsheet context" 
+                        className="max-h-32 max-w-full object-contain rounded border"
+                      />
+                    </div>
+                  ) : contextSpreadsheetFile && (
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Spreadsheet file:</div>
+                      <div className="flex items-center">
+                        <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                        <span className="text-sm truncate">{contextSpreadsheetFile.name}</span>
+                      </div>
+                    </div>
                   )}
                 </div>
-                
-                {contextImageUrl ? (
-                  <div className="relative border rounded-md p-2 mb-2">
-                    <div className="text-xs text-muted-foreground mb-1">Image context:</div>
-                    <img 
-                      src={contextImageUrl} 
-                      alt="Spreadsheet context" 
-                      className="max-h-32 max-w-full object-contain rounded border"
-                    />
-                  </div>
-                ) : contextSpreadsheetFile ? (
-                  <div className="border rounded-md p-2 mb-2">
-                    <div className="text-xs text-muted-foreground mb-1">Spreadsheet file:</div>
-                    <div className="flex items-center">
-                      <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
-                      <span className="text-sm truncate">{contextSpreadsheetFile.name}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border border-dashed rounded-md p-3 mb-2">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <Input
-                        id="context-file"
-                        type="file"
-                        accept=".xlsx,.csv,image/*"
-                        onChange={handleContextFileChange}
-                        className="hidden"
-                      />
-                      <label 
-                        htmlFor="context-file" 
-                        className="flex flex-col items-center cursor-pointer text-center"
-                      >
-                        <Upload className="h-8 w-8 text-muted-foreground mb-1" />
-                        <span className="text-sm font-medium">Upload spreadsheet or image</span>
-                        <span className="text-xs text-muted-foreground">
-                          Drag & drop or click to browse
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                )}
-                
-                <Alert variant="outline" className="mb-2">
-                  <Info className="h-4 w-4" />
-                  <AlertTitle className="text-xs font-medium">Context helps the AI understand your data</AlertTitle>
-                  <AlertDescription className="text-xs">
-                    Upload a spreadsheet file or screenshot to give the AI more context about your data.
-                  </AlertDescription>
-                </Alert>
-              </div>
+              )}
               
+              {/* Chat messages */}
               <div 
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto mb-4 space-y-4 border rounded-md p-3"
@@ -826,6 +811,7 @@ export default function AISpreadsheets() {
                 )}
               </div>
               
+              {/* Input area with attachment button */}
               <div className="flex gap-2">
                 <Textarea
                   placeholder="Ask the AI to modify your spreadsheet..."
@@ -840,17 +826,44 @@ export default function AISpreadsheets() {
                   className="flex-1 min-h-[80px] resize-none"
                   disabled={isProcessing}
                 />
-                <Button 
-                  className="self-end" 
-                  onClick={handleUserInputSubmit}
-                  disabled={isProcessing || !userInput.trim()}
-                >
-                  {isProcessing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
+                <div className="flex flex-col justify-end gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={handleAttachmentClick}
+                          disabled={isProcessing}
+                        >
+                          <Paperclip className="h-4 w-4" />
+                          <input
+                            ref={contextFileInputRef}
+                            id="context-file"
+                            type="file"
+                            accept=".xlsx,.csv,image/*"
+                            onChange={handleContextFileChange}
+                            className="hidden"
+                          />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Upload a spreadsheet or an image, but spreadsheets are more accurate than screenshots.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <Button 
+                    onClick={handleUserInputSubmit}
+                    disabled={isProcessing || !userInput.trim()}
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
