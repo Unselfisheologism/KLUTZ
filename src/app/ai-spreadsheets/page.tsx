@@ -576,7 +576,8 @@ export default function AISpreadsheetPage() {
                   });
                 } else {
                   // Add value or empty cell
-                  const value = rowIndex - 1 < values.length ? values[rowIndex - 1] : '';
+                  const valueIndex = rowIndex - 1;
+                  const value = valueIndex < values.length ? values[valueIndex] : '';
                   newRow.splice(position, 0, { value: String(value || '') });
                 }
                 return newRow;
