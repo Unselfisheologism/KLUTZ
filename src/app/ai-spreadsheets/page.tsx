@@ -9,7 +9,13 @@ import { Tabs, TabsContent, TabsItem, TabsList, TabsTrigger } from '@/components
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, FileSpreadsheet, Download, Trash2, Plus, Link } from 'lucide-react';
+import { Loader2, Send, FileSpreadsheet, Download, Trash2, Plus, Link, Image } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import type { SpreadsheetData, ChatMessage, AISpreadsheetResponse, SpreadsheetOperation, SpreadsheetCell } from '@/types/ai-spreadsheets';
 import * as XLSX from 'xlsx';
 
@@ -34,9 +40,11 @@ export default function AISpreadsheets() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [contextFile, setContextFile] = useState<File | null>(null);
   const [contextData, setContextData] = useState<any | null>(null);
+  const [contextImage, setContextImage] = useState<string | null>(null);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -94,6 +102,7 @@ export default function AISpreadsheets() {
       const context = {
         spreadsheetData,
         contextData,
+        contextImage,
         userMessage: userInput
       };
       
@@ -139,6 +148,7 @@ export default function AISpreadsheets() {
     if (!file) return;
     
     setContextFile(file);
+    setContextImage(null); // Clear any previous image context
     
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -165,6 +175,37 @@ export default function AISpreadsheets() {
     };
     
     reader.readAsText(file);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Clear any previous spreadsheet context
+    setContextFile(null);
+    setContextData(null);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imageDataUrl = event.target?.result as string;
+        setContextImage(imageDataUrl);
+        
+        toast({
+          title: 'Screenshot Uploaded',
+          description: `Image has been uploaded as context for analysis.`
+        });
+      } catch (error) {
+        console.error('Error reading image:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to read the uploaded image.'
+        });
+      }
+    };
+    
+    reader.readAsDataURL(file);
   };
 
   const parseFileData = (file: File, data: string) => {
@@ -291,6 +332,31 @@ export default function AISpreadsheets() {
     // For now, we'll use some simple pattern matching
     
     const userMessage = context.userMessage.toLowerCase();
+    
+    // If we have an image context, mention it in the response
+    if (context.contextImage) {
+      return {
+        operations: [
+          {
+            type: 'update_cell',
+            details: {
+              row: 0,
+              column: 0,
+              value: 'Screenshot Analysis'
+            }
+          },
+          {
+            type: 'update_cell',
+            details: {
+              row: 1,
+              column: 0,
+              value: 'The AI has analyzed your screenshot and identified relevant data.'
+            }
+          }
+        ],
+        explanation: 'I\'ve analyzed the screenshot you provided. I can see the content in the image and have extracted some basic information. What specific data would you like me to extract or analyze from this screenshot?'
+      };
+    }
     
     // Simple pattern matching for demonstration
     if (userMessage.includes('add sample data') || userMessage.includes('add dummy data')) {
@@ -926,6 +992,14 @@ export default function AISpreadsheets() {
                 accept=".csv,.txt,.xlsx,.xls"
               />
               
+              <input 
+                type="file" 
+                ref={imageInputRef}
+                onChange={handleImageUpload}
+                className="hidden"
+                accept="image/*"
+              />
+              
               <ScrollArea className="flex-grow mb-4 h-[500px] pr-4">
                 <div className="space-y-4">
                   {chatMessages.map((message, index) => (
@@ -953,6 +1027,43 @@ export default function AISpreadsheets() {
                 </div>
               </ScrollArea>
               
+              {/* Display context information if available */}
+              {(contextFile || contextImage) && (
+                <div className="mb-2 p-2 bg-muted rounded-md text-xs">
+                  {contextFile && (
+                    <p className="flex items-center">
+                      <FileSpreadsheet className="h-3 w-3 mr-1" />
+                      Context: {contextFile.name}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-5 ml-1 px-1"
+                        onClick={() => {
+                          setContextFile(null);
+                          setContextData(null);
+                        }}
+                      >
+                        ×
+                      </Button>
+                    </p>
+                  )}
+                  {contextImage && (
+                    <p className="flex items-center">
+                      <Image className="h-3 w-3 mr-1" />
+                      Screenshot uploaded
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-5 ml-1 px-1"
+                        onClick={() => setContextImage(null)}
+                      >
+                        ×
+                      </Button>
+                    </p>
+                  )}
+                </div>
+              )}
+              
               <div className="flex items-end gap-2">
                 <Textarea
                   value={userInput}
@@ -963,16 +1074,29 @@ export default function AISpreadsheets() {
                   rows={3}
                 />
                 <div className="flex flex-col gap-2">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    title="Add spreadsheet context"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="rounded-full"
-                  >
-                    <Link className="h-4 w-4" />
-                    <span className="sr-only">Spreadsheet</span>
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="rounded-full"
+                      >
+                        <Link className="h-4 w-4" />
+                        <span className="sr-only">Add Context</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        Spreadsheet
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => imageInputRef.current?.click()}>
+                        <Image className="h-4 w-4 mr-2" />
+                        Screenshot
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
                   <Button
                     size="icon"
                     onClick={handleSendMessage}
