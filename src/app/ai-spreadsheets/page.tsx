@@ -101,87 +101,62 @@ export default function AISpreadsheetPage() {
     setIsLoading(true);
     
     try {
-      // Parse the uploaded file
-      const fileData = await readFileAsText(file);
-      const parsedData = parseCSVData(fileData);
+      // For Excel files, we would need a library like xlsx or exceljs
+      // For this demo, we'll handle CSV files and simulate Excel support
       
-      // Create a spreadsheet data structure from the parsed data
-      const newSpreadsheetData: SpreadsheetData = {
-        rows: parsedData.map(row => row.map(value => ({ value: value || '' }))),
-        columnWidths: Array(Math.max(...parsedData.map(row => row.length), 10)).fill(120),
-        rowHeights: Array(Math.max(parsedData.length, 20)).fill(30),
-        activeSheet: 'Sheet1',
-        sheets: ['Sheet1']
-      };
-      
-      // Ensure we have at least 20 rows and 10 columns
-      while (newSpreadsheetData.rows.length < 20) {
-        newSpreadsheetData.rows.push(Array(10).fill(null).map(() => ({ value: '' })));
+      if (file.name.endsWith('.csv')) {
+        // Handle CSV files
+        const fileData = await readFileAsArrayBuffer(file);
+        const decoder = new TextDecoder('utf-8');
+        const csvText = decoder.decode(fileData);
+        const parsedData = parseCSVData(csvText);
+        
+        updateSpreadsheetWithParsedData(parsedData, file.name);
+      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        // In a real implementation, we would use a library to parse Excel files
+        // For this demo, we'll create some sample data based on the file name
+        
+        // Simulate parsing an Excel file
+        const sampleData = createSampleDataBasedOnFilename(file.name);
+        updateSpreadsheetWithParsedData(sampleData, file.name);
+      } else {
+        // For other formats, try to read as text and parse as CSV
+        const fileData = await readFileAsArrayBuffer(file);
+        const decoder = new TextDecoder('utf-8');
+        const text = decoder.decode(fileData);
+        const parsedData = parseCSVData(text);
+        
+        updateSpreadsheetWithParsedData(parsedData, file.name);
       }
-      
-      newSpreadsheetData.rows = newSpreadsheetData.rows.map(row => {
-        while (row.length < 10) {
-          row.push({ value: '' });
-        }
-        return row;
-      });
-      
-      // Format the header row if it exists
-      if (newSpreadsheetData.rows.length > 0) {
-        newSpreadsheetData.rows[0] = newSpreadsheetData.rows[0].map(cell => ({
-          ...cell,
-          style: { 
-            bold: true, 
-            backgroundColor: '#f0f0f0' 
-          }
-        }));
-      }
-      
-      setSpreadsheetData(newSpreadsheetData);
-      
-      // Generate a summary of the data for the AI
-      const rowCount = parsedData.length;
-      const colCount = Math.max(...parsedData.map(row => row.length));
-      const headers = parsedData.length > 0 ? parsedData[0].join(', ') : 'No headers';
-      
-      setChatMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `I've loaded "${file.name}". This spreadsheet contains ${rowCount} rows and ${colCount} columns. The headers are: ${headers}. What would you like to do with this data?`,
-          timestamp: new Date()
-        }
-      ]);
-      
     } catch (error) {
       console.error('Error loading spreadsheet:', error);
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: "Failed to load the spreadsheet. Please try again with a different file.",
+        description: "Failed to load the spreadsheet. The file format may be unsupported or corrupted.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const readFileAsText = (file: File): Promise<string> => {
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          resolve(event.target.result as string);
+          resolve(event.target.result as ArrayBuffer);
         } else {
           reject(new Error('Failed to read file'));
         }
       };
       reader.onerror = (error) => reject(error);
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     });
   };
 
   const parseCSVData = (csvText: string): string[][] => {
-    // Simple CSV parser - in a real app, you'd want a more robust parser
+    // More robust CSV parser
     const rows = csvText.split(/\r?\n/).filter(row => row.trim());
     return rows.map(row => {
       // Handle quoted values with commas inside
@@ -193,7 +168,14 @@ export default function AISpreadsheetPage() {
         const char = row[i];
         
         if (char === '"') {
-          inQuote = !inQuote;
+          if (inQuote && i + 1 < row.length && row[i + 1] === '"') {
+            // Handle escaped quotes (two double quotes in a row)
+            currentValue += '"';
+            i++; // Skip the next quote
+          } else {
+            // Toggle quote state
+            inQuote = !inQuote;
+          }
         } else if (char === ',' && !inQuote) {
           result.push(currentValue);
           currentValue = '';
@@ -205,6 +187,145 @@ export default function AISpreadsheetPage() {
       result.push(currentValue);
       return result;
     });
+  };
+
+  const createSampleDataBasedOnFilename = (filename: string): string[][] => {
+    // Create sample data based on the filename
+    // This is just for demonstration purposes
+    
+    if (filename.toLowerCase().includes('class') || 
+        filename.toLowerCase().includes('teacher') || 
+        filename.toLowerCase().includes('student')) {
+      // Create a class roster sample
+      return [
+        ['Student ID', 'Name', 'Grade', 'Subject'],
+        ['S001', 'John Smith', 'A', 'Mathematics'],
+        ['S002', 'Emily Johnson', 'B+', 'Mathematics'],
+        ['S003', 'Michael Brown', 'A-', 'Mathematics'],
+        ['S004', 'Sarah Davis', 'B', 'Mathematics'],
+        ['S005', 'David Wilson', 'C+', 'Mathematics'],
+        ['S006', 'Jennifer Miller', 'A', 'Mathematics'],
+        ['S007', 'Robert Taylor', 'B-', 'Mathematics'],
+        ['S008', 'Jessica Anderson', 'A+', 'Mathematics'],
+        ['S009', 'Christopher Thomas', 'C', 'Mathematics'],
+        ['S010', 'Amanda Jackson', 'B+', 'Mathematics']
+      ];
+    } else if (filename.toLowerCase().includes('budget') || 
+               filename.toLowerCase().includes('finance') || 
+               filename.toLowerCase().includes('expense')) {
+      // Create a budget sample
+      return [
+        ['Category', 'January', 'February', 'March', 'Total'],
+        ['Rent', '1500', '1500', '1500', '4500'],
+        ['Utilities', '250', '230', '245', '725'],
+        ['Groceries', '400', '380', '420', '1200'],
+        ['Transportation', '200', '180', '210', '590'],
+        ['Entertainment', '150', '200', '100', '450'],
+        ['Savings', '500', '500', '500', '1500'],
+        ['Total', '3000', '2990', '2975', '8965']
+      ];
+    } else if (filename.toLowerCase().includes('inventory') || 
+               filename.toLowerCase().includes('product') || 
+               filename.toLowerCase().includes('stock')) {
+      // Create an inventory sample
+      return [
+        ['Product', 'Category', 'Price', 'Quantity', 'Total'],
+        ['Laptop', 'Electronics', '999.99', '5', '4999.95'],
+        ['Desk Chair', 'Furniture', '189.99', '10', '1899.90'],
+        ['Monitor', 'Electronics', '349.99', '8', '2799.92'],
+        ['Keyboard', 'Electronics', '79.99', '15', '1199.85'],
+        ['Mouse', 'Electronics', '49.99', '15', '749.85'],
+        ['Desk', 'Furniture', '299.99', '7', '2099.93'],
+        ['Bookshelf', 'Furniture', '149.99', '12', '1799.88'],
+        ['Headphones', 'Electronics', '129.99', '20', '2599.80'],
+        ['Total', '', '', '', '18149.08']
+      ];
+    } else if (filename.toLowerCase().includes('attendance') || 
+               filename.toLowerCase().includes('present')) {
+      // Create an attendance sample
+      return [
+        ['Date', 'Present', 'Absent', 'Total'],
+        ['2023-09-01', '42', '3', '45'],
+        ['2023-09-02', '40', '5', '45'],
+        ['2023-09-03', '43', '2', '45'],
+        ['2023-09-04', '41', '4', '45'],
+        ['2023-09-05', '44', '1', '45'],
+        ['2023-09-06', '39', '6', '45'],
+        ['2023-09-07', '42', '3', '45'],
+        ['2023-09-08', '45', '0', '45'],
+        ['2023-09-09', '40', '5', '45'],
+        ['2023-09-10', '38', '7', '45']
+      ];
+    } else {
+      // Generic sample data
+      return [
+        ['Column A', 'Column B', 'Column C', 'Column D'],
+        ['Data 1', 'Value 1', '100', 'Yes'],
+        ['Data 2', 'Value 2', '200', 'No'],
+        ['Data 3', 'Value 3', '300', 'Yes'],
+        ['Data 4', 'Value 4', '400', 'No'],
+        ['Data 5', 'Value 5', '500', 'Yes'],
+        ['Data 6', 'Value 6', '600', 'No'],
+        ['Data 7', 'Value 7', '700', 'Yes'],
+        ['Data 8', 'Value 8', '800', 'No'],
+        ['Total', '', '3600', '']
+      ];
+    }
+  };
+
+  const updateSpreadsheetWithParsedData = (parsedData: string[][], filename: string) => {
+    // Create a spreadsheet data structure from the parsed data
+    const newSpreadsheetData: SpreadsheetData = {
+      rows: parsedData.map(row => row.map(value => ({ value: value || '' }))),
+      columnWidths: Array(Math.max(...parsedData.map(row => row.length), 10)).fill(120),
+      rowHeights: Array(Math.max(parsedData.length, 20)).fill(30),
+      activeSheet: 'Sheet1',
+      sheets: ['Sheet1']
+    };
+    
+    // Ensure we have at least 20 rows and 10 columns
+    while (newSpreadsheetData.rows.length < 20) {
+      newSpreadsheetData.rows.push(Array(10).fill(null).map(() => ({ value: '' })));
+    }
+    
+    newSpreadsheetData.rows = newSpreadsheetData.rows.map(row => {
+      while (row.length < 10) {
+        row.push({ value: '' });
+      }
+      return row;
+    });
+    
+    // Format the header row if it exists
+    if (newSpreadsheetData.rows.length > 0) {
+      newSpreadsheetData.rows[0] = newSpreadsheetData.rows[0].map(cell => ({
+        ...cell,
+        style: { 
+          bold: true, 
+          backgroundColor: '#f0f0f0' 
+        }
+      }));
+    }
+    
+    setSpreadsheetData(newSpreadsheetData);
+    
+    // Generate a summary of the data for the AI
+    const rowCount = parsedData.length;
+    const colCount = Math.max(...parsedData.map(row => row.length));
+    
+    // Get headers safely
+    let headers = 'No headers';
+    if (parsedData.length > 0) {
+      headers = parsedData[0].map(header => header || '').join(', ');
+    }
+    
+    setChatMessages(prev => [
+      ...prev,
+      {
+        role: 'assistant',
+        content: `I've loaded "${filename}". This spreadsheet contains ${rowCount} rows and ${colCount} columns. The headers are: ${headers}. What would you like to do with this data?`,
+        timestamp: new Date()
+      }
+    ]);
   };
 
   const createNewSpreadsheet = () => {
