@@ -30,6 +30,6 @@ export interface SpreadsheetOperation {
 }
 
 export interface AISpreadsheetResponse {
-  message: string;
-  operations?: SpreadsheetOperation[];
+  operations: SpreadsheetOperation[];
+  explanation: string;
 }

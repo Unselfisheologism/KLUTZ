@@ -41,6 +41,11 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+interface SpreadsheetOperation {
+  type: string;
+  details: any;
+}
+
 export default function AISpreadsheetPage() {
   const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetData>({
     rows: Array(20).fill(null).map(() => Array(10).fill(null).map(() => ({ value: '' }))),
@@ -347,18 +352,25 @@ export default function AISpreadsheetPage() {
         
         The user's request is: "${userInput}"
         
-        First, analyze what changes need to be made to the spreadsheet. Then, implement those changes directly.
+        Analyze what changes need to be made to the spreadsheet. I will implement these changes directly based on your analysis.
         
-        If the user wants to find and replace text (like "HINDI-PCMB" to "COMMERCE-PCM"), perform this operation on all cells.
-        If the user wants to add a column, add it with appropriate headers.
-        If the user wants to sort data, sort it according to their criteria.
-        If the user wants to calculate totals or perform other calculations, do so.
+        Return your response in JSON format with these fields:
+        {
+          "operations": [
+            {
+              "type": "find_replace", // or "add_column", "add_row", "update_cell", "format_cells", etc.
+              "details": {
+                // Specific details for each operation type
+                // For find_replace: { "find": "text to find", "replace": "replacement text" }
+                // For add_column: { "header": "column name", "position": 3, "values": ["val1", "val2"] }
+                // For update_cell: { "row": 2, "col": 3, "value": "new value" }
+              }
+            }
+          ],
+          "explanation": "A clear explanation of what changes should be made"
+        }
         
-        After making the changes, explain what you did in a conversational tone.
-        
-        Return your response in this format:
-        1. A clear explanation of what changes you made
-        2. Any insights or recommendations based on the data
+        If you can't determine specific operations, just provide an explanation field with your response.
       `;
       
       const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
@@ -368,79 +380,215 @@ export default function AISpreadsheetPage() {
       }
       
       // Process the AI's response to actually modify the spreadsheet
-      const aiResponse = response.message.content;
+      const aiResponseText = response.message.content;
+      let aiResponse;
+      let operations: SpreadsheetOperation[] = [];
+      let explanation = "";
       
-      // Implement the actual spreadsheet modifications based on user request
+      try {
+        // Try to parse the JSON response
+        const jsonStart = aiResponseText.indexOf('{');
+        const jsonEnd = aiResponseText.lastIndexOf('}') + 1;
+        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+          const jsonStr = aiResponseText.substring(jsonStart, jsonEnd);
+          aiResponse = JSON.parse(jsonStr);
+          operations = aiResponse.operations || [];
+          explanation = aiResponse.explanation || aiResponseText;
+        } else {
+          explanation = aiResponseText;
+        }
+      } catch (error) {
+        console.error("Failed to parse AI response as JSON:", error);
+        explanation = aiResponseText;
+      }
+      
+      // Implement the actual spreadsheet modifications based on operations
       let updatedSpreadsheet = { ...spreadsheetData };
+      let operationsPerformed = false;
       
-      // Find and replace operation
-      if (userInput.toLowerCase().includes('change') && 
-          userInput.toLowerCase().includes('hindi-pcmb') && 
-          userInput.toLowerCase().includes('commerce-pcm')) {
-        
-        // Perform find and replace across all cells
-        updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
-          row.map(cell => ({
-            ...cell,
-            value: cell.value.replace(/HINDI-PCMB/g, 'COMMERCE-PCM')
-          }))
-        );
-        
-        // Add a confirmation message
-        setChatMessages(prev => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: `I've replaced all instances of "HINDI-PCMB" with "COMMERCE-PCM" throughout the spreadsheet.`,
-            timestamp: new Date()
+      // Process each operation
+      for (const operation of operations) {
+        switch (operation.type) {
+          case 'find_replace':
+            if (operation.details?.find && operation.details?.replace) {
+              const findText = operation.details.find;
+              const replaceText = operation.details.replace;
+              
+              // Perform find and replace across all cells
+              updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
+                row.map(cell => ({
+                  ...cell,
+                  value: cell.value.replace(new RegExp(findText, 'g'), replaceText)
+                }))
+              );
+              operationsPerformed = true;
+            }
+            break;
+            
+          case 'add_column':
+            if (operation.details?.header) {
+              const header = operation.details.header;
+              const position = operation.details.position || updatedSpreadsheet.rows[0].length;
+              const values = operation.details.values || [];
+              
+              // Add a new column
+              updatedSpreadsheet.rows = updatedSpreadsheet.rows.map((row, rowIndex) => {
+                const newRow = [...row];
+                if (rowIndex === 0) {
+                  // Add header
+                  newRow.splice(position, 0, { 
+                    value: header, 
+                    style: { bold: true, backgroundColor: '#f0f0f0' } 
+                  });
+                } else {
+                  // Add value or empty cell
+                  const value = rowIndex - 1 < values.length ? values[rowIndex - 1] : '';
+                  newRow.splice(position, 0, { value: String(value) });
+                }
+                return newRow;
+              });
+              
+              // Update column widths
+              if (updatedSpreadsheet.columnWidths) {
+                updatedSpreadsheet.columnWidths.splice(position, 0, 120);
+              }
+              
+              operationsPerformed = true;
+            }
+            break;
+            
+          case 'update_cell':
+            if (operation.details?.row !== undefined && 
+                operation.details?.col !== undefined && 
+                operation.details?.value !== undefined) {
+              
+              const row = operation.details.row;
+              const col = operation.details.col;
+              const value = operation.details.value;
+              
+              // Make sure the row and column exist
+              if (row >= 0 && row < updatedSpreadsheet.rows.length &&
+                  col >= 0 && col < updatedSpreadsheet.rows[row].length) {
+                
+                updatedSpreadsheet.rows[row][col] = {
+                  ...updatedSpreadsheet.rows[row][col],
+                  value: String(value)
+                };
+                
+                operationsPerformed = true;
+              }
+            }
+            break;
+            
+          case 'format_cells':
+            if (operation.details?.cells && operation.details?.style) {
+              const cells = operation.details.cells;
+              const style = operation.details.style;
+              
+              for (const cell of cells) {
+                const { row, col } = cell;
+                
+                // Make sure the row and column exist
+                if (row >= 0 && row < updatedSpreadsheet.rows.length &&
+                    col >= 0 && col < updatedSpreadsheet.rows[row].length) {
+                  
+                  updatedSpreadsheet.rows[row][col] = {
+                    ...updatedSpreadsheet.rows[row][col],
+                    style: {
+                      ...updatedSpreadsheet.rows[row][col].style,
+                      ...style
+                    }
+                  };
+                }
+              }
+              
+              operationsPerformed = true;
+            }
+            break;
+            
+          // Add more operation types as needed
+        }
+      }
+      
+      // If no operations were performed but we have a user request that looks like a find/replace
+      if (!operationsPerformed) {
+        // Handle common operations based on user input patterns
+        if (userInput.toLowerCase().includes('change') || 
+            userInput.toLowerCase().includes('replace')) {
+          
+          // Try to extract find and replace terms
+          const findReplacePattern = /change\s+["']?([^"']+)["']?\s+to\s+["']?([^"']+)["']?/i;
+          const match = userInput.match(findReplacePattern);
+          
+          if (match && match.length >= 3) {
+            const findText = match[1].trim();
+            const replaceText = match[2].trim();
+            
+            // Perform find and replace across all cells
+            updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
+              row.map(cell => ({
+                ...cell,
+                value: cell.value.replace(new RegExp(findText, 'g'), replaceText)
+              }))
+            );
+            
+            operationsPerformed = true;
+            explanation = `I've replaced all instances of "${findText}" with "${replaceText}" throughout the spreadsheet.`;
           }
-        ]);
-      } 
-      else if (userInput.toLowerCase().includes('add') && 
-               userInput.toLowerCase().includes('column') &&
-               userInput.toLowerCase().includes('lcd monitor')) {
+        }
         
-        // Add a new column for LCD Monitor
-        const newRows = updatedSpreadsheet.rows.map((row, rowIndex) => {
-          const newRow = [...row];
-          if (rowIndex === 0) {
-            // Add header
-            newRow.push({ 
-              value: 'LCD Monitor', 
-              style: { bold: true, backgroundColor: '#f0f0f0' } 
+        // Handle adding a column
+        else if (userInput.toLowerCase().includes('add') && 
+                 userInput.toLowerCase().includes('column')) {
+          
+          // Try to extract column name
+          const columnNamePattern = /add\s+(?:a\s+)?column\s+(?:for|called|named|with header)\s+["']?([^"']+)["']?/i;
+          const match = userInput.match(columnNamePattern);
+          
+          if (match && match.length >= 2) {
+            const columnName = match[1].trim();
+            
+            // Add a new column
+            updatedSpreadsheet.rows = updatedSpreadsheet.rows.map((row, rowIndex) => {
+              const newRow = [...row];
+              if (rowIndex === 0) {
+                // Add header
+                newRow.push({ 
+                  value: columnName, 
+                  style: { bold: true, backgroundColor: '#f0f0f0' } 
+                });
+              } else {
+                // Add empty cell
+                newRow.push({ value: '' });
+              }
+              return newRow;
             });
-          } else {
-            // Add empty cell
-            newRow.push({ value: '' });
+            
+            // Update column widths
+            if (updatedSpreadsheet.columnWidths) {
+              updatedSpreadsheet.columnWidths.push(120);
+            }
+            
+            operationsPerformed = true;
+            explanation = `I've added a new column titled "${columnName}" to your spreadsheet.`;
           }
-          return newRow;
-        });
-        
-        updatedSpreadsheet.rows = newRows;
-        updatedSpreadsheet.columnWidths = [...(updatedSpreadsheet.columnWidths || []), 120];
-        
-        setChatMessages(prev => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: `I've added a new column titled "LCD Monitor" to your spreadsheet.`,
-            timestamp: new Date()
-          }
-        ]);
-      }
-      else {
-        // For other requests, just provide the AI response without modifying the spreadsheet
-        setChatMessages(prev => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: aiResponse,
-            timestamp: new Date()
-          }
-        ]);
+        }
       }
       
-      setSpreadsheetData(updatedSpreadsheet);
+      // Update the spreadsheet if operations were performed
+      if (operationsPerformed) {
+        setSpreadsheetData(updatedSpreadsheet);
+      }
+      
+      // Add the AI's response to the chat
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: explanation,
+          timestamp: new Date()
+        }
+      ]);
       
     } catch (err: any) {
       console.error("AI chat error:", err);
