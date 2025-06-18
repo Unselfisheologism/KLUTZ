@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github } from 'lucide-react';
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
 interface Feature {
@@ -114,6 +114,13 @@ const features: Feature[] = [
     title: 'AI Text-to-Image Generator',
     description: 'Generate high-quality images from text descriptions using advanced AI technology.',
     href: '/text-to-image-generator',
+    isImplemented: true,
+  },
+  {
+    icon: FileSpreadsheet,
+    title: 'AI-Native Spreadsheets',
+    description: 'Create and modify spreadsheets through natural language with an AI assistant that understands your data.',
+    href: '/ai-spreadsheets',
     isImplemented: true,
   },
 ];
