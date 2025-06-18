@@ -288,6 +288,22 @@ export default function AISpreadsheetPage() {
         }));
       }
       
+      if (userInput.toLowerCase().includes('add') && 
+          userInput.toLowerCase().includes('column') &&
+          userInput.toLowerCase().includes('monitor')) {
+        // Simulate adding a new column for monitors
+        updatedSpreadsheet.rows[0][5] = { value: 'LCD Monitor', style: { bold: true, backgroundColor: '#f0f0f0' } };
+        updatedSpreadsheet.rows[1][5] = { value: '1' };
+        updatedSpreadsheet.rows[2][5] = { value: '0' };
+        updatedSpreadsheet.rows[3][5] = { value: '8' };
+        updatedSpreadsheet.rows[4][5] = { value: '0' };
+        updatedSpreadsheet.rows[5][5] = { value: '0' };
+        updatedSpreadsheet.rows[6][5] = { value: '0' };
+        updatedSpreadsheet.rows[7][5] = { value: '0' };
+        updatedSpreadsheet.rows[8][5] = { value: '0' };
+        updatedSpreadsheet.rows[9][5] = { value: '9' };
+      }
+      
       setSpreadsheetData(updatedSpreadsheet);
       
       setChatMessages(prev => [
@@ -608,105 +624,6 @@ export default function AISpreadsheetPage() {
               </ul>
             </AlertDescription>
           </Alert>
-        </div>
-        
-        {/* Blog Section */}
-        <div className="mt-12 max-w-3xl mx-auto prose dark:prose-invert">
-          <h2>AI-Native Spreadsheets: The Future of Data Analysis and Management</h2>
-          
-          <p>
-            In today's data-driven world, spreadsheets remain an essential tool for businesses and individuals alike. 
-            However, traditional spreadsheet applications often require specialized knowledge and can be time-consuming 
-            to use effectively. AI-Native Spreadsheets represents a revolutionary approach that combines the power of 
-            artificial intelligence with the familiar spreadsheet interface, making data analysis and management more 
-            accessible and efficient than ever before.
-          </p>
-          
-          <h3>What Makes AI-Native Spreadsheets Different?</h3>
-          
-          <p>
-            Unlike conventional spreadsheet software that requires manual formula creation and data manipulation, 
-            AI-Native Spreadsheets allows users to interact with their data through natural language. Simply tell 
-            the AI what you want to accomplish, and it will handle the technical details for you. This conversational 
-            approach democratizes data analysis, making it accessible to users regardless of their technical expertise.
-          </p>
-          
-          <h3>Key Features and Benefits</h3>
-          
-          <h4>Natural Language Data Analysis</h4>
-          <p>
-            Instead of memorizing complex formulas or functions, users can simply ask questions like "What's the average 
-            sales for Q2?" or "Show me the trend of expenses over the last 12 months." The AI understands these requests 
-            and performs the necessary calculations automatically.
-          </p>
-          
-          <h4>Automated Data Formatting and Visualization</h4>
-          <p>
-            Creating professional-looking spreadsheets with proper formatting and visualizations is now as simple as 
-            asking. Request "Format the header row in blue and make it bold" or "Create a pie chart showing sales by 
-            category," and the AI will implement these changes instantly.
-          </p>
-          
-          <h4>Data Cleaning and Transformation</h4>
-          <p>
-            Dealing with messy data is a common challenge. AI-Native Spreadsheets can automatically detect and fix 
-            inconsistencies, remove duplicates, standardize formats, and transform data based on simple instructions 
-            like "Clean up the customer names" or "Convert these dates to MM/DD/YYYY format."
-          </p>
-          
-          <h4>Intelligent Suggestions and Insights</h4>
-          <p>
-            The AI doesn't just respond to requests—it proactively offers insights and suggestions based on your data. 
-            It might identify outliers, suggest correlations you hadn't noticed, or recommend visualizations that would 
-            best represent your data.
-          </p>
-          
-          <h3>Use Cases</h3>
-          
-          <h4>Business Analytics</h4>
-          <p>
-            Business users can quickly analyze sales data, track performance metrics, and generate reports without 
-            needing to be spreadsheet experts. Ask questions like "What were our top-selling products last quarter?" 
-            or "Compare this year's revenue to last year's by month."
-          </p>
-          
-          <h4>Financial Planning</h4>
-          <p>
-            Create and manage budgets, forecast expenses, and analyze financial data with ease. The AI can help with 
-            complex calculations and provide insights on spending patterns or investment opportunities.
-          </p>
-          
-          <h4>Project Management</h4>
-          <p>
-            Track project timelines, resource allocation, and budgets through simple conversations with the AI. 
-            Ask it to "Show me which team members are overallocated" or "Calculate the projected completion date 
-            based on current progress."
-          </p>
-          
-          <h4>Academic Research</h4>
-          <p>
-            Researchers can focus on interpreting results rather than manipulating data. The AI can help with 
-            statistical analysis, data normalization, and visualization of research findings.
-          </p>
-          
-          <h3>Getting Started</h3>
-          
-          <p>
-            Using AI-Native Spreadsheets is simple:
-          </p>
-          
-          <ol>
-            <li>Upload an existing spreadsheet or start from scratch</li>
-            <li>Describe what you want to do in the chat interface</li>
-            <li>Watch as the AI implements your requests in real-time</li>
-            <li>Download your completed spreadsheet when you're finished</li>
-          </ol>
-          
-          <p>
-            Whether you're a spreadsheet novice or an experienced data analyst, AI-Native Spreadsheets offers a more 
-            intuitive and efficient way to work with your data. Try it today and experience the future of spreadsheet 
-            technology.
-          </p>
         </div>
       </div>
     </>
