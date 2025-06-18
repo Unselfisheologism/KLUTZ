@@ -430,10 +430,32 @@ export default function AISpreadsheetPage() {
 
   const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
     const newData = { ...spreadsheetData };
+    
+    // Ensure the row exists
+    while (newData.rows.length <= rowIndex) {
+      newData.rows.push(Array(newData.rows[0].length).fill(null).map(() => ({ value: '' })));
+      if (newData.rowHeights) {
+        newData.rowHeights.push(30);
+      }
+    }
+    
+    // Ensure the column exists
+    while (newData.rows[rowIndex].length <= colIndex) {
+      // Add column to all rows to maintain rectangular grid
+      newData.rows.forEach(row => {
+        row.push({ value: '' });
+      });
+      
+      if (newData.columnWidths) {
+        newData.columnWidths.push(120);
+      }
+    }
+    
     newData.rows[rowIndex][colIndex] = { 
       ...newData.rows[rowIndex][colIndex],
       value 
     };
+    
     setSpreadsheetData(newData);
   };
 
@@ -565,6 +587,16 @@ export default function AISpreadsheetPage() {
                 : updatedSpreadsheet.rows[0].length;
               const values = operation.details.values || [];
               
+              // Ensure we have enough rows for all values
+              while (updatedSpreadsheet.rows.length < values.length + 1) { // +1 for header
+                updatedSpreadsheet.rows.push(
+                  Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
+                );
+                if (updatedSpreadsheet.rowHeights) {
+                  updatedSpreadsheet.rowHeights.push(30);
+                }
+              }
+              
               // Add a new column
               updatedSpreadsheet.rows = updatedSpreadsheet.rows.map((row, rowIndex) => {
                 const newRow = [...row];
@@ -599,8 +631,26 @@ export default function AISpreadsheetPage() {
                 : updatedSpreadsheet.rows.length;
               const values = operation.details.values || [];
               
+              // Ensure we have enough columns for all values
+              const maxColumns = Math.max(updatedSpreadsheet.rows[0].length, values.length);
+              
+              // Expand all rows to have the same number of columns
+              updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => {
+                while (row.length < maxColumns) {
+                  row.push({ value: '' });
+                }
+                return row;
+              });
+              
+              // Update column widths if needed
+              if (updatedSpreadsheet.columnWidths) {
+                while (updatedSpreadsheet.columnWidths.length < maxColumns) {
+                  updatedSpreadsheet.columnWidths.push(120);
+                }
+              }
+              
               // Create a new row with the provided values
-              const newRow = Array(updatedSpreadsheet.rows[0].length).fill(null).map((_, index) => ({
+              const newRow = Array(maxColumns).fill(null).map((_, index) => ({
                 value: index < values.length ? String(values[index] || '') : ''
               }));
               
@@ -625,17 +675,33 @@ export default function AISpreadsheetPage() {
               const col = operation.details.col;
               const value = operation.details.value;
               
-              // Make sure the row and column exist
-              if (row >= 0 && row < updatedSpreadsheet.rows.length &&
-                  col >= 0 && col < updatedSpreadsheet.rows[row].length) {
-                
-                updatedSpreadsheet.rows[row][col] = {
-                  ...updatedSpreadsheet.rows[row][col],
-                  value: String(value)
-                };
-                
-                operationsPerformed = true;
+              // Ensure the row and column exist
+              while (updatedSpreadsheet.rows.length <= row) {
+                updatedSpreadsheet.rows.push(
+                  Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
+                );
+                if (updatedSpreadsheet.rowHeights) {
+                  updatedSpreadsheet.rowHeights.push(30);
+                }
               }
+              
+              while (updatedSpreadsheet.rows[0].length <= col) {
+                // Add column to all rows to maintain rectangular grid
+                updatedSpreadsheet.rows.forEach(r => {
+                  r.push({ value: '' });
+                });
+                
+                if (updatedSpreadsheet.columnWidths) {
+                  updatedSpreadsheet.columnWidths.push(120);
+                }
+              }
+              
+              updatedSpreadsheet.rows[row][col] = {
+                ...updatedSpreadsheet.rows[row][col],
+                value: String(value)
+              };
+              
+              operationsPerformed = true;
             }
             break;
             
@@ -708,18 +774,34 @@ export default function AISpreadsheetPage() {
               for (const cell of cells) {
                 const { row, col } = cell;
                 
-                // Make sure the row and column exist
-                if (row >= 0 && row < updatedSpreadsheet.rows.length &&
-                    col >= 0 && col < updatedSpreadsheet.rows[row].length) {
-                  
-                  updatedSpreadsheet.rows[row][col] = {
-                    ...updatedSpreadsheet.rows[row][col],
-                    style: {
-                      ...updatedSpreadsheet.rows[row][col].style,
-                      ...style
-                    }
-                  };
+                // Ensure the row and column exist
+                while (updatedSpreadsheet.rows.length <= row) {
+                  updatedSpreadsheet.rows.push(
+                    Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
+                  );
+                  if (updatedSpreadsheet.rowHeights) {
+                    updatedSpreadsheet.rowHeights.push(30);
+                  }
                 }
+                
+                while (updatedSpreadsheet.rows[0].length <= col) {
+                  // Add column to all rows to maintain rectangular grid
+                  updatedSpreadsheet.rows.forEach(r => {
+                    r.push({ value: '' });
+                  });
+                  
+                  if (updatedSpreadsheet.columnWidths) {
+                    updatedSpreadsheet.columnWidths.push(120);
+                  }
+                }
+                
+                updatedSpreadsheet.rows[row][col] = {
+                  ...updatedSpreadsheet.rows[row][col],
+                  style: {
+                    ...updatedSpreadsheet.rows[row][col].style,
+                    ...style
+                  }
+                };
               }
               
               operationsPerformed = true;
@@ -734,32 +816,56 @@ export default function AISpreadsheetPage() {
               // Generate dummy data
               const dummyData = generateDummyData(headers, rowCount);
               
+              // Ensure we have enough rows and columns
+              const requiredRows = rowCount + 1; // +1 for header
+              const requiredCols = headers.length;
+              
+              // Expand rows if needed
+              while (updatedSpreadsheet.rows.length < requiredRows) {
+                updatedSpreadsheet.rows.push(
+                  Array(Math.max(updatedSpreadsheet.rows[0].length, requiredCols)).fill(null).map(() => ({ value: '' }))
+                );
+                if (updatedSpreadsheet.rowHeights) {
+                  updatedSpreadsheet.rowHeights.push(30);
+                }
+              }
+              
+              // Expand columns if needed
+              if (requiredCols > updatedSpreadsheet.rows[0].length) {
+                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => {
+                  while (row.length < requiredCols) {
+                    row.push({ value: '' });
+                  }
+                  return row;
+                });
+                
+                if (updatedSpreadsheet.columnWidths) {
+                  while (updatedSpreadsheet.columnWidths.length < requiredCols) {
+                    updatedSpreadsheet.columnWidths.push(120);
+                  }
+                }
+              }
+              
               // Clear existing data if needed
               if (operation.details.clear) {
-                updatedSpreadsheet.rows = Array(20).fill(null).map(() => 
-                  Array(10).fill(null).map(() => ({ value: '' }))
+                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
+                  row.map(() => ({ value: '' }))
                 );
               }
               
               // Add headers
               headers.forEach((header, index) => {
-                if (index < updatedSpreadsheet.rows[0].length) {
-                  updatedSpreadsheet.rows[0][index] = {
-                    value: header,
-                    style: { bold: true, backgroundColor: '#f0f0f0' }
-                  };
-                }
+                updatedSpreadsheet.rows[0][index] = {
+                  value: header,
+                  style: { bold: true, backgroundColor: '#f0f0f0' }
+                };
               });
               
               // Add data rows
               dummyData.forEach((row, rowIndex) => {
-                if (rowIndex + 1 < updatedSpreadsheet.rows.length) {
-                  row.forEach((value, colIndex) => {
-                    if (colIndex < updatedSpreadsheet.rows[0].length) {
-                      updatedSpreadsheet.rows[rowIndex + 1][colIndex] = { value };
-                    }
-                  });
-                }
+                row.forEach((value, colIndex) => {
+                  updatedSpreadsheet.rows[rowIndex + 1][colIndex] = { value };
+                });
               });
               
               operationsPerformed = true;
@@ -773,14 +879,31 @@ export default function AISpreadsheetPage() {
               if (range) {
                 const { startRow, endRow, startCol, endCol } = range;
                 
+                // Ensure the rows and columns exist
+                while (updatedSpreadsheet.rows.length <= endRow) {
+                  updatedSpreadsheet.rows.push(
+                    Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
+                  );
+                  if (updatedSpreadsheet.rowHeights) {
+                    updatedSpreadsheet.rowHeights.push(30);
+                  }
+                }
+                
+                while (updatedSpreadsheet.rows[0].length <= endCol) {
+                  // Add column to all rows to maintain rectangular grid
+                  updatedSpreadsheet.rows.forEach(r => {
+                    r.push({ value: '' });
+                  });
+                  
+                  if (updatedSpreadsheet.columnWidths) {
+                    updatedSpreadsheet.columnWidths.push(120);
+                  }
+                }
+                
                 // Clear the specified range
                 for (let r = startRow; r <= endRow; r++) {
-                  if (r < updatedSpreadsheet.rows.length) {
-                    for (let c = startCol; c <= endCol; c++) {
-                      if (c < updatedSpreadsheet.rows[r].length) {
-                        updatedSpreadsheet.rows[r][c] = { value: '' };
-                      }
-                    }
+                  for (let c = startCol; c <= endCol; c++) {
+                    updatedSpreadsheet.rows[r][c] = { value: '' };
                   }
                 }
               } else if (operation.details.all) {
@@ -870,14 +993,24 @@ export default function AISpreadsheetPage() {
           // Default headers
           const headers = ['Name', 'Age', 'Email'];
           
+          // Ensure we have enough columns
+          while (updatedSpreadsheet.rows[0].length < headers.length) {
+            // Add column to all rows
+            updatedSpreadsheet.rows.forEach(row => {
+              row.push({ value: '' });
+            });
+            
+            if (updatedSpreadsheet.columnWidths) {
+              updatedSpreadsheet.columnWidths.push(120);
+            }
+          }
+          
           // Add headers
           headers.forEach((header, index) => {
-            if (index < updatedSpreadsheet.rows[0].length) {
-              updatedSpreadsheet.rows[0][index] = {
-                value: header,
-                style: { bold: true, backgroundColor: '#f0f0f0' }
-              };
-            }
+            updatedSpreadsheet.rows[0][index] = {
+              value: header,
+              style: { bold: true, backgroundColor: '#f0f0f0' }
+            };
           });
           
           // Generate dummy data
@@ -887,10 +1020,18 @@ export default function AISpreadsheetPage() {
           dummyData.forEach((row, rowIndex) => {
             if (rowIndex + 1 < updatedSpreadsheet.rows.length) {
               row.forEach((value, colIndex) => {
-                if (colIndex < updatedSpreadsheet.rows[0].length) {
-                  updatedSpreadsheet.rows[rowIndex + 1][colIndex] = { value };
-                }
+                updatedSpreadsheet.rows[rowIndex + 1][colIndex] = { value };
               });
+            } else {
+              // Add new row if needed
+              const newRow = Array(updatedSpreadsheet.rows[0].length).fill(null).map((_, colIndex) => ({
+                value: colIndex < row.length ? row[colIndex] : ''
+              }));
+              updatedSpreadsheet.rows.push(newRow);
+              
+              if (updatedSpreadsheet.rowHeights) {
+                updatedSpreadsheet.rowHeights.push(30);
+              }
             }
           });
           
