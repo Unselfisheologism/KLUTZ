@@ -25,7 +25,7 @@ export interface ChatMessage {
 }
 
 export interface SpreadsheetOperation {
-  type: 'update_cell' | 'update_row' | 'update_column' | 'add_row' | 'add_column' | 'delete_row' | 'delete_column' | 'format' | 'create_chart';
+  type: 'update_cell' | 'update_row' | 'update_column' | 'add_row' | 'add_column' | 'delete_row' | 'delete_column' | 'format' | 'create_chart' | 'find_replace';
   details: any; // Specific details for each operation type
 }
 

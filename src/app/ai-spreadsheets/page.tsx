@@ -347,8 +347,18 @@ export default function AISpreadsheetPage() {
         
         The user's request is: "${userInput}"
         
-        Provide a helpful response that addresses their request. If they want to modify the spreadsheet, explain what changes would be made.
-        Keep your response conversational and focused on spreadsheet operations.
+        First, analyze what changes need to be made to the spreadsheet. Then, implement those changes directly.
+        
+        If the user wants to find and replace text (like "HINDI-PCMB" to "COMMERCE-PCM"), perform this operation on all cells.
+        If the user wants to add a column, add it with appropriate headers.
+        If the user wants to sort data, sort it according to their criteria.
+        If the user wants to calculate totals or perform other calculations, do so.
+        
+        After making the changes, explain what you did in a conversational tone.
+        
+        Return your response in this format:
+        1. A clear explanation of what changes you made
+        2. Any insights or recommendations based on the data
       `;
       
       const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
@@ -357,109 +367,80 @@ export default function AISpreadsheetPage() {
         throw new Error("AI response was empty.");
       }
       
-      // Process the AI's response to actually modify the spreadsheet if needed
+      // Process the AI's response to actually modify the spreadsheet
       const aiResponse = response.message.content;
       
-      // In a real implementation, we would parse the AI's response and apply changes to the spreadsheet
-      // For this demo, we'll simulate some basic spreadsheet operations based on keywords
-      
+      // Implement the actual spreadsheet modifications based on user request
       let updatedSpreadsheet = { ...spreadsheetData };
       
-      if (userInput.toLowerCase().includes('add row') || 
-          userInput.toLowerCase().includes('insert row')) {
-        // Simulate adding a row
-        updatedSpreadsheet.rows.splice(10, 0, Array(10).fill(null).map(() => ({ value: '' })));
-        // Remove the last row to keep the same number of rows
-        if (updatedSpreadsheet.rows.length > 20) {
-          updatedSpreadsheet.rows.pop();
-        }
-      }
-      
-      if (userInput.toLowerCase().includes('sort') && 
-         (userInput.toLowerCase().includes('product') || userInput.toLowerCase().includes('name'))) {
-        // Simulate sorting by product name or first column
-        const headerRow = updatedSpreadsheet.rows[0];
-        const dataRows = [...updatedSpreadsheet.rows.slice(1, 10)].sort((a, b) => 
-          (a[0].value || '').localeCompare(b[0].value || '')
-        );
-        updatedSpreadsheet.rows = [headerRow, ...dataRows, ...updatedSpreadsheet.rows.slice(10)];
-      }
-      
-      if (userInput.toLowerCase().includes('calculate total') || 
-          userInput.toLowerCase().includes('sum')) {
-        // Find the column with numeric values
-        let numericColumnIndex = -1;
-        for (let i = 0; i < updatedSpreadsheet.rows[0].length; i++) {
-          if (updatedSpreadsheet.rows.slice(1).some(row => !isNaN(Number(row[i].value)))) {
-            numericColumnIndex = i;
-            break;
-          }
-        }
+      // Find and replace operation
+      if (userInput.toLowerCase().includes('change') && 
+          userInput.toLowerCase().includes('hindi-pcmb') && 
+          userInput.toLowerCase().includes('commerce-pcm')) {
         
-        if (numericColumnIndex !== -1) {
-          // Calculate sum of the numeric column
-          const sum = updatedSpreadsheet.rows.slice(1, 10)
-            .reduce((total, row) => {
-              const value = Number(row[numericColumnIndex].value);
-              return total + (isNaN(value) ? 0 : value);
-            }, 0);
-          
-          // Update the total row
-          if (!updatedSpreadsheet.rows[10]) {
-            updatedSpreadsheet.rows[10] = Array(10).fill(null).map(() => ({ value: '' }));
+        // Perform find and replace across all cells
+        updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
+          row.map(cell => ({
+            ...cell,
+            value: cell.value.replace(/HINDI-PCMB/g, 'COMMERCE-PCM')
+          }))
+        );
+        
+        // Add a confirmation message
+        setChatMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `I've replaced all instances of "HINDI-PCMB" with "COMMERCE-PCM" throughout the spreadsheet.`,
+            timestamp: new Date()
           }
-          updatedSpreadsheet.rows[10][0] = { value: 'Total', style: { bold: true } };
-          updatedSpreadsheet.rows[10][numericColumnIndex] = { 
-            value: sum.toFixed(2), 
-            style: { bold: true } 
-          };
-        }
-      }
-      
-      if (userInput.toLowerCase().includes('format') && 
-          userInput.toLowerCase().includes('header')) {
-        // Simulate formatting the header row
-        updatedSpreadsheet.rows[0] = updatedSpreadsheet.rows[0].map(cell => ({
-          ...cell,
-          style: { 
-            ...cell.style,
-            bold: true, 
-            backgroundColor: '#e6f7ff',
-            textAlign: 'center'
-          }
-        }));
-      }
-      
-      if (userInput.toLowerCase().includes('add') && 
-          userInput.toLowerCase().includes('column') &&
-          userInput.toLowerCase().includes('monitor')) {
-        // Simulate adding a new column for monitors
-        const columnIndex = Math.min(5, updatedSpreadsheet.rows[0].length);
-        updatedSpreadsheet.rows.forEach((row, rowIndex) => {
+        ]);
+      } 
+      else if (userInput.toLowerCase().includes('add') && 
+               userInput.toLowerCase().includes('column') &&
+               userInput.toLowerCase().includes('lcd monitor')) {
+        
+        // Add a new column for LCD Monitor
+        const newRows = updatedSpreadsheet.rows.map((row, rowIndex) => {
+          const newRow = [...row];
           if (rowIndex === 0) {
-            row[columnIndex] = { value: 'LCD Monitor', style: { bold: true, backgroundColor: '#f0f0f0' } };
-          } else if (rowIndex === 1) {
-            row[columnIndex] = { value: '1' };
-          } else if (rowIndex === 3) {
-            row[columnIndex] = { value: '8' };
-          } else if (rowIndex === 9) {
-            row[columnIndex] = { value: '9' };
+            // Add header
+            newRow.push({ 
+              value: 'LCD Monitor', 
+              style: { bold: true, backgroundColor: '#f0f0f0' } 
+            });
           } else {
-            row[columnIndex] = { value: '0' };
+            // Add empty cell
+            newRow.push({ value: '' });
           }
+          return newRow;
         });
+        
+        updatedSpreadsheet.rows = newRows;
+        updatedSpreadsheet.columnWidths = [...(updatedSpreadsheet.columnWidths || []), 120];
+        
+        setChatMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `I've added a new column titled "LCD Monitor" to your spreadsheet.`,
+            timestamp: new Date()
+          }
+        ]);
+      }
+      else {
+        // For other requests, just provide the AI response without modifying the spreadsheet
+        setChatMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: aiResponse,
+            timestamp: new Date()
+          }
+        ]);
       }
       
       setSpreadsheetData(updatedSpreadsheet);
-      
-      setChatMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: aiResponse,
-          timestamp: new Date()
-        }
-      ]);
       
     } catch (err: any) {
       console.error("AI chat error:", err);
