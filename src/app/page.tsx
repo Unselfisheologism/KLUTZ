@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, Upload } from 'lucide-react';
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
 interface Feature {
@@ -117,10 +117,10 @@ const features: Feature[] = [
     isImplemented: true,
   },
   {
-    icon: Upload,
-    title: 'AI Spreadsheet Analyzer',
-    description: 'Upload and analyze spreadsheets with AI to extract insights, perform calculations, and transform data.',
-    href: '/spreadsheet-analyzer',
+    icon: FileSpreadsheet,
+    title: 'AI-Native Spreadsheets',
+    description: 'Create and modify spreadsheets through natural language with an AI assistant that understands your data.',
+    href: '/ai-spreadsheets',
     isImplemented: true,
   },
 ];
