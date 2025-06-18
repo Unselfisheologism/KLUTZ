@@ -887,7 +887,7 @@ export default function AISpreadsheetPage() {
   const downloadSpreadsheet = () => {
     try {
       // Create a new workbook
-      const wb = originalWorkbook || XLSX.utils.book_new();
+      const wb = XLSX.utils.book_new();
       
       // Convert the current spreadsheet data to a worksheet
       const wsData = spreadsheetData.rows.map(row => 
@@ -897,7 +897,6 @@ export default function AISpreadsheetPage() {
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       
       // Add the worksheet to the workbook
-      XLSX.utils.book_remove_sheet(wb, 0); // Remove existing sheet if any
       XLSX.utils.book_append_sheet(wb, ws, spreadsheetData.activeSheet);
       
       // Generate the file
