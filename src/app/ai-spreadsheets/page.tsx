@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Upload, FileSpreadsheet, Send, Download, Plus, Trash, Info, MessageSquare, Table, FileUp, RefreshCw, AlertTriangle } from 'lucide-react';
 import { getLaymanErrorMessage } from '@/lib/error-utils';
+import * as XLSX from 'xlsx';
 
 interface SpreadsheetCell {
   value: string;
@@ -69,14 +70,30 @@ export default function AISpreadsheetPage() {
   
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'upload' | 'create'>('create');
   const [fileName, setFileName] = useState('New Spreadsheet');
+  const [originalWorkbook, setOriginalWorkbook] = useState<XLSX.WorkBook | null>(null);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load XLSX library dynamically
+    const loadXLSX = async () => {
+      try {
+        await import('xlsx');
+      } catch (error) {
+        console.error('Failed to load XLSX library:', error);
+        toast({
+          variant: "destructive",
+          title: "Library Error",
+          description: "Failed to load spreadsheet processing library. Please refresh the page.",
+        });
+      }
+    };
+    
+    loadXLSX();
+    
     if (typeof window.puter === 'undefined') {
       toast({
         variant: "destructive",
@@ -101,32 +118,19 @@ export default function AISpreadsheetPage() {
     setIsLoading(true);
     
     try {
-      // For Excel files, we would need a library like xlsx or exceljs
-      // For this demo, we'll handle CSV files and simulate Excel support
+      // Read the file as an ArrayBuffer
+      const arrayBuffer = await readFileAsArrayBuffer(file);
       
+      // Process different file types
       if (file.name.endsWith('.csv')) {
-        // Handle CSV files
-        const fileData = await readFileAsArrayBuffer(file);
-        const decoder = new TextDecoder('utf-8');
-        const csvText = decoder.decode(fileData);
-        const parsedData = parseCSVData(csvText);
-        
-        updateSpreadsheetWithParsedData(parsedData, file.name);
+        // For CSV files
+        processCSVFile(arrayBuffer, file.name);
       } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        // In a real implementation, we would use a library to parse Excel files
-        // For this demo, we'll create some sample data based on the file name
-        
-        // Simulate parsing an Excel file
-        const sampleData = createSampleDataBasedOnFilename(file.name);
-        updateSpreadsheetWithParsedData(sampleData, file.name);
+        // For Excel files
+        processExcelFile(arrayBuffer, file.name);
       } else {
-        // For other formats, try to read as text and parse as CSV
-        const fileData = await readFileAsArrayBuffer(file);
-        const decoder = new TextDecoder('utf-8');
-        const text = decoder.decode(fileData);
-        const parsedData = parseCSVData(text);
-        
-        updateSpreadsheetWithParsedData(parsedData, file.name);
+        // Try to process as CSV for other formats
+        processCSVFile(arrayBuffer, file.name);
       }
     } catch (error) {
       console.error('Error loading spreadsheet:', error);
@@ -135,6 +139,9 @@ export default function AISpreadsheetPage() {
         title: "Upload Failed",
         description: "Failed to load the spreadsheet. The file format may be unsupported or corrupted.",
       });
+      
+      // Create a new empty spreadsheet as fallback
+      createNewSpreadsheet();
     } finally {
       setIsLoading(false);
     }
@@ -155,132 +162,65 @@ export default function AISpreadsheetPage() {
     });
   };
 
-  const parseCSVData = (csvText: string): string[][] => {
-    // More robust CSV parser
-    const rows = csvText.split(/\r?\n/).filter(row => row.trim());
-    return rows.map(row => {
-      // Handle quoted values with commas inside
-      const result = [];
-      let inQuote = false;
-      let currentValue = '';
+  const processCSVFile = (arrayBuffer: ArrayBuffer, filename: string) => {
+    try {
+      // Use XLSX to parse CSV
+      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+      setOriginalWorkbook(workbook);
       
-      for (let i = 0; i < row.length; i++) {
-        const char = row[i];
-        
-        if (char === '"') {
-          if (inQuote && i + 1 < row.length && row[i + 1] === '"') {
-            // Handle escaped quotes (two double quotes in a row)
-            currentValue += '"';
-            i++; // Skip the next quote
-          } else {
-            // Toggle quote state
-            inQuote = !inQuote;
-          }
-        } else if (char === ',' && !inQuote) {
-          result.push(currentValue);
-          currentValue = '';
-        } else {
-          currentValue += char;
-        }
-      }
+      // Get the first sheet
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
       
-      result.push(currentValue);
-      return result;
-    });
-  };
-
-  const createSampleDataBasedOnFilename = (filename: string): string[][] => {
-    // Create sample data based on the filename
-    // This is just for demonstration purposes
-    
-    if (filename.toLowerCase().includes('class') || 
-        filename.toLowerCase().includes('teacher') || 
-        filename.toLowerCase().includes('student')) {
-      // Create a class roster sample
-      return [
-        ['Student ID', 'Name', 'Grade', 'Subject'],
-        ['S001', 'John Smith', 'A', 'Mathematics'],
-        ['S002', 'Emily Johnson', 'B+', 'Mathematics'],
-        ['S003', 'Michael Brown', 'A-', 'Mathematics'],
-        ['S004', 'Sarah Davis', 'B', 'Mathematics'],
-        ['S005', 'David Wilson', 'C+', 'Mathematics'],
-        ['S006', 'Jennifer Miller', 'A', 'Mathematics'],
-        ['S007', 'Robert Taylor', 'B-', 'Mathematics'],
-        ['S008', 'Jessica Anderson', 'A+', 'Mathematics'],
-        ['S009', 'Christopher Thomas', 'C', 'Mathematics'],
-        ['S010', 'Amanda Jackson', 'B+', 'Mathematics']
-      ];
-    } else if (filename.toLowerCase().includes('budget') || 
-               filename.toLowerCase().includes('finance') || 
-               filename.toLowerCase().includes('expense')) {
-      // Create a budget sample
-      return [
-        ['Category', 'January', 'February', 'March', 'Total'],
-        ['Rent', '1500', '1500', '1500', '4500'],
-        ['Utilities', '250', '230', '245', '725'],
-        ['Groceries', '400', '380', '420', '1200'],
-        ['Transportation', '200', '180', '210', '590'],
-        ['Entertainment', '150', '200', '100', '450'],
-        ['Savings', '500', '500', '500', '1500'],
-        ['Total', '3000', '2990', '2975', '8965']
-      ];
-    } else if (filename.toLowerCase().includes('inventory') || 
-               filename.toLowerCase().includes('product') || 
-               filename.toLowerCase().includes('stock')) {
-      // Create an inventory sample
-      return [
-        ['Product', 'Category', 'Price', 'Quantity', 'Total'],
-        ['Laptop', 'Electronics', '999.99', '5', '4999.95'],
-        ['Desk Chair', 'Furniture', '189.99', '10', '1899.90'],
-        ['Monitor', 'Electronics', '349.99', '8', '2799.92'],
-        ['Keyboard', 'Electronics', '79.99', '15', '1199.85'],
-        ['Mouse', 'Electronics', '49.99', '15', '749.85'],
-        ['Desk', 'Furniture', '299.99', '7', '2099.93'],
-        ['Bookshelf', 'Furniture', '149.99', '12', '1799.88'],
-        ['Headphones', 'Electronics', '129.99', '20', '2599.80'],
-        ['Total', '', '', '', '18149.08']
-      ];
-    } else if (filename.toLowerCase().includes('attendance') || 
-               filename.toLowerCase().includes('present')) {
-      // Create an attendance sample
-      return [
-        ['Date', 'Present', 'Absent', 'Total'],
-        ['2023-09-01', '42', '3', '45'],
-        ['2023-09-02', '40', '5', '45'],
-        ['2023-09-03', '43', '2', '45'],
-        ['2023-09-04', '41', '4', '45'],
-        ['2023-09-05', '44', '1', '45'],
-        ['2023-09-06', '39', '6', '45'],
-        ['2023-09-07', '42', '3', '45'],
-        ['2023-09-08', '45', '0', '45'],
-        ['2023-09-09', '40', '5', '45'],
-        ['2023-09-10', '38', '7', '45']
-      ];
-    } else {
-      // Generic sample data
-      return [
-        ['Column A', 'Column B', 'Column C', 'Column D'],
-        ['Data 1', 'Value 1', '100', 'Yes'],
-        ['Data 2', 'Value 2', '200', 'No'],
-        ['Data 3', 'Value 3', '300', 'Yes'],
-        ['Data 4', 'Value 4', '400', 'No'],
-        ['Data 5', 'Value 5', '500', 'Yes'],
-        ['Data 6', 'Value 6', '600', 'No'],
-        ['Data 7', 'Value 7', '700', 'Yes'],
-        ['Data 8', 'Value 8', '800', 'No'],
-        ['Total', '', '3600', '']
-      ];
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
+      
+      // Create spreadsheet data
+      updateSpreadsheetWithParsedData(jsonData, filename, workbook.SheetNames);
+    } catch (error) {
+      console.error('Error processing CSV:', error);
+      throw new Error('Failed to process CSV file');
     }
   };
 
-  const updateSpreadsheetWithParsedData = (parsedData: string[][], filename: string) => {
+  const processExcelFile = (arrayBuffer: ArrayBuffer, filename: string) => {
+    try {
+      // Use XLSX to parse Excel
+      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+      setOriginalWorkbook(workbook);
+      
+      // Get the first sheet
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
+      
+      // Create spreadsheet data
+      updateSpreadsheetWithParsedData(jsonData, filename, workbook.SheetNames);
+    } catch (error) {
+      console.error('Error processing Excel:', error);
+      throw new Error('Failed to process Excel file');
+    }
+  };
+
+  const updateSpreadsheetWithParsedData = (parsedData: any[][], filename: string, sheetNames: string[] = ['Sheet1']) => {
+    // Ensure we have data
+    if (!parsedData || parsedData.length === 0) {
+      parsedData = [[]];
+    }
+    
     // Create a spreadsheet data structure from the parsed data
     const newSpreadsheetData: SpreadsheetData = {
-      rows: parsedData.map(row => row.map(value => ({ value: value || '' }))),
+      rows: parsedData.map(row => 
+        row.map(value => ({ 
+          value: value !== null && value !== undefined ? String(value) : '' 
+        }))
+      ),
       columnWidths: Array(Math.max(...parsedData.map(row => row.length), 10)).fill(120),
       rowHeights: Array(Math.max(parsedData.length, 20)).fill(30),
-      activeSheet: 'Sheet1',
-      sheets: ['Sheet1']
+      activeSheet: sheetNames[0],
+      sheets: sheetNames
     };
     
     // Ensure we have at least 20 rows and 10 columns
@@ -314,8 +254,11 @@ export default function AISpreadsheetPage() {
     
     // Get headers safely
     let headers = 'No headers';
-    if (parsedData.length > 0) {
-      headers = parsedData[0].map(header => header || '').join(', ');
+    if (parsedData.length > 0 && parsedData[0].length > 0) {
+      headers = parsedData[0]
+        .map(header => header !== null && header !== undefined ? String(header) : '')
+        .filter(Boolean)
+        .join(', ');
     }
     
     setChatMessages(prev => [
@@ -338,11 +281,22 @@ export default function AISpreadsheetPage() {
     });
     
     setFileName('New Spreadsheet');
+    setOriginalWorkbook(null);
     
     setChatMessages([
       {
         role: 'system',
-        content: 'Welcome to AI-Native Spreadsheets! I can help you create, analyze, and modify spreadsheets. What would you like to do today?',
+        content: 'Welcome to AI-Native Spreadsheets! I can help you create, analyze, and modify spreadsheets. You can ask me to:',
+        timestamp: new Date()
+      },
+      {
+        role: 'system',
+        content: '• Create tables and charts\n• Format cells and data\n• Perform calculations\n• Analyze your data\n• Generate reports\n• Import/export data',
+        timestamp: new Date()
+      },
+      {
+        role: 'system',
+        content: 'What would you like to do today?',
         timestamp: new Date()
       }
     ]);
@@ -416,24 +370,50 @@ export default function AISpreadsheetPage() {
         // Simulate adding a row
         updatedSpreadsheet.rows.splice(10, 0, Array(10).fill(null).map(() => ({ value: '' })));
         // Remove the last row to keep the same number of rows
-        updatedSpreadsheet.rows.pop();
+        if (updatedSpreadsheet.rows.length > 20) {
+          updatedSpreadsheet.rows.pop();
+        }
       }
       
-      if (userInput.toLowerCase().includes('sort') && userInput.toLowerCase().includes('product')) {
-        // Simulate sorting by product name
+      if (userInput.toLowerCase().includes('sort') && 
+         (userInput.toLowerCase().includes('product') || userInput.toLowerCase().includes('name'))) {
+        // Simulate sorting by product name or first column
         const headerRow = updatedSpreadsheet.rows[0];
         const dataRows = [...updatedSpreadsheet.rows.slice(1, 10)].sort((a, b) => 
-          a[0].value.localeCompare(b[0].value)
+          (a[0].value || '').localeCompare(b[0].value || '')
         );
         updatedSpreadsheet.rows = [headerRow, ...dataRows, ...updatedSpreadsheet.rows.slice(10)];
       }
       
       if (userInput.toLowerCase().includes('calculate total') || 
           userInput.toLowerCase().includes('sum')) {
-        // Simulate updating the total
-        const lastRow = updatedSpreadsheet.rows[9];
-        lastRow[4].value = '18149.08';
-        lastRow[4].style = { ...lastRow[4].style, bold: true };
+        // Find the column with numeric values
+        let numericColumnIndex = -1;
+        for (let i = 0; i < updatedSpreadsheet.rows[0].length; i++) {
+          if (updatedSpreadsheet.rows.slice(1).some(row => !isNaN(Number(row[i].value)))) {
+            numericColumnIndex = i;
+            break;
+          }
+        }
+        
+        if (numericColumnIndex !== -1) {
+          // Calculate sum of the numeric column
+          const sum = updatedSpreadsheet.rows.slice(1, 10)
+            .reduce((total, row) => {
+              const value = Number(row[numericColumnIndex].value);
+              return total + (isNaN(value) ? 0 : value);
+            }, 0);
+          
+          // Update the total row
+          if (!updatedSpreadsheet.rows[10]) {
+            updatedSpreadsheet.rows[10] = Array(10).fill(null).map(() => ({ value: '' }));
+          }
+          updatedSpreadsheet.rows[10][0] = { value: 'Total', style: { bold: true } };
+          updatedSpreadsheet.rows[10][numericColumnIndex] = { 
+            value: sum.toFixed(2), 
+            style: { bold: true } 
+          };
+        }
       }
       
       if (userInput.toLowerCase().includes('format') && 
@@ -454,16 +434,20 @@ export default function AISpreadsheetPage() {
           userInput.toLowerCase().includes('column') &&
           userInput.toLowerCase().includes('monitor')) {
         // Simulate adding a new column for monitors
-        updatedSpreadsheet.rows[0][5] = { value: 'LCD Monitor', style: { bold: true, backgroundColor: '#f0f0f0' } };
-        updatedSpreadsheet.rows[1][5] = { value: '1' };
-        updatedSpreadsheet.rows[2][5] = { value: '0' };
-        updatedSpreadsheet.rows[3][5] = { value: '8' };
-        updatedSpreadsheet.rows[4][5] = { value: '0' };
-        updatedSpreadsheet.rows[5][5] = { value: '0' };
-        updatedSpreadsheet.rows[6][5] = { value: '0' };
-        updatedSpreadsheet.rows[7][5] = { value: '0' };
-        updatedSpreadsheet.rows[8][5] = { value: '0' };
-        updatedSpreadsheet.rows[9][5] = { value: '9' };
+        const columnIndex = Math.min(5, updatedSpreadsheet.rows[0].length);
+        updatedSpreadsheet.rows.forEach((row, rowIndex) => {
+          if (rowIndex === 0) {
+            row[columnIndex] = { value: 'LCD Monitor', style: { bold: true, backgroundColor: '#f0f0f0' } };
+          } else if (rowIndex === 1) {
+            row[columnIndex] = { value: '1' };
+          } else if (rowIndex === 3) {
+            row[columnIndex] = { value: '8' };
+          } else if (rowIndex === 9) {
+            row[columnIndex] = { value: '9' };
+          } else {
+            row[columnIndex] = { value: '0' };
+          }
+        });
       }
       
       setSpreadsheetData(updatedSpreadsheet);
@@ -512,9 +496,9 @@ export default function AISpreadsheetPage() {
     let hasData = false;
     for (let i = 0; i < Math.min(10, spreadsheetData.rows.length); i++) {
       const row = spreadsheetData.rows[i];
-      const rowValues = row.map(cell => cell.value || '').filter(Boolean);
+      const rowValues = row.map(cell => cell.value || '');
       
-      if (rowValues.length > 0) {
+      if (rowValues.some(value => value !== '')) {
         hasData = true;
         context += rowValues.join('\t') + '\n';
       }
@@ -535,38 +519,36 @@ export default function AISpreadsheetPage() {
   };
 
   const downloadSpreadsheet = () => {
-    // In a real implementation, this would convert the spreadsheet data to CSV or Excel format
-    // For this demo, we'll just create a CSV
-    
-    let csv = '';
-    
-    // Add headers
-    spreadsheetData.rows.forEach(row => {
-      csv += row.map(cell => {
-        // Escape quotes and wrap in quotes if the value contains commas or quotes
-        const value = cell.value || '';
-        if (value.includes(',') || value.includes('"')) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      }).join(',') + '\n';
-    });
-    
-    // Create a blob and download
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${fileName.replace(/\.[^/.]+$/, '')}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Download Complete",
-      description: `${fileName.replace(/\.[^/.]+$/, '')}.csv has been downloaded.`,
-    });
+    try {
+      // Create a new workbook
+      const wb = originalWorkbook || XLSX.utils.book_new();
+      
+      // Convert the current spreadsheet data to a worksheet
+      const wsData = spreadsheetData.rows.map(row => 
+        row.map(cell => cell.value)
+      );
+      
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Add the worksheet to the workbook
+      XLSX.utils.book_remove_sheet(wb, 0); // Remove existing sheet if any
+      XLSX.utils.book_append_sheet(wb, ws, spreadsheetData.activeSheet);
+      
+      // Generate the file
+      XLSX.writeFile(wb, `${fileName.replace(/\.[^/.]+$/, '')}.xlsx`);
+      
+      toast({
+        title: "Download Complete",
+        description: `${fileName.replace(/\.[^/.]+$/, '')}.xlsx has been downloaded.`,
+      });
+    } catch (error) {
+      console.error('Error downloading spreadsheet:', error);
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Failed to download the spreadsheet. Please try again.",
+      });
+    }
   };
 
   const getCellStyle = (cell: SpreadsheetCell) => {
