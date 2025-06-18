@@ -101,59 +101,57 @@ export default function AISpreadsheetPage() {
     setIsLoading(true);
     
     try {
-      // In a real implementation, we would parse the spreadsheet file here
-      // For this demo, we'll simulate loading a spreadsheet with sample data
-      setTimeout(() => {
-        const sampleData: SpreadsheetData = {
-          rows: [
-            [{ value: 'Product', style: { bold: true, backgroundColor: '#f0f0f0' } }, 
-             { value: 'Category', style: { bold: true, backgroundColor: '#f0f0f0' } }, 
-             { value: 'Price', style: { bold: true, backgroundColor: '#f0f0f0' } }, 
-             { value: 'Quantity', style: { bold: true, backgroundColor: '#f0f0f0' } }, 
-             { value: 'Total', style: { bold: true, backgroundColor: '#f0f0f0' } }],
-            [{ value: 'Laptop' }, { value: 'Electronics' }, { value: '999.99' }, { value: '5' }, { value: '4999.95', formula: '=C2*D2' }],
-            [{ value: 'Desk Chair' }, { value: 'Furniture' }, { value: '189.99' }, { value: '10' }, { value: '1899.90', formula: '=C3*D3' }],
-            [{ value: 'Monitor' }, { value: 'Electronics' }, { value: '349.99' }, { value: '8' }, { value: '2799.92', formula: '=C4*D4' }],
-            [{ value: 'Keyboard' }, { value: 'Electronics' }, { value: '79.99' }, { value: '15' }, { value: '1199.85', formula: '=C5*D5' }],
-            [{ value: 'Mouse' }, { value: 'Electronics' }, { value: '49.99' }, { value: '15' }, { value: '749.85', formula: '=C6*D6' }],
-            [{ value: 'Desk' }, { value: 'Furniture' }, { value: '299.99' }, { value: '7' }, { value: '2099.93', formula: '=C7*D7' }],
-            [{ value: 'Bookshelf' }, { value: 'Furniture' }, { value: '149.99' }, { value: '12' }, { value: '1799.88', formula: '=C8*D8' }],
-            [{ value: 'Headphones' }, { value: 'Electronics' }, { value: '129.99' }, { value: '20' }, { value: '2599.80', formula: '=C9*D9' }],
-            [{ value: 'Total', style: { bold: true } }, { value: '' }, { value: '' }, { value: '' }, 
-             { value: '18149.08', formula: '=SUM(E2:E9)', style: { bold: true } }],
-          ],
-          columnWidths: [150, 120, 100, 100, 120],
-          rowHeights: Array(20).fill(30),
-          activeSheet: 'Inventory',
-          sheets: ['Inventory', 'Sales', 'Expenses']
-        };
-        
-        // Fill remaining rows with empty cells
-        while (sampleData.rows.length < 20) {
-          sampleData.rows.push(Array(5).fill(null).map(() => ({ value: '' })));
+      // Parse the uploaded file
+      const fileData = await readFileAsText(file);
+      const parsedData = parseCSVData(fileData);
+      
+      // Create a spreadsheet data structure from the parsed data
+      const newSpreadsheetData: SpreadsheetData = {
+        rows: parsedData.map(row => row.map(value => ({ value: value || '' }))),
+        columnWidths: Array(Math.max(...parsedData.map(row => row.length), 10)).fill(120),
+        rowHeights: Array(Math.max(parsedData.length, 20)).fill(30),
+        activeSheet: 'Sheet1',
+        sheets: ['Sheet1']
+      };
+      
+      // Ensure we have at least 20 rows and 10 columns
+      while (newSpreadsheetData.rows.length < 20) {
+        newSpreadsheetData.rows.push(Array(10).fill(null).map(() => ({ value: '' })));
+      }
+      
+      newSpreadsheetData.rows = newSpreadsheetData.rows.map(row => {
+        while (row.length < 10) {
+          row.push({ value: '' });
         }
-        
-        // Fill remaining columns with empty cells
-        sampleData.rows = sampleData.rows.map(row => {
-          while (row.length < 10) {
-            row.push({ value: '' });
+        return row;
+      });
+      
+      // Format the header row if it exists
+      if (newSpreadsheetData.rows.length > 0) {
+        newSpreadsheetData.rows[0] = newSpreadsheetData.rows[0].map(cell => ({
+          ...cell,
+          style: { 
+            bold: true, 
+            backgroundColor: '#f0f0f0' 
           }
-          return row;
-        });
-        
-        setSpreadsheetData(sampleData);
-        
-        setChatMessages(prev => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: `I've loaded "${file.name}". This spreadsheet contains inventory data with products, categories, prices, and quantities. What would you like to do with this data?`,
-            timestamp: new Date()
-          }
-        ]);
-        
-        setIsLoading(false);
-      }, 1500);
+        }));
+      }
+      
+      setSpreadsheetData(newSpreadsheetData);
+      
+      // Generate a summary of the data for the AI
+      const rowCount = parsedData.length;
+      const colCount = Math.max(...parsedData.map(row => row.length));
+      const headers = parsedData.length > 0 ? parsedData[0].join(', ') : 'No headers';
+      
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `I've loaded "${file.name}". This spreadsheet contains ${rowCount} rows and ${colCount} columns. The headers are: ${headers}. What would you like to do with this data?`,
+          timestamp: new Date()
+        }
+      ]);
       
     } catch (error) {
       console.error('Error loading spreadsheet:', error);
@@ -162,8 +160,51 @@ export default function AISpreadsheetPage() {
         title: "Upload Failed",
         description: "Failed to load the spreadsheet. Please try again with a different file.",
       });
+    } finally {
       setIsLoading(false);
     }
+  };
+
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result as string);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsText(file);
+    });
+  };
+
+  const parseCSVData = (csvText: string): string[][] => {
+    // Simple CSV parser - in a real app, you'd want a more robust parser
+    const rows = csvText.split(/\r?\n/).filter(row => row.trim());
+    return rows.map(row => {
+      // Handle quoted values with commas inside
+      const result = [];
+      let inQuote = false;
+      let currentValue = '';
+      
+      for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        
+        if (char === '"') {
+          inQuote = !inQuote;
+        } else if (char === ',' && !inQuote) {
+          result.push(currentValue);
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      
+      result.push(currentValue);
+      return result;
+    });
   };
 
   const createNewSpreadsheet = () => {
