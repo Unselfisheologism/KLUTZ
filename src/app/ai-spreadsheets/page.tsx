@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Upload, FileSpreadsheet, Send, Download, Plus, Trash, Info, MessageSquare, Table, FileUp, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Loader2, Upload, FileSpreadsheet, Send, Download, Plus, Trash, Info, MessageSquare, Table, FileUp, RefreshCw, AlertTriangle, Link } from 'lucide-react';
 import { getLaymanErrorMessage } from '@/lib/error-utils';
 import * as XLSX from 'xlsx';
 
@@ -77,9 +77,12 @@ export default function AISpreadsheetPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [fileName, setFileName] = useState('New Spreadsheet');
   const [originalWorkbook, setOriginalWorkbook] = useState<XLSX.WorkBook | null>(null);
+  const [contextSpreadsheet, setContextSpreadsheet] = useState<File | null>(null);
+  const [contextSpreadsheetData, setContextSpreadsheetData] = useState<string>('');
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const contextFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -152,6 +155,60 @@ export default function AISpreadsheetPage() {
     }
   };
 
+  const handleContextSpreadsheetUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setContextSpreadsheet(file);
+    setIsLoading(true);
+    
+    try {
+      // Read the file as an ArrayBuffer
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      
+      // Process the context spreadsheet
+      let contextData = '';
+      
+      if (file.name.endsWith('.csv')) {
+        contextData = await processContextCSVFile(arrayBuffer, file.name);
+      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        contextData = await processContextExcelFile(arrayBuffer, file.name);
+      } else {
+        contextData = await processContextCSVFile(arrayBuffer, file.name);
+      }
+      
+      setContextSpreadsheetData(contextData);
+      
+      // Notify the user
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'system',
+          content: `I've loaded "${file.name}" as context. You can now refer to this spreadsheet in your questions, and I'll use it to provide more relevant answers.`,
+          timestamp: new Date()
+        }
+      ]);
+      
+      toast({
+        title: "Context Added",
+        description: `"${file.name}" has been added as context for the AI.`,
+      });
+      
+    } catch (error) {
+      console.error('Error loading context spreadsheet:', error);
+      toast({
+        variant: "destructive",
+        title: "Context Upload Failed",
+        description: "Failed to load the context spreadsheet. The file format may be unsupported or corrupted.",
+      });
+      
+      setContextSpreadsheet(null);
+      setContextSpreadsheetData('');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -207,6 +264,70 @@ export default function AISpreadsheetPage() {
       console.error('Error processing Excel:', error);
       throw new Error('Failed to process Excel file');
     }
+  };
+
+  const processContextCSVFile = async (arrayBuffer: ArrayBuffer, filename: string): Promise<string> => {
+    try {
+      // Use XLSX to parse CSV
+      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+      
+      // Get the first sheet
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
+      
+      // Convert to text representation
+      return convertSpreadsheetDataToText(jsonData, filename, workbook.SheetNames);
+    } catch (error) {
+      console.error('Error processing context CSV:', error);
+      throw new Error('Failed to process context CSV file');
+    }
+  };
+
+  const processContextExcelFile = async (arrayBuffer: ArrayBuffer, filename: string): Promise<string> => {
+    try {
+      // Use XLSX to parse Excel
+      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+      
+      // Process each sheet
+      let contextData = `Filename: ${filename}\n`;
+      contextData += `Sheets: ${workbook.SheetNames.join(', ')}\n\n`;
+      
+      for (const sheetName of workbook.SheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
+        
+        contextData += `Sheet: ${sheetName}\n`;
+        contextData += `Data:\n`;
+        
+        // Add rows
+        for (const row of jsonData) {
+          contextData += row.join('\t') + '\n';
+        }
+        
+        contextData += '\n';
+      }
+      
+      return contextData;
+    } catch (error) {
+      console.error('Error processing context Excel:', error);
+      throw new Error('Failed to process context Excel file');
+    }
+  };
+
+  const convertSpreadsheetDataToText = (data: any[][], filename: string, sheetNames: string[]): string => {
+    let contextData = `Filename: ${filename}\n`;
+    contextData += `Sheets: ${sheetNames.join(', ')}\n\n`;
+    contextData += `Data:\n`;
+    
+    // Add rows
+    for (const row of data) {
+      contextData += row.join('\t') + '\n';
+    }
+    
+    return contextData;
   };
 
   const updateSpreadsheetWithParsedData = (parsedData: any[][], filename: string, sheetNames: string[] = ['Sheet1']) => {
@@ -345,10 +466,16 @@ export default function AISpreadsheetPage() {
       // Create a string representation of the current spreadsheet data for context
       const spreadsheetContext = generateSpreadsheetContext();
       
+      // Add context spreadsheet data if available
+      const contextData = contextSpreadsheetData 
+        ? `\nADDITIONAL CONTEXT SPREADSHEET:\n${contextSpreadsheetData}\n` 
+        : '';
+      
       const prompt = `
         You are an AI assistant specialized in spreadsheet operations. The user is working with a spreadsheet with the following data:
         
         ${spreadsheetContext}
+        ${contextData}
         
         The user's request is: "${userInput}"
         
@@ -916,6 +1043,25 @@ export default function AISpreadsheetPage() {
     }
   };
 
+  const removeContextSpreadsheet = () => {
+    setContextSpreadsheet(null);
+    setContextSpreadsheetData('');
+    
+    setChatMessages(prev => [
+      ...prev,
+      {
+        role: 'system',
+        content: 'Context spreadsheet has been removed.',
+        timestamp: new Date()
+      }
+    ]);
+    
+    toast({
+      title: "Context Removed",
+      description: "The context spreadsheet has been removed.",
+    });
+  };
+
   const getCellStyle = (cell: SpreadsheetCell) => {
     if (!cell) return {};
     
@@ -982,6 +1128,7 @@ export default function AISpreadsheetPage() {
                 <li>Request data formatting or styling changes</li>
                 <li>Ask for analysis or insights about your data</li>
                 <li>The AI can modify your spreadsheet based on your instructions</li>
+                <li>Add a context spreadsheet to help the AI understand your data better</li>
               </ul>
             </AlertDescription>
           </Alert>
@@ -1068,9 +1215,45 @@ export default function AISpreadsheetPage() {
                   <MessageSquare className="mr-2 h-5 w-5 text-primary" />
                   Spreadsheet Assistant
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  Ask me to help you create, analyze, or modify your spreadsheet.
-                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-sm text-muted-foreground">
+                    Ask me to help you create, analyze, or modify your spreadsheet.
+                  </p>
+                  <div className="flex items-center">
+                    {contextSpreadsheet ? (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-muted-foreground">
+                          Context: {contextSpreadsheet.name}
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6" 
+                          onClick={removeContextSpreadsheet}
+                        >
+                          <Trash className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs h-7" 
+                        onClick={() => contextFileInputRef.current?.click()}
+                      >
+                        <Link className="mr-1 h-3 w-3" />
+                        Add Context Spreadsheet
+                      </Button>
+                    )}
+                    <Input 
+                      ref={contextFileInputRef}
+                      type="file" 
+                      accept=".csv,.xlsx,.xls,.ods,.tsv" 
+                      className="hidden"
+                      onChange={handleContextSpreadsheetUpload}
+                    />
+                  </div>
+                </div>
               </div>
               
               <div 
