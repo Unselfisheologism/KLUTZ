@@ -1,466 +1,196 @@
 'use client';
 
-import Head from 'next/head';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Upload, FileSpreadsheet, Send, Download, Plus, Trash, Info, MessageSquare, Table, FileUp, RefreshCw, AlertTriangle, Link } from 'lucide-react';
-import { getLaymanErrorMessage } from '@/lib/error-utils';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, Send, Download, Clipboard, Info, Upload, Search, Image, Brain } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import type { SpreadsheetData, ChatMessage, SpreadsheetOperation } from '@/types/ai-spreadsheets';
 
-interface SpreadsheetCell {
-  value: string;
-  formula?: string;
-  style?: {
-    bold?: boolean;
-    italic?: boolean;
-    color?: string;
-    backgroundColor?: string;
-    textAlign?: 'left' | 'center' | 'right';
-  };
-}
+const DEFAULT_ROWS = 10;
+const DEFAULT_COLS = 5;
 
-interface SpreadsheetData {
-  rows: SpreadsheetCell[][];
-  columnWidths?: number[];
-  rowHeights?: number[];
-  activeSheet: string;
-  sheets: string[];
-}
-
-interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
-}
-
-interface SpreadsheetOperation {
-  type: string;
-  details: any;
-}
-
-export default function AISpreadsheetPage() {
-  const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetData>({
-    rows: Array(20).fill(null).map(() => Array(10).fill(null).map(() => ({ value: '' }))),
-    columnWidths: Array(10).fill(120),
-    rowHeights: Array(20).fill(30),
+// Create empty spreadsheet data
+const createEmptySpreadsheet = (rows: number = DEFAULT_ROWS, cols: number = DEFAULT_COLS): SpreadsheetData => {
+  const emptyData: SpreadsheetData = {
+    rows: Array(rows).fill(null).map(() => 
+      Array(cols).fill(null).map(() => ({ value: '' }))
+    ),
     activeSheet: 'Sheet1',
     sheets: ['Sheet1']
-  });
+  };
+  return emptyData;
+};
+
+// Helper to ensure the grid has enough rows and columns
+const ensureGridSize = (data: SpreadsheetData, rowIndex: number, colIndex: number): SpreadsheetData => {
+  const newData = { ...data };
   
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      role: 'system',
-      content: 'Welcome to AI-Native Spreadsheets! I can help you create, analyze, and modify spreadsheets. You can ask me to:',
-      timestamp: new Date()
-    },
-    {
-      role: 'system',
-      content: '• Create tables and charts\n• Format cells and data\n• Perform calculations\n• Analyze your data\n• Generate reports\n• Import/export data',
-      timestamp: new Date()
-    },
-    {
-      role: 'system',
-      content: 'What would you like to do today?',
-      timestamp: new Date()
+  // Ensure we have enough rows
+  while (newData.rows.length <= rowIndex) {
+    const newRow = Array(newData.rows[0]?.length || DEFAULT_COLS).fill(null).map(() => ({ value: '' }));
+    newData.rows.push(newRow);
+  }
+  
+  // Ensure all rows have enough columns
+  for (let i = 0; i < newData.rows.length; i++) {
+    while (newData.rows[i].length <= colIndex) {
+      newData.rows[i].push({ value: '' });
     }
-  ]);
+  }
   
+  // Ensure all rows have the same number of columns
+  const maxCols = Math.max(...newData.rows.map(row => row.length));
+  for (let i = 0; i < newData.rows.length; i++) {
+    while (newData.rows[i].length < maxCols) {
+      newData.rows[i].push({ value: '' });
+    }
+  }
+  
+  return newData;
+};
+
+export default function AISpreadsheetPage() {
+  const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetData>(createEmptySpreadsheet());
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [fileName, setFileName] = useState('New Spreadsheet');
-  const [originalWorkbook, setOriginalWorkbook] = useState<XLSX.WorkBook | null>(null);
-  const [contextSpreadsheet, setContextSpreadsheet] = useState<File | null>(null);
-  const [contextSpreadsheetData, setContextSpreadsheetData] = useState<string>('');
-  
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const contextFileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showCommandOptions, setShowCommandOptions] = useState(false);
+  const [selectedCommands, setSelectedCommands] = useState<{
+    analyze: boolean;
+    web: boolean;
+    image: boolean;
+  }>({
+    analyze: true,
+    web: false,
+    image: false
+  });
+  const [webSearchUrl, setWebSearchUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [spreadsheetFile, setSpreadsheetFile] = useState<File | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
-
+  
+  // Scroll to bottom of chat when messages change
   useEffect(() => {
-    // Load XLSX library dynamically
-    const loadXLSX = async () => {
-      try {
-        await import('xlsx');
-      } catch (error) {
-        console.error('Failed to load XLSX library:', error);
-        toast({
-          variant: "destructive",
-          title: "Library Error",
-          description: "Failed to load spreadsheet processing library. Please refresh the page.",
-        });
-      }
-    };
-    
-    loadXLSX();
-    
-    if (typeof window.puter === 'undefined') {
-      toast({
-        variant: "destructive",
-        title: "Puter SDK Error",
-        description: "Puter.js SDK is not loaded. Please refresh the page.",
-      });
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    // Scroll to bottom of chat when new messages are added
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setFileName(file.name);
-    setIsLoading(true);
+  // Handle input change and check for command trigger
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setUserInput(value);
     
-    try {
-      // Read the file as an ArrayBuffer
-      const arrayBuffer = await readFileAsArrayBuffer(file);
-      
-      // Process different file types
-      if (file.name.endsWith('.csv')) {
-        // For CSV files
-        processCSVFile(arrayBuffer, file.name);
-      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        // For Excel files
-        processExcelFile(arrayBuffer, file.name);
-      } else {
-        // Try to process as CSV for other formats
-        processCSVFile(arrayBuffer, file.name);
-      }
-    } catch (error) {
-      console.error('Error loading spreadsheet:', error);
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: "Failed to load the spreadsheet. The file format may be unsupported or corrupted.",
-      });
-      
-      // Create a new empty spreadsheet as fallback
-      createNewSpreadsheet();
-    } finally {
-      setIsLoading(false);
+    // Show command options when user types '/'
+    if (value === '/') {
+      setShowCommandOptions(true);
+    } else if (showCommandOptions && !value.startsWith('/')) {
+      setShowCommandOptions(false);
     }
   };
 
-  const handleContextSpreadsheetUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setContextSpreadsheet(file);
-    setIsLoading(true);
+  // Handle command selection
+  const handleCommandSelect = (command: 'analyze' | 'web' | 'image') => {
+    setSelectedCommands(prev => ({
+      ...prev,
+      [command]: !prev[command]
+    }));
     
-    try {
-      // Read the file as an ArrayBuffer
-      const arrayBuffer = await readFileAsArrayBuffer(file);
-      
-      // Process the context spreadsheet
-      let contextData = '';
-      
-      if (file.name.endsWith('.csv')) {
-        contextData = await processContextCSVFile(arrayBuffer, file.name);
-      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        contextData = await processContextExcelFile(arrayBuffer, file.name);
-      } else {
-        contextData = await processContextCSVFile(arrayBuffer, file.name);
-      }
-      
-      setContextSpreadsheetData(contextData);
-      
-      // Notify the user
-      setChatMessages(prev => [
-        ...prev,
-        {
-          role: 'system',
-          content: `I've loaded "${file.name}" as context. You can now refer to this spreadsheet in your questions, and I'll use it to provide more relevant answers.`,
-          timestamp: new Date()
-        }
-      ]);
-      
-      toast({
-        title: "Context Added",
-        description: `"${file.name}" has been added as context for the AI.`,
-      });
-      
-    } catch (error) {
-      console.error('Error loading context spreadsheet:', error);
-      toast({
-        variant: "destructive",
-        title: "Context Upload Failed",
-        description: "Failed to load the context spreadsheet. The file format may be unsupported or corrupted.",
-      });
-      
-      setContextSpreadsheet(null);
-      setContextSpreadsheetData('');
-    } finally {
-      setIsLoading(false);
+    // Focus back on input after selecting command
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
   };
 
-  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
-    return new Promise((resolve, reject) => {
+  // Handle web search URL input
+  const handleWebSearchUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setWebSearchUrl(e.target.value);
+  };
+
+  // Handle image file upload
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImageFile(e.target.files[0]);
+    }
+  };
+
+  // Handle spreadsheet file upload
+  const handleSpreadsheetFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setSpreadsheetFile(file);
+      
+      // Read and parse the spreadsheet
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
-          resolve(event.target.result as ArrayBuffer);
-        } else {
-          reject(new Error('Failed to read file'));
+        try {
+          if (event.target?.result) {
+            const data = new Uint8Array(event.target.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Convert to JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            // Create spreadsheet data structure
+            const newData: SpreadsheetData = {
+              rows: jsonData.map((row: any) => 
+                Array.isArray(row) 
+                  ? row.map((cell: any) => ({ value: cell?.toString() || '' }))
+                  : [{ value: row?.toString() || '' }]
+              ),
+              activeSheet: firstSheetName,
+              sheets: workbook.SheetNames
+            };
+            
+            // Ensure all rows have the same number of columns
+            const maxCols = Math.max(...newData.rows.map(row => row.length), DEFAULT_COLS);
+            newData.rows = newData.rows.map(row => {
+              while (row.length < maxCols) {
+                row.push({ value: '' });
+              }
+              return row;
+            });
+            
+            // Ensure minimum number of rows
+            while (newData.rows.length < DEFAULT_ROWS) {
+              newData.rows.push(Array(maxCols).fill(null).map(() => ({ value: '' })));
+            }
+            
+            setSpreadsheetData(newData);
+            
+            toast({
+              title: "Spreadsheet Loaded",
+              description: `Loaded spreadsheet with ${newData.rows.length} rows and ${maxCols} columns.`,
+            });
+          }
+        } catch (error) {
+          console.error("Error parsing spreadsheet:", error);
+          toast({
+            variant: "destructive",
+            title: "Error Loading Spreadsheet",
+            description: "Failed to parse the spreadsheet file. Please check the format and try again.",
+          });
         }
       };
-      reader.onerror = (error) => reject(error);
       reader.readAsArrayBuffer(file);
-    });
-  };
-
-  const processCSVFile = (arrayBuffer: ArrayBuffer, filename: string) => {
-    try {
-      // Use XLSX to parse CSV
-      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-      setOriginalWorkbook(workbook);
-      
-      // Get the first sheet
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      
-      // Convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
-      
-      // Create spreadsheet data
-      updateSpreadsheetWithParsedData(jsonData, filename, workbook.SheetNames);
-    } catch (error) {
-      console.error('Error processing CSV:', error);
-      throw new Error('Failed to process CSV file');
     }
-  };
-
-  const processExcelFile = (arrayBuffer: ArrayBuffer, filename: string) => {
-    try {
-      // Use XLSX to parse Excel
-      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-      setOriginalWorkbook(workbook);
-      
-      // Get the first sheet
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      
-      // Convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
-      
-      // Create spreadsheet data
-      updateSpreadsheetWithParsedData(jsonData, filename, workbook.SheetNames);
-    } catch (error) {
-      console.error('Error processing Excel:', error);
-      throw new Error('Failed to process Excel file');
-    }
-  };
-
-  const processContextCSVFile = async (arrayBuffer: ArrayBuffer, filename: string): Promise<string> => {
-    try {
-      // Use XLSX to parse CSV
-      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-      
-      // Get the first sheet
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      
-      // Convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
-      
-      // Convert to text representation
-      return convertSpreadsheetDataToText(jsonData, filename, workbook.SheetNames);
-    } catch (error) {
-      console.error('Error processing context CSV:', error);
-      throw new Error('Failed to process context CSV file');
-    }
-  };
-
-  const processContextExcelFile = async (arrayBuffer: ArrayBuffer, filename: string): Promise<string> => {
-    try {
-      // Use XLSX to parse Excel
-      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-      
-      // Process each sheet
-      let contextData = `Filename: ${filename}\n`;
-      contextData += `Sheets: ${workbook.SheetNames.join(', ')}\n\n`;
-      
-      for (const sheetName of workbook.SheetNames) {
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
-        
-        contextData += `Sheet: ${sheetName}\n`;
-        contextData += `Data:\n`;
-        
-        // Add rows
-        for (const row of jsonData) {
-          contextData += row.join('\t') + '\n';
-        }
-        
-        contextData += '\n';
-      }
-      
-      return contextData;
-    } catch (error) {
-      console.error('Error processing context Excel:', error);
-      throw new Error('Failed to process context Excel file');
-    }
-  };
-
-  const convertSpreadsheetDataToText = (data: any[][], filename: string, sheetNames: string[]): string => {
-    let contextData = `Filename: ${filename}\n`;
-    contextData += `Sheets: ${sheetNames.join(', ')}\n\n`;
-    contextData += `Data:\n`;
-    
-    // Add rows
-    for (const row of data) {
-      contextData += row.join('\t') + '\n';
-    }
-    
-    return contextData;
-  };
-
-  const updateSpreadsheetWithParsedData = (parsedData: any[][], filename: string, sheetNames: string[] = ['Sheet1']) => {
-    // Ensure we have data
-    if (!parsedData || parsedData.length === 0) {
-      parsedData = [[]];
-    }
-    
-    // Create a spreadsheet data structure from the parsed data
-    const newSpreadsheetData: SpreadsheetData = {
-      rows: parsedData.map(row => 
-        row.map(value => ({ 
-          value: value !== null && value !== undefined ? String(value) : '' 
-        }))
-      ),
-      columnWidths: Array(Math.max(...parsedData.map(row => row.length), 10)).fill(120),
-      rowHeights: Array(Math.max(parsedData.length, 20)).fill(30),
-      activeSheet: sheetNames[0],
-      sheets: sheetNames
-    };
-    
-    // Ensure we have at least 20 rows and 10 columns
-    while (newSpreadsheetData.rows.length < 20) {
-      newSpreadsheetData.rows.push(Array(10).fill(null).map(() => ({ value: '' })));
-    }
-    
-    newSpreadsheetData.rows = newSpreadsheetData.rows.map(row => {
-      while (row.length < 10) {
-        row.push({ value: '' });
-      }
-      return row;
-    });
-    
-    // Format the header row if it exists
-    if (newSpreadsheetData.rows.length > 0) {
-      newSpreadsheetData.rows[0] = newSpreadsheetData.rows[0].map(cell => ({
-        ...cell,
-        style: { 
-          bold: true, 
-          backgroundColor: '#f0f0f0' 
-        }
-      }));
-    }
-    
-    setSpreadsheetData(newSpreadsheetData);
-    
-    // Generate a summary of the data for the AI
-    const rowCount = parsedData.length;
-    const colCount = Math.max(...parsedData.map(row => row.length));
-    
-    // Get headers safely
-    let headers = 'No headers';
-    if (parsedData.length > 0 && parsedData[0].length > 0) {
-      headers = parsedData[0]
-        .map(header => header !== null && header !== undefined ? String(header) : '')
-        .filter(Boolean)
-        .join(', ');
-    }
-    
-    setChatMessages(prev => [
-      ...prev,
-      {
-        role: 'assistant',
-        content: `I've loaded "${filename}". This spreadsheet contains ${rowCount} rows and ${colCount} columns. The headers are: ${headers}. What would you like to do with this data?`,
-        timestamp: new Date()
-      }
-    ]);
-  };
-
-  const createNewSpreadsheet = () => {
-    setSpreadsheetData({
-      rows: Array(20).fill(null).map(() => Array(10).fill(null).map(() => ({ value: '' }))),
-      columnWidths: Array(10).fill(120),
-      rowHeights: Array(20).fill(30),
-      activeSheet: 'Sheet1',
-      sheets: ['Sheet1']
-    });
-    
-    setFileName('New Spreadsheet');
-    setOriginalWorkbook(null);
-    
-    setChatMessages([
-      {
-        role: 'system',
-        content: 'Welcome to AI-Native Spreadsheets! I can help you create, analyze, and modify spreadsheets. You can ask me to:',
-        timestamp: new Date()
-      },
-      {
-        role: 'system',
-        content: '• Create tables and charts\n• Format cells and data\n• Perform calculations\n• Analyze your data\n• Generate reports\n• Import/export data',
-        timestamp: new Date()
-      },
-      {
-        role: 'system',
-        content: 'What would you like to do today?',
-        timestamp: new Date()
-      }
-    ]);
-  };
-
-  const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
-    const newData = { ...spreadsheetData };
-    
-    // Ensure the row exists
-    while (newData.rows.length <= rowIndex) {
-      newData.rows.push(Array(newData.rows[0].length).fill(null).map(() => ({ value: '' })));
-      if (newData.rowHeights) {
-        newData.rowHeights.push(30);
-      }
-    }
-    
-    // Ensure the column exists
-    while (newData.rows[rowIndex].length <= colIndex) {
-      // Add column to all rows to maintain rectangular grid
-      newData.rows.forEach(row => {
-        row.push({ value: '' });
-      });
-      
-      if (newData.columnWidths) {
-        newData.columnWidths.push(120);
-      }
-    }
-    
-    newData.rows[rowIndex][colIndex] = { 
-      ...newData.rows[rowIndex][colIndex],
-      value 
-    };
-    
-    setSpreadsheetData(newData);
   };
 
   const handleSendMessage = async () => {
-    if (!userInput.trim()) return;
+    if (!userInput.trim() && !imageFile) return;
     
     const userMessage: ChatMessage = {
       role: 'user',
@@ -470,14 +200,17 @@ export default function AISpreadsheetPage() {
     
     setChatMessages(prev => [...prev, userMessage]);
     setUserInput('');
+    setShowCommandOptions(false);
     setIsLoading(true);
+    setError(null);
     
     try {
       if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
         throw new Error("Puter SDK not available. Please refresh.");
       }
+      
       const puter = window.puter;
-
+      
       let isSignedIn = await puter.auth.isSignedIn();
       if (!isSignedIn) {
         await puter.auth.signIn();
@@ -485,698 +218,406 @@ export default function AISpreadsheetPage() {
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
       
-      // Create a string representation of the current spreadsheet data for context
-      const spreadsheetContext = generateSpreadsheetContext();
+      // Prepare context for the AI
+      let contextPrompt = "You are an AI assistant specialized in helping with spreadsheet operations. ";
       
-      // Add context spreadsheet data if available
-      const contextData = contextSpreadsheetData 
-        ? `\nADDITIONAL CONTEXT SPREADSHEET:\n${contextSpreadsheetData}\n` 
-        : '';
+      // Add command context
+      if (selectedCommands.analyze) {
+        contextPrompt += "Analyze the user's spreadsheet data and provide insights. ";
+      }
       
-      const prompt = `
-        You are an AI assistant specialized in spreadsheet operations. The user is working with a spreadsheet with the following data:
+      if (selectedCommands.web && webSearchUrl) {
+        contextPrompt += `Use information from the web URL: ${webSearchUrl} to enhance your response. `;
         
-        ${spreadsheetContext}
-        ${contextData}
+        // Here you would integrate with crawl4ai API
+        // For now, we'll simulate this with a message
+        setChatMessages(prev => [
+          ...prev, 
+          {
+            role: 'system',
+            content: `Searching web content from: ${webSearchUrl}...`,
+            timestamp: new Date()
+          }
+        ]);
+      }
+      
+      // Process image if provided
+      let imageAnalysisResult = '';
+      if (selectedCommands.image && imageFile) {
+        setChatMessages(prev => [
+          ...prev, 
+          {
+            role: 'system',
+            content: 'Analyzing uploaded image...',
+            timestamp: new Date()
+          }
+        ]);
         
-        The user's request is: "${userInput}"
-        
-        Analyze what changes need to be made to the spreadsheet. I will implement these changes directly based on your analysis.
-        
-        Return your response in JSON format with these fields:
-        {
-          "operations": [
+        try {
+          // Convert image to data URL
+          const reader = new FileReader();
+          const imageDataPromise = new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(imageFile);
+          });
+          
+          const imageData = await imageDataPromise;
+          
+          // Analyze image with GPT-4 Vision
+          const imagePrompt = "Describe this image in detail, focusing on any data, charts, or spreadsheet-related content visible.";
+          const imageResponse = await puter.ai.chat(imagePrompt, imageData);
+          
+          if (imageResponse?.message?.content) {
+            imageAnalysisResult = imageResponse.message.content;
+            contextPrompt += `Based on the image analysis: ${imageAnalysisResult} `;
+          }
+        } catch (imageError) {
+          console.error("Image analysis error:", imageError);
+          setChatMessages(prev => [
+            ...prev, 
             {
-              "type": "find_replace", // or "add_column", "add_row", "update_cell", "format_cells", etc.
-              "details": {
-                // Specific details for each operation type
-                // For find_replace: { "find": "text to find", "replace": "replacement text" }
-                // For add_column: { "header": "column name", "position": 3, "values": ["val1", "val2"] }
-                // For update_cell: { "row": 2, "col": 3, "value": "new value" }
-                // For add_row: { "position": 5, "values": ["val1", "val2", "val3"] }
-                // For delete_row: { "row": 3 }
-                // For delete_column: { "col": 2 }
-                // For format_cells: { "cells": [{"row": 1, "col": 2}], "style": {"bold": true, "color": "#ff0000"} }
-                // For add_dummy_data: { "headers": ["Name", "Age", "Email"], "rows": 5 }
-              }
+              role: 'system',
+              content: 'Error analyzing image. Proceeding without image context.',
+              timestamp: new Date()
             }
-          ],
-          "explanation": "A clear explanation of what changes were made"
+          ]);
         }
-        
-        If you can't determine specific operations, just provide an explanation field with your response.
-      `;
+      }
+      
+      // Create a description of the current spreadsheet state
+      const spreadsheetDescription = generateSpreadsheetDescription(spreadsheetData);
+      contextPrompt += `\n\nCurrent spreadsheet state: ${spreadsheetDescription}\n\n`;
+      
+      // Add spreadsheet file context if provided
+      if (spreadsheetFile) {
+        contextPrompt += `The user has also uploaded a spreadsheet file named "${spreadsheetFile.name}" for context. `;
+      }
+      
+      // Prepare the main prompt
+      const prompt = `${contextPrompt}
+      
+User request: "${userInput}"
+
+Respond with a JSON object that contains:
+1. "operations": An array of spreadsheet operations to perform
+2. "explanation": A clear explanation of what changes you're making and why
+
+Available operation types:
+- "update_cell": Update a specific cell
+- "update_row": Update an entire row
+- "update_column": Update an entire column
+- "add_row": Add a new row
+- "add_column": Add a new column
+- "delete_row": Delete a row
+- "delete_column": Delete a column
+- "format": Apply formatting
+- "create_chart": Create a chart
+- "find_replace": Find and replace text
+
+Example response format:
+{
+  "operations": [
+    {
+      "type": "update_cell",
+      "details": {
+        "row": 0,
+        "col": 0,
+        "value": "New Value"
+      }
+    },
+    {
+      "type": "add_column",
+      "details": {
+        "header": "New Column",
+        "position": 2,
+        "values": ["Value 1", "Value 2"]
+      }
+    }
+  ],
+  "explanation": "I've updated the cell A1 with 'New Value' and added a new column with header 'New Column' at position C."
+}
+
+If you need to analyze the data without making changes, just provide an explanation without operations.
+`;
       
       const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
       
       if (!response?.message?.content) {
-        throw new Error("AI response was empty.");
+        throw new Error("AI response was empty or invalid.");
       }
       
-      // Process the AI's response to actually modify the spreadsheet
+      // Process the AI response
       const aiResponseText = response.message.content;
-      let aiResponse;
-      let operations: SpreadsheetOperation[] = [];
-      let explanation = "";
+      let aiOperations: SpreadsheetOperation[] = [];
+      let aiExplanation = "";
       
       try {
-        // Try to parse the JSON response
-        const jsonStart = aiResponseText.indexOf('{');
-        const jsonEnd = aiResponseText.lastIndexOf('}') + 1;
-        if (jsonStart >= 0 && jsonEnd > jsonStart) {
-          const jsonStr = aiResponseText.substring(jsonStart, jsonEnd);
-          aiResponse = JSON.parse(jsonStr);
-          operations = aiResponse.operations || [];
-          explanation = aiResponse.explanation || aiResponseText;
+        // Extract JSON from the response
+        const jsonMatch = aiResponseText.match(/```json\n([\s\S]*?)\n```/) || 
+                          aiResponseText.match(/```\n([\s\S]*?)\n```/) ||
+                          aiResponseText.match(/{[\s\S]*?}/);
+                          
+        if (jsonMatch) {
+          const jsonStr = jsonMatch[0].startsWith('{') ? jsonMatch[0] : jsonMatch[1];
+          const parsedResponse = JSON.parse(jsonStr);
+          
+          if (parsedResponse.operations) {
+            aiOperations = parsedResponse.operations;
+          }
+          
+          if (parsedResponse.explanation) {
+            aiExplanation = parsedResponse.explanation;
+          }
         } else {
-          explanation = aiResponseText;
+          // If no JSON found, use the whole response as explanation
+          aiExplanation = aiResponseText;
         }
-      } catch (error) {
-        console.error("Failed to parse AI response as JSON:", error);
-        explanation = aiResponseText;
+      } catch (parseError) {
+        console.error("Error parsing AI response:", parseError);
+        aiExplanation = aiResponseText;
       }
       
-      // Implement the actual spreadsheet modifications based on operations
-      let updatedSpreadsheet = { ...spreadsheetData };
-      let operationsPerformed = false;
+      // Apply operations to the spreadsheet
+      if (aiOperations.length > 0) {
+        const newSpreadsheetData = applyOperations(spreadsheetData, aiOperations);
+        setSpreadsheetData(newSpreadsheetData);
+      }
       
-      // Process each operation
-      for (const operation of operations) {
-        switch (operation.type) {
-          case 'find_replace':
-            if (operation.details?.find && operation.details?.replace) {
-              const findText = operation.details.find;
-              const replaceText = operation.details.replace;
-              
-              // Perform find and replace across all cells
-              updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
-                row.map(cell => ({
-                  ...cell,
-                  value: cell.value.replace(new RegExp(findText, 'g'), replaceText)
-                }))
-              );
-              operationsPerformed = true;
+      // Add AI response to chat
+      const aiMessage: ChatMessage = {
+        role: 'assistant',
+        content: aiExplanation,
+        timestamp: new Date()
+      };
+      
+      setChatMessages(prev => [...prev, aiMessage]);
+      
+    } catch (err: any) {
+      console.error("AI processing error:", err);
+      setError(err.message || "An error occurred while processing your request.");
+      
+      setChatMessages(prev => [
+        ...prev, 
+        {
+          role: 'system',
+          content: `Error: ${err.message || "An error occurred while processing your request."}`,
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+      setWebSearchUrl('');
+      setImageFile(null);
+    }
+  };
+  
+  // Generate a text description of the spreadsheet for the AI
+  const generateSpreadsheetDescription = (data: SpreadsheetData): string => {
+    // Get headers (first row)
+    const headers = data.rows[0]?.map(cell => cell.value) || [];
+    
+    // Count non-empty cells
+    let nonEmptyCells = 0;
+    data.rows.forEach(row => {
+      row.forEach(cell => {
+        if (cell.value.trim() !== '') nonEmptyCells++;
+      });
+    });
+    
+    // Sample some data
+    const sampleData: string[] = [];
+    for (let i = 1; i < Math.min(data.rows.length, 5); i++) {
+      if (data.rows[i].some(cell => cell.value.trim() !== '')) {
+        const rowValues = data.rows[i].map(cell => cell.value).join(', ');
+        sampleData.push(`Row ${i+1}: ${rowValues}`);
+      }
+    }
+    
+    return `
+Spreadsheet with ${data.rows.length} rows and ${data.rows[0]?.length || 0} columns.
+Headers: ${headers.join(', ') || 'None'}
+Contains ${nonEmptyCells} non-empty cells.
+Sample data:
+${sampleData.join('\n') || 'No data available'}
+Active sheet: ${data.activeSheet}
+Available sheets: ${data.sheets.join(', ')}
+`;
+  };
+  
+  // Apply operations to the spreadsheet
+  const applyOperations = (data: SpreadsheetData, operations: SpreadsheetOperation[]): SpreadsheetData => {
+    let newData = { ...data, rows: [...data.rows.map(row => [...row])] };
+    
+    operations.forEach(operation => {
+      switch (operation.type) {
+        case 'update_cell': {
+          const { row, col, value } = operation.details;
+          // Ensure the grid is large enough
+          newData = ensureGridSize(newData, row, col);
+          newData.rows[row][col] = { ...newData.rows[row][col], value: value.toString() };
+          break;
+        }
+        
+        case 'update_row': {
+          const { row, values } = operation.details;
+          // Ensure the grid is large enough
+          newData = ensureGridSize(newData, row, values.length - 1);
+          values.forEach((value: any, colIndex: number) => {
+            if (colIndex < newData.rows[row].length) {
+              newData.rows[row][colIndex] = { ...newData.rows[row][colIndex], value: value.toString() };
             }
-            break;
-            
-          case 'add_column':
-            if (operation.details) {
-              const header = operation.details.header || 'New Column';
-              const position = operation.details.position !== undefined 
-                ? operation.details.position 
-                : updatedSpreadsheet.rows[0].length;
-              const values = operation.details.values || [];
-              
-              // Ensure we have enough rows for all values
-              while (updatedSpreadsheet.rows.length < values.length + 1) { // +1 for header
-                updatedSpreadsheet.rows.push(
-                  Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
-                );
-                if (updatedSpreadsheet.rowHeights) {
-                  updatedSpreadsheet.rowHeights.push(30);
-                }
-              }
-              
-              // Add a new column
-              updatedSpreadsheet.rows = updatedSpreadsheet.rows.map((row, rowIndex) => {
-                const newRow = [...row];
-                if (rowIndex === 0) {
-                  // Add header
-                  newRow.splice(position, 0, { 
-                    value: header, 
-                    style: { bold: true, backgroundColor: '#f0f0f0' } 
-                  });
-                } else {
-                  // Add value or empty cell
-                  const valueIndex = rowIndex - 1;
-                  const value = valueIndex < values.length ? values[valueIndex] : '';
-                  newRow.splice(position, 0, { value: String(value || '') });
-                }
-                return newRow;
+          });
+          break;
+        }
+        
+        case 'update_column': {
+          const { col, values } = operation.details;
+          values.forEach((value: any, rowIndex: number) => {
+            // Ensure the grid is large enough
+            newData = ensureGridSize(newData, rowIndex, col);
+            newData.rows[rowIndex][col] = { ...newData.rows[rowIndex][col], value: value.toString() };
+          });
+          break;
+        }
+        
+        case 'add_row': {
+          const { position = newData.rows.length, values } = operation.details;
+          const rowIndex = Math.min(position, newData.rows.length);
+          
+          // Create a new row with the right number of columns
+          const colCount = Math.max(newData.rows[0]?.length || 0, values?.length || 0);
+          const newRow = Array(colCount).fill(null).map((_, i) => {
+            return { value: values && i < values.length ? values[i].toString() : '' };
+          });
+          
+          // Insert the new row
+          newData.rows.splice(rowIndex, 0, newRow);
+          
+          // Ensure all rows have the same number of columns
+          const maxCols = Math.max(...newData.rows.map(row => row.length));
+          newData.rows = newData.rows.map(row => {
+            while (row.length < maxCols) {
+              row.push({ value: '' });
+            }
+            return row;
+          });
+          break;
+        }
+        
+        case 'add_column': {
+          const { position = newData.rows[0]?.length || 0, header, values } = operation.details;
+          const colIndex = Math.min(position, newData.rows[0]?.length || 0);
+          
+          // Ensure we have at least one row for the header
+          if (newData.rows.length === 0) {
+            newData.rows.push([]);
+          }
+          
+          // Add the header
+          const headerRow = newData.rows[0];
+          headerRow.splice(colIndex, 0, { value: header || '' });
+          
+          // Add values to each row
+          for (let i = 1; i < newData.rows.length; i++) {
+            const value = values && i - 1 < values.length ? values[i - 1].toString() : '';
+            newData.rows[i].splice(colIndex, 0, { value });
+          }
+          
+          // If values array is longer than existing rows, add new rows
+          if (values && values.length > newData.rows.length - 1) {
+            for (let i = newData.rows.length - 1; i < values.length; i++) {
+              const newRow = Array(newData.rows[0].length).fill(null).map((_, colIdx) => {
+                return { value: colIdx === colIndex ? values[i].toString() : '' };
               });
-              
-              // Update column widths
-              if (updatedSpreadsheet.columnWidths) {
-                updatedSpreadsheet.columnWidths.splice(position, 0, 120);
-              }
-              
-              operationsPerformed = true;
+              newData.rows.push(newRow);
             }
-            break;
+          }
+          break;
+        }
+        
+        case 'delete_row': {
+          const { row } = operation.details;
+          if (row >= 0 && row < newData.rows.length) {
+            newData.rows.splice(row, 1);
             
-          case 'add_row':
-            if (operation.details) {
-              const position = operation.details.position !== undefined 
-                ? operation.details.position 
-                : updatedSpreadsheet.rows.length;
-              const values = operation.details.values || [];
-              
-              // Ensure we have enough columns for all values
-              const maxColumns = Math.max(updatedSpreadsheet.rows[0].length, values.length);
-              
-              // Expand all rows to have the same number of columns
-              updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => {
-                while (row.length < maxColumns) {
+            // Ensure we have at least DEFAULT_ROWS rows
+            while (newData.rows.length < DEFAULT_ROWS) {
+              const colCount = newData.rows[0]?.length || DEFAULT_COLS;
+              newData.rows.push(Array(colCount).fill(null).map(() => ({ value: '' })));
+            }
+          }
+          break;
+        }
+        
+        case 'delete_column': {
+          const { col } = operation.details;
+          if (col >= 0 && newData.rows.length > 0 && col < newData.rows[0].length) {
+            newData.rows = newData.rows.map(row => {
+              row.splice(col, 1);
+              return row;
+            });
+            
+            // Ensure we have at least DEFAULT_COLS columns
+            if (newData.rows[0]?.length < DEFAULT_COLS) {
+              newData.rows = newData.rows.map(row => {
+                while (row.length < DEFAULT_COLS) {
                   row.push({ value: '' });
                 }
                 return row;
               });
-              
-              // Update column widths if needed
-              if (updatedSpreadsheet.columnWidths) {
-                while (updatedSpreadsheet.columnWidths.length < maxColumns) {
-                  updatedSpreadsheet.columnWidths.push(120);
-                }
-              }
-              
-              // Create a new row with the provided values
-              const newRow = Array(maxColumns).fill(null).map((_, index) => ({
-                value: index < values.length ? String(values[index] || '') : ''
-              }));
-              
-              // Add the row at the specified position
-              updatedSpreadsheet.rows.splice(position, 0, newRow);
-              
-              // Update row heights
-              if (updatedSpreadsheet.rowHeights) {
-                updatedSpreadsheet.rowHeights.splice(position, 0, 30);
-              }
-              
-              operationsPerformed = true;
             }
-            break;
-            
-          case 'update_cell':
-            if (operation.details?.row !== undefined && 
-                operation.details?.col !== undefined && 
-                operation.details?.value !== undefined) {
-              
-              const row = operation.details.row;
-              const col = operation.details.col;
-              const value = operation.details.value;
-              
-              // Ensure the row and column exist
-              while (updatedSpreadsheet.rows.length <= row) {
-                updatedSpreadsheet.rows.push(
-                  Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
-                );
-                if (updatedSpreadsheet.rowHeights) {
-                  updatedSpreadsheet.rowHeights.push(30);
-                }
-              }
-              
-              while (updatedSpreadsheet.rows[0].length <= col) {
-                // Add column to all rows to maintain rectangular grid
-                updatedSpreadsheet.rows.forEach(r => {
-                  r.push({ value: '' });
-                });
-                
-                if (updatedSpreadsheet.columnWidths) {
-                  updatedSpreadsheet.columnWidths.push(120);
-                }
-              }
-              
-              updatedSpreadsheet.rows[row][col] = {
-                ...updatedSpreadsheet.rows[row][col],
-                value: String(value)
-              };
-              
-              operationsPerformed = true;
-            }
-            break;
-            
-          case 'delete_row':
-            if (operation.details?.row !== undefined) {
-              const row = operation.details.row;
-              
-              // Make sure the row exists
-              if (row >= 0 && row < updatedSpreadsheet.rows.length) {
-                // Remove the row
-                updatedSpreadsheet.rows.splice(row, 1);
-                
-                // Update row heights
-                if (updatedSpreadsheet.rowHeights) {
-                  updatedSpreadsheet.rowHeights.splice(row, 1);
-                }
-                
-                // Add an empty row at the end to maintain the total number of rows
-                updatedSpreadsheet.rows.push(
-                  Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
-                );
-                
-                if (updatedSpreadsheet.rowHeights) {
-                  updatedSpreadsheet.rowHeights.push(30);
-                }
-                
-                operationsPerformed = true;
-              }
-            }
-            break;
-            
-          case 'delete_column':
-            if (operation.details?.col !== undefined) {
-              const col = operation.details.col;
-              
-              // Make sure the column exists
-              if (col >= 0 && col < updatedSpreadsheet.rows[0].length) {
-                // Remove the column from each row
-                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => {
-                  const newRow = [...row];
-                  newRow.splice(col, 1);
-                  return newRow;
-                });
-                
-                // Update column widths
-                if (updatedSpreadsheet.columnWidths) {
-                  updatedSpreadsheet.columnWidths.splice(col, 1);
-                }
-                
-                // Add an empty column at the end to maintain the total number of columns
-                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => {
-                  row.push({ value: '' });
-                  return row;
-                });
-                
-                if (updatedSpreadsheet.columnWidths) {
-                  updatedSpreadsheet.columnWidths.push(120);
-                }
-                
-                operationsPerformed = true;
-              }
-            }
-            break;
-            
-          case 'format_cells':
-            if (operation.details?.cells && operation.details?.style) {
-              const cells = operation.details.cells;
-              const style = operation.details.style;
-              
-              for (const cell of cells) {
-                const { row, col } = cell;
-                
-                // Ensure the row and column exist
-                while (updatedSpreadsheet.rows.length <= row) {
-                  updatedSpreadsheet.rows.push(
-                    Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
-                  );
-                  if (updatedSpreadsheet.rowHeights) {
-                    updatedSpreadsheet.rowHeights.push(30);
-                  }
-                }
-                
-                while (updatedSpreadsheet.rows[0].length <= col) {
-                  // Add column to all rows to maintain rectangular grid
-                  updatedSpreadsheet.rows.forEach(r => {
-                    r.push({ value: '' });
-                  });
-                  
-                  if (updatedSpreadsheet.columnWidths) {
-                    updatedSpreadsheet.columnWidths.push(120);
-                  }
-                }
-                
-                updatedSpreadsheet.rows[row][col] = {
-                  ...updatedSpreadsheet.rows[row][col],
-                  style: {
-                    ...updatedSpreadsheet.rows[row][col].style,
-                    ...style
-                  }
-                };
-              }
-              
-              operationsPerformed = true;
-            }
-            break;
-            
-          case 'add_dummy_data':
-            if (operation.details) {
-              const headers = operation.details.headers || ['Name', 'Age', 'Email'];
-              const rowCount = operation.details.rows || 4;
-              
-              // Generate dummy data
-              const dummyData = generateDummyData(headers, rowCount);
-              
-              // Ensure we have enough rows and columns
-              const requiredRows = rowCount + 1; // +1 for header
-              const requiredCols = headers.length;
-              
-              // Expand rows if needed
-              while (updatedSpreadsheet.rows.length < requiredRows) {
-                updatedSpreadsheet.rows.push(
-                  Array(Math.max(updatedSpreadsheet.rows[0].length, requiredCols)).fill(null).map(() => ({ value: '' }))
-                );
-                if (updatedSpreadsheet.rowHeights) {
-                  updatedSpreadsheet.rowHeights.push(30);
-                }
-              }
-              
-              // Expand columns if needed
-              if (requiredCols > updatedSpreadsheet.rows[0].length) {
-                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => {
-                  while (row.length < requiredCols) {
-                    row.push({ value: '' });
-                  }
-                  return row;
-                });
-                
-                if (updatedSpreadsheet.columnWidths) {
-                  while (updatedSpreadsheet.columnWidths.length < requiredCols) {
-                    updatedSpreadsheet.columnWidths.push(120);
-                  }
-                }
-              }
-              
-              // Clear existing data if needed
-              if (operation.details.clear) {
-                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
-                  row.map(() => ({ value: '' }))
-                );
-              }
-              
-              // Add headers
-              headers.forEach((header, index) => {
-                updatedSpreadsheet.rows[0][index] = {
-                  value: header,
-                  style: { bold: true, backgroundColor: '#f0f0f0' }
-                };
-              });
-              
-              // Add data rows
-              dummyData.forEach((row, rowIndex) => {
-                row.forEach((value, colIndex) => {
-                  updatedSpreadsheet.rows[rowIndex + 1][colIndex] = { value };
-                });
-              });
-              
-              operationsPerformed = true;
-            }
-            break;
-            
-          case 'clear_cells':
-            if (operation.details) {
-              const range = operation.details.range;
-              
-              if (range) {
-                const { startRow, endRow, startCol, endCol } = range;
-                
-                // Ensure the rows and columns exist
-                while (updatedSpreadsheet.rows.length <= endRow) {
-                  updatedSpreadsheet.rows.push(
-                    Array(updatedSpreadsheet.rows[0].length).fill(null).map(() => ({ value: '' }))
-                  );
-                  if (updatedSpreadsheet.rowHeights) {
-                    updatedSpreadsheet.rowHeights.push(30);
-                  }
-                }
-                
-                while (updatedSpreadsheet.rows[0].length <= endCol) {
-                  // Add column to all rows to maintain rectangular grid
-                  updatedSpreadsheet.rows.forEach(r => {
-                    r.push({ value: '' });
-                  });
-                  
-                  if (updatedSpreadsheet.columnWidths) {
-                    updatedSpreadsheet.columnWidths.push(120);
-                  }
-                }
-                
-                // Clear the specified range
-                for (let r = startRow; r <= endRow; r++) {
-                  for (let c = startCol; c <= endCol; c++) {
-                    updatedSpreadsheet.rows[r][c] = { value: '' };
-                  }
-                }
-              } else if (operation.details.all) {
-                // Clear all cells
-                updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
-                  row.map(() => ({ value: '' }))
-                );
-              }
-              
-              operationsPerformed = true;
-            }
-            break;
-            
-          // Add more operation types as needed
-        }
-      }
-      
-      // If no operations were performed but we have a user request that looks like a find/replace
-      if (!operationsPerformed) {
-        // Handle common operations based on user input patterns
-        if (userInput.toLowerCase().includes('change') || 
-            userInput.toLowerCase().includes('replace')) {
-          
-          // Try to extract find and replace terms
-          const findReplacePattern = /change\s+["']?([^"']+)["']?\s+to\s+["']?([^"']+)["']?/i;
-          const match = userInput.match(findReplacePattern);
-          
-          if (match && match.length >= 3) {
-            const findText = match[1].trim();
-            const replaceText = match[2].trim();
-            
-            // Perform find and replace across all cells
-            updatedSpreadsheet.rows = updatedSpreadsheet.rows.map(row => 
-              row.map(cell => ({
-                ...cell,
-                value: cell.value.replace(new RegExp(findText, 'g'), replaceText)
-              }))
-            );
-            
-            operationsPerformed = true;
-            explanation = `I've replaced all instances of "${findText}" with "${replaceText}" throughout the spreadsheet.`;
           }
+          break;
         }
         
-        // Handle adding a column
-        else if (userInput.toLowerCase().includes('add') && 
-                 userInput.toLowerCase().includes('column')) {
-          
-          // Try to extract column name
-          const columnNamePattern = /add\s+(?:a\s+)?column\s+(?:for|called|named|with header)\s+["']?([^"']+)["']?/i;
-          const match = userInput.match(columnNamePattern);
-          
-          if (match && match.length >= 2) {
-            const columnName = match[1].trim();
-            
-            // Add a new column
-            updatedSpreadsheet.rows = updatedSpreadsheet.rows.map((row, rowIndex) => {
-              const newRow = [...row];
-              if (rowIndex === 0) {
-                // Add header
-                newRow.push({ 
-                  value: columnName, 
-                  style: { bold: true, backgroundColor: '#f0f0f0' } 
-                });
-              } else {
-                // Add empty cell
-                newRow.push({ value: '' });
-              }
-              return newRow;
-            });
-            
-            // Update column widths
-            if (updatedSpreadsheet.columnWidths) {
-              updatedSpreadsheet.columnWidths.push(120);
-            }
-            
-            operationsPerformed = true;
-            explanation = `I've added a new column titled "${columnName}" to your spreadsheet.`;
-          }
-        }
-        
-        // Handle adding dummy data
-        else if (userInput.toLowerCase().includes('add dummy') || 
-                 userInput.toLowerCase().includes('add sample') ||
-                 userInput.toLowerCase().includes('add test data')) {
-          
-          // Default headers
-          const headers = ['Name', 'Age', 'Email'];
-          
-          // Ensure we have enough columns
-          while (updatedSpreadsheet.rows[0].length < headers.length) {
-            // Add column to all rows
-            updatedSpreadsheet.rows.forEach(row => {
-              row.push({ value: '' });
-            });
-            
-            if (updatedSpreadsheet.columnWidths) {
-              updatedSpreadsheet.columnWidths.push(120);
-            }
-          }
-          
-          // Add headers
-          headers.forEach((header, index) => {
-            updatedSpreadsheet.rows[0][index] = {
-              value: header,
-              style: { bold: true, backgroundColor: '#f0f0f0' }
+        case 'format': {
+          const { row, col, style } = operation.details;
+          if (row >= 0 && row < newData.rows.length && 
+              col >= 0 && col < newData.rows[row].length) {
+            newData.rows[row][col] = { 
+              ...newData.rows[row][col], 
+              style: { ...newData.rows[row][col].style, ...style } 
             };
-          });
-          
-          // Generate dummy data
-          const dummyData = generateDummyData(headers, 4);
-          
-          // Add data rows
-          dummyData.forEach((row, rowIndex) => {
-            if (rowIndex + 1 < updatedSpreadsheet.rows.length) {
-              row.forEach((value, colIndex) => {
-                updatedSpreadsheet.rows[rowIndex + 1][colIndex] = { value };
-              });
-            } else {
-              // Add new row if needed
-              const newRow = Array(updatedSpreadsheet.rows[0].length).fill(null).map((_, colIndex) => ({
-                value: colIndex < row.length ? row[colIndex] : ''
-              }));
-              updatedSpreadsheet.rows.push(newRow);
-              
-              if (updatedSpreadsheet.rowHeights) {
-                updatedSpreadsheet.rowHeights.push(30);
-              }
-            }
-          });
-          
-          operationsPerformed = true;
-          explanation = "I've added a header row with columns for Name, Age, and Email, followed by four rows of dummy data.";
+          }
+          break;
         }
-      }
-      
-      // Update the spreadsheet if operations were performed
-      if (operationsPerformed) {
-        setSpreadsheetData(updatedSpreadsheet);
-      }
-      
-      // Add the AI's response to the chat
-      setChatMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: explanation,
-          timestamp: new Date()
-        }
-      ]);
-      
-    } catch (err: any) {
-      console.error("AI chat error:", err);
-      const friendlyErrorMessage = getLaymanErrorMessage(err);
-      
-      setChatMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `I'm sorry, I encountered an error: ${friendlyErrorMessage}. Please try again.`,
-          timestamp: new Date()
-        }
-      ]);
-      
-      toast({ 
-        variant: "destructive", 
-        title: "Chat Failed", 
-        description: friendlyErrorMessage 
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Generate dummy data for the spreadsheet
-  const generateDummyData = (headers: string[], rowCount: number): string[][] => {
-    const dummyData: string[][] = [];
-    
-    // Sample data for different column types
-    const names = ['John Smith', 'Emily Johnson', 'Michael Brown', 'Sarah Davis', 'David Wilson', 'Jennifer Miller', 'Robert Taylor', 'Jessica Anderson', 'Christopher Thomas', 'Amanda Martinez'];
-    const ages = ['25', '32', '41', '28', '35', '29', '45', '31', '38', '27'];
-    const emails = ['john@example.com', 'emily@example.com', 'michael@example.com', 'sarah@example.com', 'david@example.com', 'jennifer@example.com', 'robert@example.com', 'jessica@example.com', 'chris@example.com', 'amanda@example.com'];
-    const departments = ['Marketing', 'Sales', 'Engineering', 'HR', 'Finance', 'Product', 'Support', 'Legal', 'Operations', 'Research'];
-    const dates = ['2023-01-15', '2023-02-28', '2023-03-10', '2023-04-22', '2023-05-05', '2023-06-18', '2023-07-30', '2023-08-12', '2023-09-25', '2023-10-07'];
-    
-    // Generate rows
-    for (let i = 0; i < Math.min(rowCount, 10); i++) {
-      const row: string[] = [];
-      
-      // Add data based on header names
-      headers.forEach(header => {
-        const headerLower = header.toLowerCase();
         
-        if (headerLower.includes('name')) {
-          row.push(names[i]);
-        } else if (headerLower.includes('age')) {
-          row.push(ages[i]);
-        } else if (headerLower.includes('email')) {
-          row.push(emails[i]);
-        } else if (headerLower.includes('department') || headerLower.includes('dept')) {
-          row.push(departments[i]);
-        } else if (headerLower.includes('date')) {
-          row.push(dates[i]);
-        } else {
-          // Generic data for other headers
-          row.push(`Data ${i+1}`);
-        }
-      });
-      
-      dummyData.push(row);
-    }
-    
-    return dummyData;
-  };
-
-  const generateSpreadsheetContext = (): string => {
-    // Create a text representation of the spreadsheet for the AI
-    let context = `Filename: ${fileName}\n`;
-    context += `Active Sheet: ${spreadsheetData.activeSheet}\n`;
-    context += `Sheets: ${spreadsheetData.sheets.join(', ')}\n\n`;
-    
-    // Add the first 10 rows or until we hit empty rows
-    context += "Spreadsheet Data (first 10 rows):\n";
-    
-    let hasData = false;
-    for (let i = 0; i < Math.min(10, spreadsheetData.rows.length); i++) {
-      const row = spreadsheetData.rows[i];
-      const rowValues = row.map(cell => cell.value || '');
-      
-      if (rowValues.some(value => value !== '')) {
-        hasData = true;
-        context += rowValues.join('\t') + '\n';
+        // Other operation types can be added here
       }
-    }
+    });
     
-    if (!hasData) {
-      context += "The spreadsheet is currently empty.\n";
-    }
-    
-    return context;
+    return newData;
   };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  
+  // Handle key press in the input field
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-
-  const downloadSpreadsheet = () => {
+  
+  // Download the spreadsheet
+  const handleDownloadSpreadsheet = () => {
     try {
-      // Create a new workbook
-      const wb = XLSX.utils.book_new();
-      
-      // Convert the current spreadsheet data to a worksheet
-      const wsData = spreadsheetData.rows.map(row => 
-        row.map(cell => cell.value)
+      // Convert spreadsheet data to worksheet
+      const ws = XLSX.utils.aoa_to_sheet(
+        spreadsheetData.rows.map(row => row.map(cell => cell.value))
       );
       
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      
-      // Add the worksheet to the workbook
+      // Create a new workbook
+      const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, spreadsheetData.activeSheet);
       
-      // Generate the file
-      XLSX.writeFile(wb, `${fileName.replace(/\.[^/.]+$/, '')}.xlsx`);
+      // Generate file and trigger download
+      XLSX.writeFile(wb, 'ai_spreadsheet.xlsx');
       
       toast({
         title: "Download Complete",
-        description: `${fileName.replace(/\.[^/.]+$/, '')}.xlsx has been downloaded.`,
+        description: "Spreadsheet has been downloaded successfully.",
       });
     } catch (error) {
-      console.error('Error downloading spreadsheet:', error);
+      console.error("Error downloading spreadsheet:", error);
       toast({
         variant: "destructive",
         title: "Download Failed",
@@ -1184,283 +625,316 @@ export default function AISpreadsheetPage() {
       });
     }
   };
-
-  const removeContextSpreadsheet = () => {
-    setContextSpreadsheet(null);
-    setContextSpreadsheetData('');
-    
-    setChatMessages(prev => [
-      ...prev,
-      {
-        role: 'system',
-        content: 'Context spreadsheet has been removed.',
-        timestamp: new Date()
-      }
-    ]);
-    
-    toast({
-      title: "Context Removed",
-      description: "The context spreadsheet has been removed.",
+  
+  // Copy cell value to clipboard
+  const handleCopyCellValue = (value: string) => {
+    navigator.clipboard.writeText(value).then(() => {
+      toast({
+        title: "Copied to Clipboard",
+        description: "Cell value has been copied to clipboard.",
+      });
+    }).catch(err => {
+      console.error("Failed to copy:", err);
+      toast({
+        variant: "destructive",
+        title: "Copy Failed",
+        description: "Failed to copy cell value to clipboard.",
+      });
     });
   };
-
-  const getCellStyle = (cell: SpreadsheetCell) => {
-    if (!cell) return {};
+  
+  // Render cell with appropriate styling
+  const renderCell = (cell: { value: string, style?: any }, rowIndex: number, colIndex: number) => {
+    const isHeader = rowIndex === 0;
+    const cellStyle = cell.style || {};
     
-    return {
-      fontWeight: cell.style?.bold ? 'bold' : 'normal',
-      fontStyle: cell.style?.italic ? 'italic' : 'normal',
-      color: cell.style?.color || 'inherit',
-      backgroundColor: cell.style?.backgroundColor || 'transparent',
-      textAlign: cell.style?.textAlign || 'left',
-    };
+    return (
+      <div 
+        key={`cell-${rowIndex}-${colIndex}`}
+        className={`
+          border border-gray-200 dark:border-gray-700 p-2 min-w-[100px] 
+          ${isHeader ? 'bg-muted font-semibold' : 'bg-card'}
+          ${cellStyle.bold ? 'font-bold' : ''}
+          ${cellStyle.italic ? 'italic' : ''}
+          ${cellStyle.textAlign === 'center' ? 'text-center' : 
+            cellStyle.textAlign === 'right' ? 'text-right' : 'text-left'}
+        `}
+        style={{
+          color: cellStyle.color,
+          backgroundColor: cellStyle.backgroundColor,
+        }}
+        onClick={() => handleCopyCellValue(cell.value)}
+        title="Click to copy"
+      >
+        {cell.value || ''}
+      </div>
+    );
   };
-
-  const getColumnLetter = (index: number) => {
-    let letter = '';
-    while (index >= 0) {
-      letter = String.fromCharCode(65 + (index % 26)) + letter;
-      index = Math.floor(index / 26) - 1;
-    }
-    return letter;
-  };
-
-  return (
-    <>
-      <Head>
-        <link rel="canonical" href="https://klutz.netlify.app/ai-spreadsheets" />
-      </Head>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center justify-between">
-            <h1 className="font-headline text-3xl text-primary flex items-center">
-              <FileSpreadsheet className="mr-3 h-8 w-8" />
-              AI-Native Spreadsheets
-            </h1>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" />
-                Upload
-              </Button>
-              <Input 
-                ref={fileInputRef}
-                type="file" 
-                accept=".csv,.xlsx,.xls,.ods,.tsv" 
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-              <Button variant="outline" onClick={createNewSpreadsheet}>
-                <Plus className="mr-2 h-4 w-4" />
-                New
-              </Button>
-              <Button variant="outline" onClick={downloadSpreadsheet}>
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </Button>
-            </div>
+  
+  // Render row labels (A, B, C, etc.)
+  const renderColumnLabels = () => {
+    const colCount = spreadsheetData.rows[0]?.length || DEFAULT_COLS;
+    return (
+      <div className="flex">
+        <div className="w-10 bg-muted border border-gray-200 dark:border-gray-700 flex items-center justify-center font-semibold">
+          #
+        </div>
+        {Array(colCount).fill(null).map((_, colIndex) => (
+          <div 
+            key={`col-label-${colIndex}`}
+            className="min-w-[100px] bg-muted border border-gray-200 dark:border-gray-700 p-2 text-center font-semibold"
+          >
+            {String.fromCharCode(65 + colIndex)}
           </div>
-          
-          {/* Tips alert - moved above the main content */}
-          <Alert variant="default" className="bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-            <Info className="h-5 w-5 text-blue-500" />
-            <AlertTitle className="font-semibold">Spreadsheet Assistant Tips</AlertTitle>
-            <AlertDescription>
-              <ul className="list-disc list-inside space-y-1 mt-1">
-                <li>Ask the AI to create tables, charts, or perform calculations</li>
-                <li>Request data formatting or styling changes</li>
-                <li>Ask for analysis or insights about your data</li>
-                <li>The AI can modify your spreadsheet based on your instructions</li>
-                <li>Add a context spreadsheet to help the AI understand your data better</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-          
-          {/* Main content area with spreadsheet and chat */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-12rem)]">
-            {/* Spreadsheet area - takes up 2/3 on large screens */}
-            <div className="lg:col-span-2 overflow-hidden flex flex-col">
-              <div className="bg-card rounded-lg border shadow-sm p-4 flex-grow overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Input 
-                      value={fileName}
-                      onChange={(e) => setFileName(e.target.value)}
-                      className="w-64 h-8 text-lg font-medium"
-                    />
-                  </div>
-                  <div className="flex space-x-2">
-                    {spreadsheetData.sheets.map(sheet => (
-                      <Button 
-                        key={sheet}
-                        variant={spreadsheetData.activeSheet === sheet ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSpreadsheetData({...spreadsheetData, activeSheet: sheet})}
-                      >
-                        {sheet}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex-grow overflow-auto border rounded-md">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-muted/50">
-                        <th className="w-10 h-8 border border-border text-center sticky top-0 left-0 z-20 bg-muted/80">#</th>
-                        {spreadsheetData.columnWidths?.map((width, colIndex) => (
-                          <th 
-                            key={colIndex} 
-                            className="h-8 border border-border text-center sticky top-0 z-10 bg-muted/80"
-                            style={{ width: `${width}px`, minWidth: `${width}px` }}
-                          >
-                            {getColumnLetter(colIndex)}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {spreadsheetData.rows.map((row, rowIndex) => (
-                        <tr key={rowIndex}>
-                          <td className="border border-border text-center sticky left-0 z-10 bg-muted/50 w-10">
-                            {rowIndex + 1}
-                          </td>
-                          {row.map((cell, colIndex) => (
-                            <td 
-                              key={colIndex} 
-                              className="border border-border p-0"
-                              style={{ 
-                                height: `${spreadsheetData.rowHeights?.[rowIndex] || 30}px`,
-                                width: `${spreadsheetData.columnWidths?.[colIndex] || 120}px`,
-                              }}
-                            >
-                              <input
-                                type="text"
-                                value={cell?.value || ''}
-                                onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                                className="w-full h-full px-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                                style={getCellStyle(cell)}
-                              />
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+        ))}
+      </div>
+    );
+  };
+  
+  // Render the spreadsheet grid
+  const renderSpreadsheet = () => {
+    return (
+      <div className="overflow-auto max-h-[500px]">
+        {renderColumnLabels()}
+        {spreadsheetData.rows.map((row, rowIndex) => (
+          <div key={`row-${rowIndex}`} className="flex">
+            <div className="w-10 bg-muted border border-gray-200 dark:border-gray-700 flex items-center justify-center font-semibold">
+              {rowIndex + 1}
             </div>
-            
-            {/* Chat area - takes up 1/3 on large screens */}
-            <div className="bg-card rounded-lg border shadow-sm flex flex-col h-full">
-              <div className="p-4 border-b">
-                <h2 className="font-headline text-xl flex items-center">
-                  <MessageSquare className="mr-2 h-5 w-5 text-primary" />
-                  Spreadsheet Assistant
-                </h2>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-sm text-muted-foreground">
-                    Ask me to help you create, analyze, or modify your spreadsheet.
-                  </p>
-                  <div className="flex items-center">
-                    {contextSpreadsheet ? (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-muted-foreground">
-                          Context: {contextSpreadsheet.name}
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6" 
-                          onClick={removeContextSpreadsheet}
-                        >
-                          <Trash className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs h-7" 
-                        onClick={() => contextFileInputRef.current?.click()}
-                      >
-                        <Link className="mr-1 h-3 w-3" />
-                        Add Context Spreadsheet
-                      </Button>
-                    )}
-                    <Input 
-                      ref={contextFileInputRef}
-                      type="file" 
-                      accept=".csv,.xlsx,.xls,.ods,.tsv" 
-                      className="hidden"
-                      onChange={handleContextSpreadsheetUpload}
-                    />
-                  </div>
-                </div>
-              </div>
-              
+            {row.map((cell, colIndex) => renderCell(cell, rowIndex, colIndex))}
+          </div>
+        ))}
+      </div>
+    );
+  };
+  
+  // Render chat messages
+  const renderChatMessages = () => {
+    return (
+      <div className="flex flex-col space-y-4 p-4 max-h-[500px] overflow-y-auto">
+        {chatMessages.length === 0 ? (
+          <div className="text-center text-muted-foreground p-4">
+            <Info className="h-12 w-12 mx-auto mb-2 opacity-50" />
+            <p>Ask the AI assistant to help you with your spreadsheet.</p>
+            <p className="text-sm mt-2">Examples:</p>
+            <ul className="text-sm mt-1 space-y-1 text-left max-w-md mx-auto">
+              <li>• "Create a monthly budget template with income and expenses"</li>
+              <li>• "Add formulas to calculate the sum of column B"</li>
+              <li>• "Format the header row with bold text"</li>
+              <li>• "Analyze this data and create a summary"</li>
+            </ul>
+          </div>
+        ) : (
+          chatMessages.map((message, index) => (
+            <div 
+              key={index} 
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
               <div 
-                ref={chatContainerRef}
-                className="flex-grow overflow-y-auto p-4 space-y-4"
+                className={`max-w-[80%] rounded-lg p-3 ${
+                  message.role === 'user' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : message.role === 'system'
+                    ? 'bg-muted text-muted-foreground'
+                    : 'bg-secondary text-secondary-foreground'
+                }`}
               >
-                {chatMessages.map((message, index) => (
-                  <div 
-                    key={index} 
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div 
-                      className={`max-w-[80%] rounded-lg p-3 ${
-                        message.role === 'user' 
-                          ? 'bg-primary text-primary-foreground' 
-                          : message.role === 'system'
-                            ? 'bg-muted/50 text-foreground'
-                            : 'bg-muted text-foreground'
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] rounded-lg p-3 bg-muted text-foreground">
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <p>Thinking...</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="p-4 border-t">
-                <div className="flex space-x-2">
-                  <Textarea
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask about your spreadsheet or request changes..."
-                    className="min-h-[60px] resize-none"
-                    disabled={isLoading}
-                  />
-                  <Button 
-                    onClick={handleSendMessage} 
-                    disabled={isLoading || !userInput.trim()}
-                    className="self-end"
-                  >
-                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Press Enter to send, Shift+Enter for new line
+                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className="text-xs opacity-70 mt-1">
+                  {message.timestamp.toLocaleTimeString()}
                 </p>
               </div>
             </div>
-          </div>
-        </div>
+          ))
+        )}
+        <div ref={chatEndRef} />
       </div>
-    </>
+    );
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <Card className="shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">AI-Native Spreadsheets</CardTitle>
+          <CardDescription>
+            Create and modify spreadsheets through natural language with an AI assistant that understands your data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="spreadsheet">
+            <TabsList className="mb-4">
+              <TabsTrigger value="spreadsheet">Spreadsheet</TabsTrigger>
+              <TabsTrigger value="chat">AI Assistant</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="spreadsheet" className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center space-x-2">
+                  <Input 
+                    value={spreadsheetData.activeSheet} 
+                    onChange={(e) => setSpreadsheetData({...spreadsheetData, activeSheet: e.target.value})}
+                    className="w-32"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {spreadsheetData.rows.length} × {spreadsheetData.rows[0]?.length || 0}
+                  </span>
+                </div>
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={handleDownloadSpreadsheet}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                  <div className="relative">
+                    <Button variant="outline">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import
+                      <Input
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={handleSpreadsheetFileChange}
+                      />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {renderSpreadsheet()}
+              
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Tip</AlertTitle>
+                <AlertDescription>
+                  Switch to the AI Assistant tab to modify this spreadsheet using natural language.
+                </AlertDescription>
+              </Alert>
+            </TabsContent>
+            
+            <TabsContent value="chat" className="space-y-4">
+              <div className="border rounded-lg h-[500px] flex flex-col">
+                {renderChatMessages()}
+                
+                <Separator />
+                
+                <div className="p-4 space-y-4">
+                  {/* Command options */}
+                  {showCommandOptions && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <Button 
+                        variant={selectedCommands.analyze ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => handleCommandSelect('analyze')}
+                        className="flex items-center"
+                      >
+                        <Brain className="h-4 w-4 mr-1" />
+                        Analyze
+                      </Button>
+                      
+                      <Button 
+                        variant={selectedCommands.web ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => handleCommandSelect('web')}
+                        className="flex items-center"
+                      >
+                        <Search className="h-4 w-4 mr-1" />
+                        Web
+                      </Button>
+                      
+                      <Button 
+                        variant={selectedCommands.image ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => handleCommandSelect('image')}
+                        className="flex items-center"
+                      >
+                        <Image className="h-4 w-4 mr-1" />
+                        Image
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Web search input */}
+                  {selectedCommands.web && (
+                    <div className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Enter URL to search or provide search query"
+                        value={webSearchUrl}
+                        onChange={handleWebSearchUrlChange}
+                        className="flex-1"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Image upload */}
+                  {selectedCommands.image && (
+                    <div className="flex items-center gap-2">
+                      <Image className="h-4 w-4 text-muted-foreground" />
+                      <div className="relative flex-1">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="opacity-0 absolute inset-0 cursor-pointer"
+                          onChange={handleImageFileChange}
+                        />
+                        <Input
+                          readOnly
+                          placeholder="Click to upload an image"
+                          value={imageFile ? imageFile.name : ''}
+                          className="pointer-events-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Spreadsheet context */}
+                  {spreadsheetFile && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clipboard className="h-4 w-4" />
+                      <span>Using spreadsheet context: {spreadsheetFile.name}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-end gap-2">
+                    <Textarea
+                      ref={inputRef}
+                      placeholder="Ask the AI assistant to help with your spreadsheet..."
+                      value={userInput}
+                      onChange={handleInputChange}
+                      onKeyDown={handleKeyPress}
+                      className="flex-1 min-h-[80px] resize-none"
+                      disabled={isLoading}
+                    />
+                    <Button 
+                      onClick={handleSendMessage} 
+                      disabled={isLoading || (!userInput.trim() && !imageFile)}
+                      className="mb-1"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {error && (
+                <Alert variant="destructive">
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <p className="text-sm text-muted-foreground">
+            Powered by AI. All data is processed securely.
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }
