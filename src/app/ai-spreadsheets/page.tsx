@@ -6,11 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Send, Download, Clipboard, Info, Upload, Search, Image, Brain } from 'lucide-react';
+import { Loader2, Send, Download, Clipboard, Info, Upload, Brain, Image, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { SpreadsheetData, ChatMessage, SpreadsheetOperation } from '@/types/ai-spreadsheets';
 
@@ -66,16 +64,16 @@ export default function AISpreadsheetPage() {
   const [showCommandOptions, setShowCommandOptions] = useState(false);
   const [selectedCommands, setSelectedCommands] = useState<{
     analyze: boolean;
-    web: boolean;
     image: boolean;
+    spreadsheetContext: boolean;
   }>({
     analyze: true,
-    web: false,
-    image: false
+    image: false,
+    spreadsheetContext: false
   });
-  const [webSearchUrl, setWebSearchUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [spreadsheetFile, setSpreadsheetFile] = useState<File | null>(null);
+  const [contextSpreadsheetFile, setContextSpreadsheetFile] = useState<File | null>(null);
+  const [contextSpreadsheetData, setContextSpreadsheetData] = useState<SpreadsheetData | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -101,7 +99,7 @@ export default function AISpreadsheetPage() {
   };
 
   // Handle command selection
-  const handleCommandSelect = (command: 'analyze' | 'web' | 'image') => {
+  const handleCommandSelect = (command: 'analyze' | 'image' | 'spreadsheetContext') => {
     setSelectedCommands(prev => ({
       ...prev,
       [command]: !prev[command]
@@ -113,11 +111,6 @@ export default function AISpreadsheetPage() {
     }
   };
 
-  // Handle web search URL input
-  const handleWebSearchUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setWebSearchUrl(e.target.value);
-  };
-
   // Handle image file upload
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -125,11 +118,69 @@ export default function AISpreadsheetPage() {
     }
   };
 
+  // Handle context spreadsheet file upload
+  const handleContextSpreadsheetFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setContextSpreadsheetFile(file);
+      
+      // Read and parse the spreadsheet
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          if (event.target?.result) {
+            const data = new Uint8Array(event.target.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Convert to JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            // Create spreadsheet data structure
+            const newData: SpreadsheetData = {
+              rows: jsonData.map((row: any) => 
+                Array.isArray(row) 
+                  ? row.map((cell: any) => ({ value: cell?.toString() || '' }))
+                  : [{ value: row?.toString() || '' }]
+              ),
+              activeSheet: firstSheetName,
+              sheets: workbook.SheetNames
+            };
+            
+            // Ensure all rows have the same number of columns
+            const maxCols = Math.max(...newData.rows.map(row => row.length), DEFAULT_COLS);
+            newData.rows = newData.rows.map(row => {
+              while (row.length < maxCols) {
+                row.push({ value: '' });
+              }
+              return row;
+            });
+            
+            setContextSpreadsheetData(newData);
+            
+            toast({
+              title: "Context Spreadsheet Loaded",
+              description: `Loaded context spreadsheet with ${newData.rows.length} rows and ${maxCols} columns.`,
+            });
+          }
+        } catch (error) {
+          console.error("Error parsing context spreadsheet:", error);
+          toast({
+            variant: "destructive",
+            title: "Error Loading Context Spreadsheet",
+            description: "Failed to parse the spreadsheet file. Please check the format and try again.",
+          });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
   // Handle spreadsheet file upload
   const handleSpreadsheetFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setSpreadsheetFile(file);
       
       // Read and parse the spreadsheet
       const reader = new FileReader();
@@ -226,21 +277,6 @@ export default function AISpreadsheetPage() {
         contextPrompt += "Analyze the user's spreadsheet data and provide insights. ";
       }
       
-      if (selectedCommands.web && webSearchUrl) {
-        contextPrompt += `Use information from the web URL: ${webSearchUrl} to enhance your response. `;
-        
-        // Here you would integrate with crawl4ai API
-        // For now, we'll simulate this with a message
-        setChatMessages(prev => [
-          ...prev, 
-          {
-            role: 'system',
-            content: `Searching web content from: ${webSearchUrl}...`,
-            timestamp: new Date()
-          }
-        ]);
-      }
-      
       // Process image if provided
       let imageAnalysisResult = '';
       if (selectedCommands.image && imageFile) {
@@ -288,9 +324,19 @@ export default function AISpreadsheetPage() {
       const spreadsheetDescription = generateSpreadsheetDescription(spreadsheetData);
       contextPrompt += `\n\nCurrent spreadsheet state: ${spreadsheetDescription}\n\n`;
       
-      // Add spreadsheet file context if provided
-      if (spreadsheetFile) {
-        contextPrompt += `The user has also uploaded a spreadsheet file named "${spreadsheetFile.name}" for context. `;
+      // Add context spreadsheet data if provided
+      if (selectedCommands.spreadsheetContext && contextSpreadsheetData) {
+        const contextDescription = generateSpreadsheetDescription(contextSpreadsheetData);
+        contextPrompt += `\n\nContext spreadsheet: ${contextDescription}\n\n`;
+        
+        setChatMessages(prev => [
+          ...prev, 
+          {
+            role: 'system',
+            content: 'Using additional spreadsheet context for analysis.',
+            timestamp: new Date()
+          }
+        ]);
       }
       
       // Prepare the main prompt
@@ -406,7 +452,6 @@ If you need to analyze the data without making changes, just provide an explanat
       ]);
     } finally {
       setIsLoading(false);
-      setWebSearchUrl('');
       setImageFile(null);
     }
   };
@@ -762,13 +807,9 @@ Available sheets: ${data.sheets.join(', ')}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="spreadsheet">
-            <TabsList className="mb-4">
-              <TabsTrigger value="spreadsheet">Spreadsheet</TabsTrigger>
-              <TabsTrigger value="chat">AI Assistant</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="spreadsheet" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Spreadsheet Section - Takes 2/3 of the space on large screens */}
+            <div className="lg:col-span-2 space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center space-x-2">
                   <Input 
@@ -801,133 +842,146 @@ Available sheets: ${data.sheets.join(', ')}
               </div>
               
               {renderSpreadsheet()}
-              
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>Tip</AlertTitle>
-                <AlertDescription>
-                  Switch to the AI Assistant tab to modify this spreadsheet using natural language.
-                </AlertDescription>
-              </Alert>
-            </TabsContent>
+            </div>
             
-            <TabsContent value="chat" className="space-y-4">
-              <div className="border rounded-lg h-[500px] flex flex-col">
-                {renderChatMessages()}
-                
-                <Separator />
-                
-                <div className="p-4 space-y-4">
-                  {/* Command options */}
-                  {showCommandOptions && (
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      <Button 
-                        variant={selectedCommands.analyze ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => handleCommandSelect('analyze')}
-                        className="flex items-center"
-                      >
-                        <Brain className="h-4 w-4 mr-1" />
-                        Analyze
-                      </Button>
-                      
-                      <Button 
-                        variant={selectedCommands.web ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => handleCommandSelect('web')}
-                        className="flex items-center"
-                      >
-                        <Search className="h-4 w-4 mr-1" />
-                        Web
-                      </Button>
-                      
-                      <Button 
-                        variant={selectedCommands.image ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => handleCommandSelect('image')}
-                        className="flex items-center"
-                      >
-                        <Image className="h-4 w-4 mr-1" />
-                        Image
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {/* Web search input */}
-                  {selectedCommands.web && (
-                    <div className="flex items-center gap-2">
-                      <Search className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Enter URL to search or provide search query"
-                        value={webSearchUrl}
-                        onChange={handleWebSearchUrlChange}
-                        className="flex-1"
-                      />
-                    </div>
-                  )}
-                  
-                  {/* Image upload */}
-                  {selectedCommands.image && (
-                    <div className="flex items-center gap-2">
-                      <Image className="h-4 w-4 text-muted-foreground" />
-                      <div className="relative flex-1">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="opacity-0 absolute inset-0 cursor-pointer"
-                          onChange={handleImageFileChange}
-                        />
-                        <Input
-                          readOnly
-                          placeholder="Click to upload an image"
-                          value={imageFile ? imageFile.name : ''}
-                          className="pointer-events-none"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Spreadsheet context */}
-                  {spreadsheetFile && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clipboard className="h-4 w-4" />
-                      <span>Using spreadsheet context: {spreadsheetFile.name}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-end gap-2">
-                    <Textarea
-                      ref={inputRef}
-                      placeholder="Ask the AI assistant to help with your spreadsheet..."
-                      value={userInput}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyPress}
-                      className="flex-1 min-h-[80px] resize-none"
-                      disabled={isLoading}
-                    />
-                    <Button 
-                      onClick={handleSendMessage} 
-                      disabled={isLoading || (!userInput.trim() && !imageFile)}
-                      className="mb-1"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
+            {/* Chat Section - Takes 1/3 of the space on large screens */}
+            <div className="border rounded-lg flex flex-col h-[600px]">
+              <div className="p-3 bg-muted border-b flex justify-between items-center">
+                <h3 className="font-semibold">AI Assistant</h3>
               </div>
               
-              {error && (
-                <Alert variant="destructive">
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-            </TabsContent>
-          </Tabs>
+              {renderChatMessages()}
+              
+              <Separator />
+              
+              <div className="p-4 space-y-4">
+                {/* Command options */}
+                {showCommandOptions && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <Button 
+                      variant={selectedCommands.analyze ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => handleCommandSelect('analyze')}
+                      className="flex items-center"
+                    >
+                      <Brain className="h-4 w-4 mr-1" />
+                      Analyze
+                    </Button>
+                    
+                    <Button 
+                      variant={selectedCommands.image ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => handleCommandSelect('image')}
+                      className="flex items-center"
+                    >
+                      <Image className="h-4 w-4 mr-1" />
+                      Image
+                    </Button>
+                    
+                    <Button 
+                      variant={selectedCommands.spreadsheetContext ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => handleCommandSelect('spreadsheetContext')}
+                      className="flex items-center"
+                    >
+                      <FileSpreadsheet className="h-4 w-4 mr-1" />
+                      Spreadsheet Context
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Image upload */}
+                {selectedCommands.image && (
+                  <div className="flex items-center gap-2">
+                    <Image className="h-4 w-4 text-muted-foreground" />
+                    <div className="relative flex-1">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="opacity-0 absolute inset-0 cursor-pointer"
+                        onChange={handleImageFileChange}
+                      />
+                      <Input
+                        readOnly
+                        placeholder="Click to upload an image"
+                        value={imageFile ? imageFile.name : ''}
+                        className="pointer-events-none"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Spreadsheet context */}
+                {selectedCommands.spreadsheetContext && (
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+                    <div className="relative flex-1">
+                      <Input
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        className="opacity-0 absolute inset-0 cursor-pointer"
+                        onChange={handleContextSpreadsheetFileChange}
+                      />
+                      <Input
+                        readOnly
+                        placeholder="Click to upload a context spreadsheet"
+                        value={contextSpreadsheetFile ? contextSpreadsheetFile.name : ''}
+                        className="pointer-events-none"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Context indicators */}
+                {(contextSpreadsheetFile || imageFile) && (
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    {contextSpreadsheetFile && (
+                      <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-md">
+                        <FileSpreadsheet className="h-3 w-3" />
+                        <span>Using: {contextSpreadsheetFile.name}</span>
+                      </div>
+                    )}
+                    {imageFile && (
+                      <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-md">
+                        <Image className="h-3 w-3" />
+                        <span>Using: {imageFile.name}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex items-end gap-2">
+                  <Textarea
+                    ref={inputRef}
+                    placeholder="Ask the AI assistant to help with your spreadsheet..."
+                    value={userInput}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyPress}
+                    className="flex-1 min-h-[80px] resize-none"
+                    disabled={isLoading}
+                  />
+                  <Button 
+                    onClick={handleSendMessage} 
+                    disabled={isLoading || (!userInput.trim() && !imageFile)}
+                    className="mb-1"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </div>
+          </div>
         </CardContent>
         <CardFooter className="flex justify-between">
           <p className="text-sm text-muted-foreground">
