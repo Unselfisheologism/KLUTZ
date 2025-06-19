@@ -123,6 +123,12 @@ const features: Feature[] = [
     href: '/ai-spreadsheets',
     isImplemented: true,
   },
+  {
+    title: 'AI-Native Infographics',
+    description: 'abcdefgh',
+    href: '/ai-infographics',
+    isImplemented: true,
+  },  
 ];
 
 export default function HomePage() {
