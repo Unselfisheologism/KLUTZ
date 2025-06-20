@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { toPng } from 'html-to-image';
+import React, { useRef, useEffect, useState } from 'react';
 import dynamic from "next/dynamic";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ export default function AIInfographicsPage() {
   const [selectedChartType, setSelectedChartType] = useState<string>('');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const infographicRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -389,29 +391,26 @@ If the user is asking for information without requesting a visualization, just p
     }
   };
 
-  const handleDownloadInfographic = () => {
-    if (!infographicData) return;
+  const handleDownloadInfographic = async () => {
+    if (!infographicRef.current) return;
     try {
-      const dataStr = JSON.stringify(infographicData, null, 2);
-      const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', `infographic_${new Date().toISOString().slice(0, 10)}.json`);
-      document.body.appendChild(linkElement);
-      linkElement.click();
-      document.body.removeChild(linkElement);
+      const dataUrl = await toPng(infographicRef.current, { cacheBust: true });
+      const link = document.createElement('a');
+      link.download = `infographic_${new Date().toISOString().slice(0,10)}.png`;
+      link.href = dataUrl;
+      link.click();
       toast({
         title: "Download Complete",
-        description: "Infographic data has been downloaded successfully.",
+        description: "Infographic image has been downloaded successfully.",
       });
     } catch (error) {
-      console.error("Error downloading infographic:", error);
+      console.error("Error downloading infographic as image:", error);
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: "Failed to download the infographic. Please try again.",
+        description: "Failed to download the infographic image. Please try again.",
       });
-    }
+    } 
   };
 
   const renderChatMessages = () => (
@@ -519,7 +518,7 @@ If the user is asking for information without requesting a visualization, just p
                   </div>
                 </div>
               </div>
-              <div className="border rounded-lg h-[600px] overflow-auto bg-background">
+              <div className="border rounded-lg h-[600px] overflow-auto bg-background" ref={infographicRef}>
                 <ClientInfographicRenderer infographicData={infographicData} />
               </div>
             </div>
