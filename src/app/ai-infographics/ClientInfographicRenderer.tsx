@@ -78,6 +78,7 @@ function isValid2DNumberArray(arr: any): arr is number[][] {
 // Try to adapt AI's object-based heatmap to 2D array if needed
 function to2DNumberArray(data: any): number[][] | null {
   if (Array.isArray(data) && data.length > 0 && typeof data[0] === "object" && !Array.isArray(data[0])) {
+    // Try to extract all numeric values from each object
     return data.map((row: any) =>
       Object.values(row)
         .map(Number)
@@ -89,6 +90,7 @@ function to2DNumberArray(data: any): number[][] | null {
 
 // Validate tree data for react-d3-tree
 function isValidTreeData(data: any): boolean {
+  // react-d3-tree expects an object (or array of objects) with at least a 'name' property and optional 'children'
   if (!data) return false;
   if (Array.isArray(data)) return data.every(n => typeof n === "object" && n.name);
   if (typeof data === "object" && data.name) return true;
@@ -119,6 +121,7 @@ export default function ClientInfographicRenderer({
   const [treeDimensions, setTreeDimensions] = useState({ width: 500, height: 400 });
   const treeContainerRef = useRef<HTMLDivElement>(null);
 
+  // Handle responsive tree diagram
   useEffect(() => {
     if (treeContainerRef.current) {
       setTreeDimensions({
@@ -148,18 +151,6 @@ export default function ClientInfographicRenderer({
   if (type === 'pie') {
     pieData = normalizePieData(pieData);
   }
-  // Accept any array of objects with name and value; coerce value to number
-  const isPie = type === 'pie'
-    && Array.isArray(pieData)
-    && pieData.length > 0
-    && pieData.every(d =>
-      typeof d.name !== 'undefined' &&
-      typeof d.value !== 'undefined' &&
-      !isNaN(Number(d.value))
-    );
-  const pieDataForChart = isPie
-    ? pieData.map(d => ({ ...d, value: Number(d.value) }))
-    : [];
 
   // Bar/Line/Area/Scatter: must have valid keys and data
   const hasValidXY =
@@ -196,12 +187,15 @@ export default function ClientInfographicRenderer({
     }
   }
 
+  // Chart flags
+  const isPie = type === 'pie' && Array.isArray(pieData) && pieData.length > 0 && pieData[0].name && pieData[0].value !== undefined;
   const isBar = type === 'bar' && hasValidXY && typeof data[0][config.yKey] === 'number';
   const isLine = type === 'line' && hasValidXY && typeof data[0][config.yKey] === 'number';
   const isArea = type === 'area' && hasValidXY && typeof data[0][config.yKey] === 'number';
   const isScatter = type === 'scatter' && hasValidXY && typeof data[0][config.xKey] === 'number' && typeof data[0][config.yKey] === 'number';
   const isTree = type === 'tree' && treeData;
 
+  // Error handling
   if (
     (['bar', 'line', 'area', 'scatter'].includes(type) && !hasValidXY) ||
     (type === 'heatmap' && !isHeatmap)
@@ -239,17 +233,18 @@ export default function ClientInfographicRenderer({
         </div>
       </div>
       <div className="flex-1 border rounded-md p-4 flex items-center justify-center bg-card">
-        {isPie && (
+        {/* PIE CHART: Only this block is changed to your "perfect" logic */}
+        {infographicData.type === 'pie' && Array.isArray(pieData) && (
           <RCPieChart width={400} height={400}>
             <Pie
-              data={pieDataForChart}
+              data={pieData}
               dataKey="value"
               nameKey="name"
               cx="50%" cy="50%"
               outerRadius={140}
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
             >
-              {pieDataForChart.map((entry, index) => (
+              {pieData.map((entry, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -353,7 +348,7 @@ export default function ClientInfographicRenderer({
         <div className="max-h-32 overflow-y-auto">
           <pre className="text-xs whitespace-pre-wrap">
             {JSON.stringify(
-              type === 'pie' ? pieDataForChart : data,
+              type === 'pie' ? pieData : data,
               null,
               2
             )}
