@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet } from 'lucide-react';
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
 interface Feature {
@@ -121,6 +121,13 @@ const features: Feature[] = [
     title: 'AI-Native Spreadsheets',
     description: 'Create and modify spreadsheets through natural language with an AI assistant that understands your data.',
     href: '/ai-spreadsheets',
+    isImplemented: true,
+  },
+  {
+    icon: BarChart,
+    title: 'AI Native Infographics',
+    description: 'Create data-driven infographics powered by AI for impactful visual storytelling.',
+    href: '/ai-infographics',
     isImplemented: true,
   },
 ];
