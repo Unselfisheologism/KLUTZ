@@ -9,8 +9,17 @@ import {
 import HeatMapGrid from 'react-heatmap-grid';
 
 const COLORS = [
-  '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00bcd4', '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#009688'
+  '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00bcd4',
+  '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#009688'
 ];
+
+function isValid2DNumberArray(arr: any): arr is number[][] {
+  return Array.isArray(arr) &&
+    arr.length > 0 &&
+    arr.every(
+      row => Array.isArray(row) && row.length > 0 && row.every(cell => typeof cell === 'number' && !isNaN(cell))
+    );
+}
 
 function summarizeData(type: string, data: any, config: any): string {
   if (!data) return "";
@@ -31,7 +40,7 @@ function summarizeData(type: string, data: any, config: any): string {
   return "";
 }
 
-function normalizePieData(data) {
+function normalizePieData(data: any) {
   if (!Array.isArray(data) || data.length < 2) return data;
   if (data.every(d => d.value === data[0].value)) {
     const names = data.map(d => d.name && d.name.toLowerCase && d.name.toLowerCase());
@@ -81,36 +90,98 @@ export default function ClientInfographicRenderer({
     );
   }
 
-  const summary = summarizeData(infographicData.type, infographicData.data, infographicData.config);
+  const { type, title, description, data, config, svgContent } = infographicData;
+  const summary = summarizeData(type, data, config);
 
-  let pieData = infographicData.data;
-  if (infographicData.type === 'pie') {
+  // Harden chart data
+  let pieData = data;
+  if (type === 'pie') {
     pieData = normalizePieData(pieData);
+  }
+
+  // Bar/Line/Area/Scatter: must be array of objects with correct keys
+  const hasValidXY =
+    Array.isArray(data) &&
+    data.length > 0 &&
+    config &&
+    typeof config.xKey === 'string' &&
+    typeof config.yKey === 'string' &&
+    data[0][config.xKey] !== undefined &&
+    data[0][config.yKey] !== undefined;
+
+  // Heatmap: must be 2D array of numbers
+  const isHeatmap = type === 'heatmap' && isValid2DNumberArray(data);
+
+  // Tree: not implemented, show message
+  const isTree = type === 'tree';
+
+  // Scatter: must have xKey/yKey and numbers
+  const isScatter =
+    type === 'scatter' &&
+    hasValidXY &&
+    typeof data[0][config.xKey] === 'number' &&
+    typeof data[0][config.yKey] === 'number';
+
+  // Line: xKey can be string, yKey must be number
+  const isLine =
+    type === 'line' &&
+    hasValidXY &&
+    typeof data[0][config.yKey] === 'number';
+
+  // Area: same as line
+  const isArea =
+    type === 'area' &&
+    hasValidXY &&
+    typeof data[0][config.yKey] === 'number';
+
+  // Bar: xKey can be string, yKey must be number
+  const isBar =
+    type === 'bar' &&
+    hasValidXY &&
+    typeof data[0][config.yKey] === 'number';
+
+  // Pie: must be array of {name, value}
+  const isPie = type === 'pie' && Array.isArray(pieData) && pieData.length > 0 && pieData[0].name && pieData[0].value !== undefined;
+
+  // Show error for invalid JSON/data
+  if (
+    (['bar', 'line', 'area', 'scatter'].includes(type) && !hasValidXY) ||
+    (type === 'heatmap' && !isHeatmap)
+  ) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-8 text-destructive">
+        <h3 className="text-xl font-semibold mb-2">Invalid or Missing Data</h3>
+        <p className="text-muted-foreground">
+          The provided data could not be parsed or is not suitable for a {type} chart.<br />
+          Please check your prompt or uploaded data.
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col h-full">
       <div className="bg-muted/20 p-4 rounded-md mb-4">
-        <h3 className="text-xl font-semibold mb-2">{infographicData.title}</h3>
-        {infographicData.description && (
-          <p className="text-muted-foreground mb-2">{infographicData.description}</p>
+        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        {description && (
+          <p className="text-muted-foreground mb-2">{description}</p>
         )}
         {summary && (
           <p className="font-medium text-info mb-2">{summary}</p>
         )}
         <div className="flex items-center gap-2 mb-4">
           <div className="bg-primary/20 text-primary px-2 py-1 rounded text-sm">
-            {infographicData.type.charAt(0).toUpperCase() + infographicData.type.slice(1)} Chart
+            {type.charAt(0).toUpperCase() + type.slice(1)} Chart
           </div>
-          {infographicData.config && Object.keys(infographicData.config).length > 0 && (
+          {config && Object.keys(config).length > 0 && (
             <div className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded text-sm">
-              {Object.keys(infographicData.config).length} Configuration Options
+              {Object.keys(config).length} Configuration Options
             </div>
           )}
         </div>
       </div>
       <div className="flex-1 border rounded-md p-4 flex items-center justify-center bg-card">
-        {infographicData.type === 'pie' && Array.isArray(pieData) && (
+        {isPie && (
           <RCPieChart width={400} height={400}>
             <Pie
               data={pieData}
@@ -128,52 +199,52 @@ export default function ClientInfographicRenderer({
             <RCLegend />
           </RCPieChart>
         )}
-        {infographicData.type === 'bar' && Array.isArray(infographicData.data) && infographicData.config && (
-          <RCBarChart width={500} height={300} data={infographicData.data}>
+        {isBar && (
+          <RCBarChart width={500} height={300} data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={infographicData.config.xKey} />
+            <XAxis dataKey={config.xKey} />
             <YAxis />
             <RCTooltip />
             <RCLegend />
-            <Bar dataKey={infographicData.config.yKey} fill={COLORS[0]} />
+            <Bar dataKey={config.yKey} fill={COLORS[0]} />
           </RCBarChart>
         )}
-        {infographicData.type === 'line' && Array.isArray(infographicData.data) && infographicData.config && (
-          <RCLineChart width={500} height={300} data={infographicData.data}>
+        {isLine && (
+          <RCLineChart width={500} height={300} data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={infographicData.config.xKey} />
+            <XAxis dataKey={config.xKey} />
             <YAxis />
             <RCTooltip />
             <RCLegend />
-            <Line type="monotone" dataKey={infographicData.config.yKey} stroke={COLORS[0]} />
+            <Line type="monotone" dataKey={config.yKey} stroke={COLORS[0]} />
           </RCLineChart>
         )}
-        {infographicData.type === 'area' && Array.isArray(infographicData.data) && infographicData.config && (
-          <RCAreaChart width={500} height={300} data={infographicData.data}>
+        {isArea && (
+          <RCAreaChart width={500} height={300} data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={infographicData.config.xKey} />
+            <XAxis dataKey={config.xKey} />
             <YAxis />
             <RCTooltip />
             <RCLegend />
-            <Area type="monotone" dataKey={infographicData.config.yKey} stroke={COLORS[0]} fill={COLORS[1]} />
+            <Area type="monotone" dataKey={config.yKey} stroke={COLORS[0]} fill={COLORS[1]} />
           </RCAreaChart>
         )}
-        {infographicData.type === 'scatter' && Array.isArray(infographicData.data) && infographicData.config && (
+        {isScatter && (
           <RCScatterChart width={500} height={300}>
             <CartesianGrid />
-            <XAxis dataKey={infographicData.config.xKey} name={infographicData.config.xKey} />
-            <YAxis dataKey={infographicData.config.yKey} name={infographicData.config.yKey} />
-            <ZAxis dataKey={infographicData.config.zKey || undefined} range={[60, 400]} />
+            <XAxis dataKey={config.xKey} name={config.xKey} />
+            <YAxis dataKey={config.yKey} name={config.yKey} />
+            <ZAxis dataKey={config.zKey || undefined} range={[60, 400]} />
             <RCTooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter name="Scatter Data" data={infographicData.data} fill={COLORS[2]} />
+            <Scatter name="Scatter Data" data={data} fill={COLORS[2]} />
           </RCScatterChart>
         )}
-        {infographicData.type === 'heatmap' && Array.isArray(infographicData.data) && (
+        {isHeatmap && (
           <div style={{ width: 400, height: 320 }}>
             <HeatMapGrid
-              data={infographicData.data}
-              xLabels={infographicData.config?.xLabels || Array.from({ length: infographicData.data[0]?.length || 0 }, (_, i) => `Col ${i+1}`)}
-              yLabels={infographicData.config?.yLabels || Array.from({ length: infographicData.data.length }, (_, i) => `Row ${i+1}`)}
+              data={data}
+              xLabels={config?.xLabels || Array.from({ length: data[0]?.length || 0 }, (_, i) => `Col ${i+1}`)}
+              yLabels={config?.yLabels || Array.from({ length: data.length }, (_, i) => `Row ${i+1}`)}
               cellStyle={(_background, value, _min, max) => ({
                 background: `rgb(66, 86, 244, ${max ? value / max : 0})`,
                 color: "#fff",
@@ -183,12 +254,17 @@ export default function ClientInfographicRenderer({
             />
           </div>
         )}
-        {(infographicData.type === 'custom' || !['pie','bar','line','area','scatter','heatmap'].includes(infographicData.type)) && (
+        {isTree && (
+          <div className="text-center text-muted-foreground">
+            Tree diagrams are not yet supported.
+          </div>
+        )}
+        {(type === 'custom' || !['pie','bar','line','area','scatter','heatmap','tree'].includes(type)) && (
           <div className="relative w-full h-64">
             <div className="text-center">
-              <h4 className="font-medium mb-2">{infographicData.type.charAt(0).toUpperCase() + infographicData.type.slice(1)} Visualization</h4>
-              {infographicData.svgContent ? (
-                <div dangerouslySetInnerHTML={{ __html: infographicData.svgContent }} />
+              <h4 className="font-medium mb-2">{type.charAt(0).toUpperCase() + type.slice(1)} Visualization</h4>
+              {svgContent ? (
+                <div dangerouslySetInnerHTML={{ __html: svgContent }} />
               ) : (
                 <div className="border border-dashed rounded-md p-8 text-muted-foreground">
                   Custom visualization would render here
@@ -203,7 +279,7 @@ export default function ClientInfographicRenderer({
         <div className="max-h-32 overflow-y-auto">
           <pre className="text-xs whitespace-pre-wrap">
             {JSON.stringify(
-              infographicData.type === 'pie' ? pieData : infographicData.data,
+              type === 'pie' ? pieData : data,
               null,
               2
             )}
