@@ -40,6 +40,7 @@
     "next-themes": "^0.3.0",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",
+    "react-d3-tree": "^3.6.6",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
     "react-heatmap-grid": "^0.9.1",

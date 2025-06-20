@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useRef, useEffect, useState } from "react";
 import {
   PieChart as RCPieChart, Pie, Cell, Tooltip as RCTooltip, Legend as RCLegend,
   BarChart as RCBarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -7,19 +8,15 @@ import {
   ScatterChart as RCScatterChart, Scatter, ZAxis
 } from 'recharts';
 import HeatMapGrid from 'react-heatmap-grid';
+import dynamic from "next/dynamic";
+
+// Dynamically import react-d3-tree for SSR safety
+const Tree = dynamic(() => import('react-d3-tree').then(mod => mod.Tree), { ssr: false });
 
 const COLORS = [
-  '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00bcd4',
-  '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#009688'
+  '#8884d8', '#82ca9d', '#ffc658', '#ff8042',
+  '#00bcd4', '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#009688'
 ];
-
-function isValid2DNumberArray(arr: any): arr is number[][] {
-  return Array.isArray(arr) &&
-    arr.length > 0 &&
-    arr.every(
-      row => Array.isArray(row) && row.length > 0 && row.every(cell => typeof cell === 'number' && !isNaN(cell))
-    );
-}
 
 function summarizeData(type: string, data: any, config: any): string {
   if (!data) return "";
@@ -36,6 +33,9 @@ function summarizeData(type: string, data: any, config: any): string {
   }
   if (type === "heatmap" && Array.isArray(data)) {
     return `Heatmap with ${data.length} rows and ${data[0]?.length ?? 0} columns.`;
+  }
+  if (type === "tree" && data) {
+    return "Tree diagram visualization.";
   }
   return "";
 }
@@ -66,6 +66,46 @@ function normalizePieData(data: any) {
   return data;
 }
 
+// Validate heatmap data
+function isValid2DNumberArray(arr: any): arr is number[][] {
+  return Array.isArray(arr) &&
+    arr.length > 0 &&
+    arr.every(
+      row => Array.isArray(row) && row.length > 0 && row.every(cell => typeof cell === 'number' && !isNaN(cell))
+    );
+}
+
+// Try to adapt AI's object-based heatmap to 2D array if needed
+function to2DNumberArray(data: any): number[][] | null {
+  if (Array.isArray(data) && data.length > 0 && typeof data[0] === "object" && !Array.isArray(data[0])) {
+    // Try to extract all numeric values from each object
+    return data.map((row: any) =>
+      Object.values(row)
+        .map(Number)
+        .filter(val => typeof val === "number" && !isNaN(val))
+    );
+  }
+  return null;
+}
+
+// Validate tree data for react-d3-tree
+function isValidTreeData(data: any): boolean {
+  // react-d3-tree expects an object (or array of objects) with at least a 'name' property and optional 'children'
+  if (!data) return false;
+  if (Array.isArray(data)) return data.every(n => typeof n === "object" && n.name);
+  if (typeof data === "object" && data.name) return true;
+  return false;
+}
+
+// Fallback dummy tree if AI fails
+const defaultTree = {
+  name: "Root",
+  children: [
+    { name: "Branch 1", children: [{ name: "Leaf 1" }, { name: "Leaf 2" }] },
+    { name: "Branch 2", children: [{ name: "Leaf 3" }] }
+  ]
+};
+
 export default function ClientInfographicRenderer({
   infographicData
 }: {
@@ -78,6 +118,19 @@ export default function ClientInfographicRenderer({
     svgContent?: string;
   } | null;
 }) {
+  const [treeDimensions, setTreeDimensions] = useState({ width: 500, height: 400 });
+  const treeContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle responsive tree diagram
+  useEffect(() => {
+    if (treeContainerRef.current) {
+      setTreeDimensions({
+        width: treeContainerRef.current.offsetWidth || 500,
+        height: treeContainerRef.current.offsetHeight || 400,
+      });
+    }
+  }, [infographicData?.data, infographicData?.type]);
+
   if (!infographicData) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -93,13 +146,13 @@ export default function ClientInfographicRenderer({
   const { type, title, description, data, config, svgContent } = infographicData;
   const summary = summarizeData(type, data, config);
 
-  // Harden chart data
+  // Pie
   let pieData = data;
   if (type === 'pie') {
     pieData = normalizePieData(pieData);
   }
 
-  // Bar/Line/Area/Scatter: must be array of objects with correct keys
+  // Bar/Line/Area/Scatter: must have valid keys and data
   const hasValidXY =
     Array.isArray(data) &&
     data.length > 0 &&
@@ -109,41 +162,40 @@ export default function ClientInfographicRenderer({
     data[0][config.xKey] !== undefined &&
     data[0][config.yKey] !== undefined;
 
-  // Heatmap: must be 2D array of numbers
-  const isHeatmap = type === 'heatmap' && isValid2DNumberArray(data);
+  // Heatmap: must be a 2D array of numbers, or convertible
+  let heatmapData = data;
+  let isHeatmap = false;
+  if (type === 'heatmap') {
+    if (isValid2DNumberArray(data)) {
+      isHeatmap = true;
+    } else {
+      const converted = to2DNumberArray(data);
+      if (converted && isValid2DNumberArray(converted)) {
+        heatmapData = converted;
+        isHeatmap = true;
+      }
+    }
+  }
 
-  // Tree: not implemented, show message
-  const isTree = type === 'tree';
+  // Tree: valid tree structure or fallback
+  let treeData = null;
+  if (type === 'tree') {
+    if (isValidTreeData(data)) {
+      treeData = Array.isArray(data) ? data : [data];
+    } else {
+      treeData = [defaultTree];
+    }
+  }
 
-  // Scatter: must have xKey/yKey and numbers
-  const isScatter =
-    type === 'scatter' &&
-    hasValidXY &&
-    typeof data[0][config.xKey] === 'number' &&
-    typeof data[0][config.yKey] === 'number';
-
-  // Line: xKey can be string, yKey must be number
-  const isLine =
-    type === 'line' &&
-    hasValidXY &&
-    typeof data[0][config.yKey] === 'number';
-
-  // Area: same as line
-  const isArea =
-    type === 'area' &&
-    hasValidXY &&
-    typeof data[0][config.yKey] === 'number';
-
-  // Bar: xKey can be string, yKey must be number
-  const isBar =
-    type === 'bar' &&
-    hasValidXY &&
-    typeof data[0][config.yKey] === 'number';
-
-  // Pie: must be array of {name, value}
+  // Chart flags
   const isPie = type === 'pie' && Array.isArray(pieData) && pieData.length > 0 && pieData[0].name && pieData[0].value !== undefined;
+  const isBar = type === 'bar' && hasValidXY && typeof data[0][config.yKey] === 'number';
+  const isLine = type === 'line' && hasValidXY && typeof data[0][config.yKey] === 'number';
+  const isArea = type === 'area' && hasValidXY && typeof data[0][config.yKey] === 'number';
+  const isScatter = type === 'scatter' && hasValidXY && typeof data[0][config.xKey] === 'number' && typeof data[0][config.yKey] === 'number';
+  const isTree = type === 'tree' && treeData;
 
-  // Show error for invalid JSON/data
+  // Error handling
   if (
     (['bar', 'line', 'area', 'scatter'].includes(type) && !hasValidXY) ||
     (type === 'heatmap' && !isHeatmap)
@@ -242,9 +294,9 @@ export default function ClientInfographicRenderer({
         {isHeatmap && (
           <div style={{ width: 400, height: 320 }}>
             <HeatMapGrid
-              data={data}
-              xLabels={config?.xLabels || Array.from({ length: data[0]?.length || 0 }, (_, i) => `Col ${i+1}`)}
-              yLabels={config?.yLabels || Array.from({ length: data.length }, (_, i) => `Row ${i+1}`)}
+              data={heatmapData}
+              xLabels={config?.xLabels || Array.from({ length: heatmapData[0]?.length || 0 }, (_, i) => `Col ${i+1}`)}
+              yLabels={config?.yLabels || Array.from({ length: heatmapData.length }, (_, i) => `Row ${i+1}`)}
               cellStyle={(_background, value, _min, max) => ({
                 background: `rgb(66, 86, 244, ${max ? value / max : 0})`,
                 color: "#fff",
@@ -255,8 +307,24 @@ export default function ClientInfographicRenderer({
           </div>
         )}
         {isTree && (
-          <div className="text-center text-muted-foreground">
-            Tree diagrams are not yet supported.
+          <div ref={treeContainerRef} style={{ width: "100%", height: "400px", minWidth: "350px" }}>
+            <Tree
+              data={treeData}
+              orientation="horizontal"
+              collapsible={true}
+              zoomable={true}
+              separation={{ siblings: 1.5, nonSiblings: 2 }}
+              translate={{
+                x: treeDimensions.width / 2,
+                y: treeDimensions.height / 2,
+              }}
+              styles={{
+                nodes: {
+                  node: { circle: { fill: "#8884d8" }, name: { fontWeight: "bold" } },
+                  leafNode: { circle: { fill: "#82ca9d" } }
+                }
+              }}
+            />
           </div>
         )}
         {(type === 'custom' || !['pie','bar','line','area','scatter','heatmap','tree'].includes(type)) && (
