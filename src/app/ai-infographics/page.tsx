@@ -8,10 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Send, Download, Clipboard, Info, Upload, Brain, Image, BarChart, PieChart, LineChart, AreaChart, ScatterChart, Plus } from 'lucide-react';
+import { Loader2, Send, Download, Info, Upload, Brain, Image, BarChart, PieChart, LineChart, AreaChart, ScatterChart } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Define types for the infographics tool
+// Recharts for infographics
+import {
+  PieChart as RCPieChart, Pie, Cell, Tooltip as RCTooltip, Legend as RCLegend,
+  BarChart as RCBarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart as RCLineChart, Line, AreaChart as RCAreaChart, Area,
+  ScatterChart as RCScatterChart, Scatter, ZAxis
+} from 'recharts';
+// Simple react-heatmap
+import HeatMapGrid from 'react-heatmap-grid';
+
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -22,9 +31,32 @@ interface InfographicData {
   type: 'pie' | 'bar' | 'line' | 'area' | 'scatter' | 'tree' | 'heatmap' | 'custom';
   title: string;
   description?: string;
-  data: any; // This will be chart-specific data
-  config?: any; // Chart configuration options
-  svgContent?: string; // For custom SVG-based visualizations
+  data: any;
+  config?: any;
+  svgContent?: string;
+}
+
+const COLORS = [
+  '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00bcd4', '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#009688'
+];
+
+function summarizeData(type: string, data: any, config: any): string {
+  if (!data) return "";
+  if (type === "pie" && Array.isArray(data)) {
+    const top = data.reduce((max, cur) => cur.value > max.value ? cur : max, data[0]);
+    return `The largest segment is ${top.name} (${top.value}).`;
+  }
+  if ((type === "bar" || type === "line" || type === "area") && Array.isArray(data) && config?.yKey && config?.xKey) {
+    const max = data.reduce((max, cur) => +cur[config.yKey] > +max[config.yKey] ? cur : max, data[0]);
+    return `The peak value is ${max[config.yKey]} at ${max[config.xKey]}.`;
+  }
+  if (type === "scatter" && Array.isArray(data) && config?.xKey && config?.yKey) {
+    return `Scatter plot of ${config.xKey} vs ${config.yKey}, ${data.length} points.`;
+  }
+  if (type === "heatmap" && Array.isArray(data)) {
+    return `Heatmap with ${data.length} rows and ${data[0]?.length ?? 0} columns.`;
+  }
+  return "";
 }
 
 export default function AIInfographicsPage() {
@@ -34,14 +66,8 @@ export default function AIInfographicsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCommandOptions, setShowCommandOptions] = useState(false);
-  const [selectedCommands, setSelectedCommands] = useState<{
-    analyze: boolean;
-    image: boolean;
-    dataContext: boolean;
-  }>({
-    analyze: true,
-    image: false,
-    dataContext: false
+  const [selectedCommands, setSelectedCommands] = useState<{ analyze: boolean; image: boolean; dataContext: boolean; }>({
+    analyze: true, image: false, dataContext: false
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [contextFile, setContextFile] = useState<File | null>(null);
@@ -50,20 +76,15 @@ export default function AIInfographicsPage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
-  
-  // Scroll to bottom of chat when messages change
+
   useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  // Handle input change and check for command trigger
+  // --- File upload and parsing logic (unchanged from your original) ---
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setUserInput(value);
-    
-    // Show command options when user types '/'
     if (value === '/') {
       setShowCommandOptions(true);
     } else if (showCommandOptions && !value.startsWith('/')) {
@@ -71,67 +92,43 @@ export default function AIInfographicsPage() {
     }
   };
 
-  // Handle command selection
   const handleCommandSelect = (command: 'analyze' | 'image' | 'dataContext') => {
     setSelectedCommands(prev => ({
       ...prev,
       [command]: !prev[command]
     }));
-    
-    // Focus back on input after selecting command
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (inputRef.current) inputRef.current.focus();
   };
 
-  // Handle image file upload
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setImageFile(e.target.files[0]);
-    }
+    if (e.target.files && e.target.files.length > 0) setImageFile(e.target.files[0]);
   };
 
-  // Handle context file upload
   const handleContextFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setContextFile(file);
-      
-      // Read and parse the context file
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
           if (event.target?.result) {
             let parsedData: any = null;
-            
-            // Handle different file types
             if (file.type === 'application/json') {
               parsedData = JSON.parse(event.target.result as string);
             } else if (file.type === 'text/csv') {
-              // Simple CSV parsing
-              const csvData = (event.target.result as string).split('\n')
-                .map(row => row.split(','));
-              
-              // Convert to structured data with headers
+              const csvData = (event.target.result as string).split('\n').map(row => row.split(','));
               const headers = csvData[0];
               parsedData = csvData.slice(1).map(row => {
                 const rowData: Record<string, string> = {};
-                headers.forEach((header, index) => {
-                  rowData[header] = row[index];
-                });
+                headers.forEach((header, index) => { rowData[header] = row[index]; });
                 return rowData;
               });
             } else if (file.type.includes('spreadsheet') || file.type.includes('excel')) {
-              // For Excel files, we'll just acknowledge receipt
-              // Actual parsing would require a library like xlsx
               parsedData = { message: "Excel file detected. Data will be processed for visualization." };
             } else {
-              // For text files or other formats
               parsedData = { rawText: event.target.result };
             }
-            
             setContextData(parsedData);
-            
             toast({
               title: "Context Data Loaded",
               description: `Loaded data from ${file.name} for visualization.`,
@@ -146,12 +143,9 @@ export default function AIInfographicsPage() {
           });
         }
       };
-      
       if (file.type === 'application/json' || file.type === 'text/csv' || file.type === 'text/plain') {
         reader.readAsText(file);
       } else if (file.type.includes('spreadsheet') || file.type.includes('excel')) {
-        // For binary files like Excel, we'd need a specialized library
-        // For now, just acknowledge receipt
         reader.readAsArrayBuffer(file);
       } else {
         toast({
@@ -163,51 +157,32 @@ export default function AIInfographicsPage() {
     }
   };
 
-  // Handle file upload for the main infographic data
   const handleInfographicFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      
-      // Read and parse the file
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
           if (event.target?.result) {
             let parsedData: any = null;
-            
-            // Handle different file types
             if (file.type === 'application/json') {
               parsedData = JSON.parse(event.target.result as string);
               processInfographicData(parsedData);
             } else if (file.type === 'text/csv') {
-              // Simple CSV parsing
-              const csvData = (event.target.result as string).split('\n')
-                .map(row => row.split(','));
-              
-              // Convert to structured data with headers
+              const csvData = (event.target.result as string).split('\n').map(row => row.split(','));
               const headers = csvData[0];
               const processedData = csvData.slice(1).map(row => {
                 const rowData: Record<string, string> = {};
-                headers.forEach((header, index) => {
-                  rowData[header] = row[index];
-                });
+                headers.forEach((header, index) => { rowData[header] = row[index]; });
                 return rowData;
               });
-              
-              // Create a simple bar chart by default
               const defaultInfographic: InfographicData = {
                 type: 'bar',
                 title: 'Data Visualization from CSV',
                 data: processedData,
-                config: {
-                  xKey: headers[0],
-                  yKey: headers[1]
-                }
+                config: { xKey: headers[0], yKey: headers[1] }
               };
-              
               setInfographicData(defaultInfographic);
-              
-              // Add system message about the loaded data
               setChatMessages(prev => [
                 ...prev,
                 {
@@ -233,7 +208,6 @@ export default function AIInfographicsPage() {
           });
         }
       };
-      
       if (file.type === 'application/json' || file.type === 'text/csv') {
         reader.readAsText(file);
       } else {
@@ -246,107 +220,81 @@ export default function AIInfographicsPage() {
     }
   };
 
-  // Process infographic data
   const processInfographicData = (data: any) => {
-    // Determine the type of data and create an appropriate visualization
     if (Array.isArray(data)) {
-      // If it's an array, create a bar chart by default
       const defaultInfographic: InfographicData = {
         type: 'bar',
         title: 'Data Visualization',
         data: data,
-        config: {
-          xKey: Object.keys(data[0])[0],
-          yKey: Object.keys(data[0])[1]
-        }
+        config: { xKey: Object.keys(data[0])[0], yKey: Object.keys(data[0])[1] }
       };
-      
       setInfographicData(defaultInfographic);
     } else if (typeof data === 'object') {
-      // If it's an object with specific chart data
       if (data.type && data.data) {
         setInfographicData(data as InfographicData);
       } else {
-        // Create a pie chart from object keys and values
         const pieData = Object.entries(data).map(([key, value]) => ({
           name: key,
           value: typeof value === 'number' ? value : 1
         }));
-        
         const defaultInfographic: InfographicData = {
           type: 'pie',
           title: 'Data Visualization',
           data: pieData
         };
-        
         setInfographicData(defaultInfographic);
       }
     }
   };
 
+  // --- Chat/AI logic remains as in your original code ---
+
   const handleSendMessage = async () => {
     if (!userInput.trim() && !imageFile) return;
-    
     const userMessage: ChatMessage = {
       role: 'user',
       content: userInput,
       timestamp: new Date()
     };
-    
     setChatMessages(prev => [...prev, userMessage]);
     setUserInput('');
     setShowCommandOptions(false);
     setIsLoading(true);
     setError(null);
-    
     try {
       if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
         throw new Error("Puter SDK not available. Please refresh.");
       }
-      
       const puter = window.puter;
-      
       let isSignedIn = await puter.auth.isSignedIn();
       if (!isSignedIn) {
         await puter.auth.signIn();
         isSignedIn = await puter.auth.isSignedIn();
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
-      
-      // Prepare context for the AI
       let contextPrompt = "You are an AI assistant specialized in creating data visualizations and infographics. ";
-      
-      // Add command context
       if (selectedCommands.analyze) {
         contextPrompt += "Analyze the user's data and provide visualization recommendations. ";
       }
-      
-      // Process image if provided
       let imageAnalysisResult = '';
       if (selectedCommands.image && imageFile) {
         setChatMessages(prev => [
-          ...prev, 
+          ...prev,
           {
             role: 'system',
             content: 'Analyzing uploaded image...',
             timestamp: new Date()
           }
         ]);
-        
         try {
-          // Convert image to data URL
           const reader = new FileReader();
           const imageDataPromise = new Promise<string>((resolve) => {
             reader.onload = () => resolve(reader.result as string);
             reader.readAsDataURL(imageFile);
           });
-          
           const imageData = await imageDataPromise;
-          
-          // Analyze image with GPT-4 Vision
           const imagePrompt = "Describe this image in detail, focusing on any charts, graphs, or data visualizations visible. If it contains data, extract and summarize it.";
           const imageResponse = await puter.ai.chat(imagePrompt, imageData);
-          
           if (imageResponse?.message?.content) {
             imageAnalysisResult = imageResponse.message.content;
             contextPrompt += `Based on the image analysis: ${imageAnalysisResult} `;
@@ -354,7 +302,7 @@ export default function AIInfographicsPage() {
         } catch (imageError) {
           console.error("Image analysis error:", imageError);
           setChatMessages(prev => [
-            ...prev, 
+            ...prev,
             {
               role: 'system',
               content: 'Error analyzing image. Proceeding without image context.',
@@ -363,13 +311,10 @@ export default function AIInfographicsPage() {
           ]);
         }
       }
-      
-      // Add context data if provided
       if (selectedCommands.dataContext && contextData) {
         contextPrompt += `\n\nContext data: ${JSON.stringify(contextData)}\n\n`;
-        
         setChatMessages(prev => [
-          ...prev, 
+          ...prev,
           {
             role: 'system',
             content: 'Using provided data context for visualization.',
@@ -377,8 +322,6 @@ export default function AIInfographicsPage() {
           }
         ]);
       }
-      
-      // Add current infographic state if available
       if (infographicData) {
         contextPrompt += `\n\nCurrent visualization: ${JSON.stringify({
           type: infographicData.type,
@@ -386,10 +329,7 @@ export default function AIInfographicsPage() {
           description: infographicData.description
         })}\n\n`;
       }
-      
-      // Prepare the main prompt
       const prompt = `${contextPrompt}
-      
 User request: "${userInput}"
 
 Respond with a JSON object that contains:
@@ -424,64 +364,39 @@ Example response format:
 
 If the user is asking for information without requesting a visualization, just provide a helpful response without the visualization object.
 `;
-      
       const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
-      
-      if (!response?.message?.content) {
-        throw new Error("AI response was empty or invalid.");
-      }
-      
-      // Process the AI response
+      if (!response?.message?.content) throw new Error("AI response was empty or invalid.");
       const aiResponseText = response.message.content;
       let aiMessage = "";
       let newInfographicData: InfographicData | null = null;
-      
       try {
-        // Extract JSON from the response
-        const jsonMatch = aiResponseText.match(/```json\n([\s\S]*?)\n```/) || 
-                          aiResponseText.match(/```\n([\s\S]*?)\n```/) ||
-                          aiResponseText.match(/{[\s\S]*?}/);
-                          
+        const jsonMatch = aiResponseText.match(/```json\n([\s\S]*?)\n```/) ||
+          aiResponseText.match(/```\n([\s\S]*?)\n```/) ||
+          aiResponseText.match(/{[\s\S]*?}/);
         if (jsonMatch) {
           const jsonStr = jsonMatch[0].startsWith('{') ? jsonMatch[0] : jsonMatch[1];
           const parsedResponse = JSON.parse(jsonStr);
-          
-          if (parsedResponse.message) {
-            aiMessage = parsedResponse.message;
-          }
-          
-          if (parsedResponse.visualization) {
-            newInfographicData = parsedResponse.visualization as InfographicData;
-          }
+          if (parsedResponse.message) aiMessage = parsedResponse.message;
+          if (parsedResponse.visualization) newInfographicData = parsedResponse.visualization as InfographicData;
         } else {
-          // If no JSON found, use the whole response as message
           aiMessage = aiResponseText;
         }
       } catch (parseError) {
         console.error("Error parsing AI response:", parseError);
         aiMessage = aiResponseText;
       }
-      
-      // Update the infographic if new data was provided
-      if (newInfographicData) {
-        setInfographicData(newInfographicData);
-      }
-      
-      // Add AI response to chat
+      if (newInfographicData) setInfographicData(newInfographicData);
       const aiChatMessage: ChatMessage = {
         role: 'assistant',
         content: aiMessage,
         timestamp: new Date()
       };
-      
       setChatMessages(prev => [...prev, aiChatMessage]);
-      
     } catch (err: any) {
       console.error("AI processing error:", err);
       setError(err.message || "An error occurred while processing your request.");
-      
       setChatMessages(prev => [
-        ...prev, 
+        ...prev,
         {
           role: 'system',
           content: `Error: ${err.message || "An error occurred while processing your request."}`,
@@ -493,32 +408,25 @@ If the user is asking for information without requesting a visualization, just p
       setImageFile(null);
     }
   };
-  
-  // Handle key press in the input field
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-  
-  // Download the infographic
+
   const handleDownloadInfographic = () => {
     if (!infographicData) return;
-    
     try {
-      // Create a downloadable version of the infographic
-      // This is a simplified version - in a real app, you'd generate an actual image
       const dataStr = JSON.stringify(infographicData, null, 2);
       const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-      
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', dataUri);
       linkElement.setAttribute('download', `infographic_${new Date().toISOString().slice(0, 10)}.json`);
       document.body.appendChild(linkElement);
       linkElement.click();
       document.body.removeChild(linkElement);
-      
       toast({
         title: "Download Complete",
         description: "Infographic data has been downloaded successfully.",
@@ -532,8 +440,7 @@ If the user is asking for information without requesting a visualization, just p
       });
     }
   };
-  
-  // Render the appropriate chart based on the infographic data
+
   const renderInfographic = () => {
     if (!infographicData) {
       return (
@@ -546,17 +453,17 @@ If the user is asking for information without requesting a visualization, just p
         </div>
       );
     }
-    
-    // For this demo, we'll render a placeholder with the chart info
-    // In a real implementation, you would use a charting library like Recharts
+    const summary = summarizeData(infographicData.type, infographicData.data, infographicData.config);
     return (
       <div className="flex flex-col h-full">
         <div className="bg-muted/20 p-4 rounded-md mb-4">
           <h3 className="text-xl font-semibold mb-2">{infographicData.title}</h3>
           {infographicData.description && (
-            <p className="text-muted-foreground mb-4">{infographicData.description}</p>
+            <p className="text-muted-foreground mb-2">{infographicData.description}</p>
           )}
-          
+          {summary && (
+            <p className="font-medium text-info mb-2">{summary}</p>
+          )}
           <div className="flex items-center gap-2 mb-4">
             <div className="bg-primary/20 text-primary px-2 py-1 rounded text-sm">
               {infographicData.type.charAt(0).toUpperCase() + infographicData.type.slice(1)} Chart
@@ -568,54 +475,81 @@ If the user is asking for information without requesting a visualization, just p
             )}
           </div>
         </div>
-        
         <div className="flex-1 border rounded-md p-4 flex items-center justify-center bg-card">
-          {infographicData.type === 'pie' && (
-            <div className="relative w-64 h-64">
-              <PieChart className="w-full h-full text-primary" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-medium">Pie Chart Visualization</span>
-              </div>
+          {infographicData.type === 'pie' && Array.isArray(infographicData.data) && (
+            <RCPieChart width={320} height={320}>
+              <Pie
+                data={infographicData.data}
+                dataKey="value"
+                nameKey="name"
+                cx="50%" cy="50%"
+                outerRadius={120}
+                label
+              >
+                {infographicData.data.map((entry: any, idx: number) => (
+                  <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                ))}
+              </Pie>
+              <RCTooltip />
+              <RCLegend />
+            </RCPieChart>
+          )}
+          {infographicData.type === 'bar' && Array.isArray(infographicData.data) && infographicData.config && (
+            <RCBarChart width={500} height={300} data={infographicData.data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={infographicData.config.xKey} />
+              <YAxis />
+              <RCTooltip />
+              <RCLegend />
+              <Bar dataKey={infographicData.config.yKey} fill={COLORS[0]} />
+            </RCBarChart>
+          )}
+          {infographicData.type === 'line' && Array.isArray(infographicData.data) && infographicData.config && (
+            <RCLineChart width={500} height={300} data={infographicData.data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={infographicData.config.xKey} />
+              <YAxis />
+              <RCTooltip />
+              <RCLegend />
+              <Line type="monotone" dataKey={infographicData.config.yKey} stroke={COLORS[0]} />
+            </RCLineChart>
+          )}
+          {infographicData.type === 'area' && Array.isArray(infographicData.data) && infographicData.config && (
+            <RCAreaChart width={500} height={300} data={infographicData.data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={infographicData.config.xKey} />
+              <YAxis />
+              <RCTooltip />
+              <RCLegend />
+              <Area type="monotone" dataKey={infographicData.config.yKey} stroke={COLORS[0]} fill={COLORS[1]} />
+            </RCAreaChart>
+          )}
+          {infographicData.type === 'scatter' && Array.isArray(infographicData.data) && infographicData.config && (
+            <RCScatterChart width={500} height={300}>
+              <CartesianGrid />
+              <XAxis dataKey={infographicData.config.xKey} name={infographicData.config.xKey} />
+              <YAxis dataKey={infographicData.config.yKey} name={infographicData.config.yKey} />
+              <ZAxis dataKey={infographicData.config.zKey || undefined} range={[60, 400]} />
+              <RCTooltip cursor={{ strokeDasharray: '3 3' }} />
+              <Scatter name="Scatter Data" data={infographicData.data} fill={COLORS[2]} />
+            </RCScatterChart>
+          )}
+          {infographicData.type === 'heatmap' && Array.isArray(infographicData.data) && (
+            <div style={{ width: 400, height: 320 }}>
+              <HeatMapGrid
+                data={infographicData.data}
+                xLabels={infographicData.config?.xLabels || Array.from({ length: infographicData.data[0]?.length || 0 }, (_, i) => `Col ${i+1}`)}
+                yLabels={infographicData.config?.yLabels || Array.from({ length: infographicData.data.length }, (_, i) => `Row ${i+1}`)}
+                cellStyle={(_background, value, _min, max) => ({
+                  background: `rgb(66, 86, 244, ${max ? value / max : 0})`,
+                  color: "#fff",
+                  fontSize: "12px"
+                })}
+                cellRender={value => value && value.toFixed ? value.toFixed(0) : value}
+              />
             </div>
           )}
-          
-          {infographicData.type === 'bar' && (
-            <div className="relative w-full h-64">
-              <BarChart className="w-full h-full text-primary" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-medium">Bar Chart Visualization</span>
-              </div>
-            </div>
-          )}
-          
-          {infographicData.type === 'line' && (
-            <div className="relative w-full h-64">
-              <LineChart className="w-full h-full text-primary" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-medium">Line Chart Visualization</span>
-              </div>
-            </div>
-          )}
-          
-          {infographicData.type === 'area' && (
-            <div className="relative w-full h-64">
-              <AreaChart className="w-full h-full text-primary" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-medium">Area Chart Visualization</span>
-              </div>
-            </div>
-          )}
-          
-          {infographicData.type === 'scatter' && (
-            <div className="relative w-full h-64">
-              <ScatterChart className="w-full h-full text-primary" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-medium">Scatter Plot Visualization</span>
-              </div>
-            </div>
-          )}
-          
-          {(infographicData.type === 'custom' || !['pie', 'bar', 'line', 'area', 'scatter'].includes(infographicData.type)) && (
+          {(infographicData.type === 'custom' || !['pie','bar','line','area','scatter','heatmap'].includes(infographicData.type)) && (
             <div className="relative w-full h-64">
               <div className="text-center">
                 <h4 className="font-medium mb-2">{infographicData.type.charAt(0).toUpperCase() + infographicData.type.slice(1)} Visualization</h4>
@@ -630,7 +564,6 @@ If the user is asking for information without requesting a visualization, just p
             </div>
           )}
         </div>
-        
         <div className="mt-4 bg-muted/20 p-4 rounded-md">
           <h4 className="font-medium mb-2">Data Preview</h4>
           <div className="max-h-32 overflow-y-auto">
@@ -642,67 +575,56 @@ If the user is asking for information without requesting a visualization, just p
       </div>
     );
   };
-  
-  // Render chat messages
-  const renderChatMessages = () => {
-    return (
-      <div className="flex flex-col space-y-4 p-4 max-h-[500px] overflow-y-auto">
-        {chatMessages.length === 0 ? (
-          <div className="text-center text-muted-foreground p-4">
-            <Info className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Ask the AI assistant to help you create infographics and data visualizations.</p>
-            <p className="text-sm mt-2">Examples:</p>
-            <ul className="text-sm mt-1 space-y-1 text-left max-w-md mx-auto">
-              <li>• "Create a pie chart showing market share distribution"</li>
-              <li>• "Generate a bar chart comparing monthly sales data"</li>
-              <li>• "Visualize this data as a line graph with trend analysis"</li>
-              <li>• "Make an infographic about global warming statistics"</li>
-            </ul>
-          </div>
-        ) : (
-          chatMessages.map((message, index) => (
-            <div 
-              key={index} 
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div 
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  message.role === 'user' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : message.role === 'system'
-                    ? 'bg-muted text-muted-foreground'
-                    : 'bg-secondary text-secondary-foreground'
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{message.content}</p>
-                <p className="text-xs opacity-70 mt-1">
-                  {message.timestamp.toLocaleTimeString()}
-                </p>
-              </div>
-            </div>
-          ))
-        )}
-        <div ref={chatEndRef} />
-      </div>
-    );
-  };
 
-  // Handle chart type selection
+  const renderChatMessages = () => (
+    <div className="flex flex-col space-y-4 p-4 max-h-[500px] overflow-y-auto">
+      {chatMessages.length === 0 ? (
+        <div className="text-center text-muted-foreground p-4">
+          <Info className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <p>Ask the AI assistant to help you create infographics and data visualizations.</p>
+          <p className="text-sm mt-2">Examples:</p>
+          <ul className="text-sm mt-1 space-y-1 text-left max-w-md mx-auto">
+            <li>• "Create a pie chart showing market share distribution"</li>
+            <li>• "Generate a bar chart comparing monthly sales data"</li>
+            <li>• "Visualize this data as a line graph with trend analysis"</li>
+            <li>• "Make an infographic about global warming statistics"</li>
+          </ul>
+        </div>
+      ) : (
+        chatMessages.map((message, index) => (
+          <div
+            key={index}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[80%] rounded-lg p-3 ${
+                message.role === 'user'
+                  ? 'bg-primary text-primary-foreground'
+                  : message.role === 'system'
+                  ? 'bg-muted text-muted-foreground'
+                  : 'bg-secondary text-secondary-foreground'
+              }`}
+            >
+              <p className="whitespace-pre-wrap">{message.content}</p>
+              <p className="text-xs opacity-70 mt-1">
+                {message.timestamp.toLocaleTimeString()}
+              </p>
+            </div>
+          </div>
+        ))
+      )}
+      <div ref={chatEndRef} />
+    </div>
+  );
+
   const handleChartTypeSelect = (type: string) => {
     setSelectedChartType(type);
-    
-    // Update user input with chart type request
     const currentInput = userInput.trim();
-    const newInput = currentInput 
-      ? `${currentInput} as a ${type} chart` 
+    const newInput = currentInput
+      ? `${currentInput} as a ${type} chart`
       : `Create a ${type} chart with the current data`;
-    
     setUserInput(newInput);
-    
-    // Focus back on input
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (inputRef.current) inputRef.current.focus();
   };
 
   return (
@@ -720,9 +642,9 @@ If the user is asking for information without requesting a visualization, just p
             <div className="lg:col-span-2 space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center space-x-2">
-                  <Input 
-                    value={infographicData?.title || "Untitled Visualization"} 
-                    onChange={(e) => infographicData && setInfographicData({...infographicData, title: e.target.value})}
+                  <Input
+                    value={infographicData?.title || "Untitled Visualization"}
+                    onChange={(e) => infographicData && setInfographicData({ ...infographicData, title: e.target.value })}
                     className="w-64"
                   />
                   <Select value={selectedChartType} onValueChange={handleChartTypeSelect}>
@@ -759,28 +681,23 @@ If the user is asking for information without requesting a visualization, just p
                   </div>
                 </div>
               </div>
-              
               <div className="border rounded-lg h-[600px] overflow-auto bg-background">
                 {renderInfographic()}
               </div>
             </div>
-            
             {/* Chat Section - Takes 1/3 of the space on large screens */}
             <div className="border rounded-lg flex flex-col h-[600px]">
               <div className="p-3 bg-muted border-b flex justify-between items-center">
                 <h3 className="font-semibold">AI Assistant</h3>
               </div>
-              
               {renderChatMessages()}
-              
               <Separator />
-              
               <div className="p-4 space-y-4">
                 {/* Command options */}
                 {showCommandOptions && (
                   <div className="flex flex-wrap gap-2 mb-2">
-                    <Button 
-                      variant={selectedCommands.analyze ? "default" : "outline"} 
+                    <Button
+                      variant={selectedCommands.analyze ? "default" : "outline"}
                       size="sm"
                       onClick={() => handleCommandSelect('analyze')}
                       className="flex items-center"
@@ -788,9 +705,8 @@ If the user is asking for information without requesting a visualization, just p
                       <Brain className="h-4 w-4 mr-1" />
                       Analyze
                     </Button>
-                    
-                    <Button 
-                      variant={selectedCommands.image ? "default" : "outline"} 
+                    <Button
+                      variant={selectedCommands.image ? "default" : "outline"}
                       size="sm"
                       onClick={() => handleCommandSelect('image')}
                       className="flex items-center"
@@ -798,9 +714,8 @@ If the user is asking for information without requesting a visualization, just p
                       <Image className="h-4 w-4 mr-1" />
                       Image
                     </Button>
-                    
-                    <Button 
-                      variant={selectedCommands.dataContext ? "default" : "outline"} 
+                    <Button
+                      variant={selectedCommands.dataContext ? "default" : "outline"}
                       size="sm"
                       onClick={() => handleCommandSelect('dataContext')}
                       className="flex items-center"
@@ -810,7 +725,6 @@ If the user is asking for information without requesting a visualization, just p
                     </Button>
                   </div>
                 )}
-                
                 {/* Image upload */}
                 {selectedCommands.image && (
                   <div className="flex items-center gap-2">
@@ -831,7 +745,6 @@ If the user is asking for information without requesting a visualization, just p
                     </div>
                   </div>
                 )}
-                
                 {/* Data context */}
                 {selectedCommands.dataContext && (
                   <div className="flex items-center gap-2">
@@ -852,7 +765,6 @@ If the user is asking for information without requesting a visualization, just p
                     </div>
                   </div>
                 )}
-                
                 {/* Context indicators */}
                 {(contextFile || imageFile) && (
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -870,7 +782,6 @@ If the user is asking for information without requesting a visualization, just p
                     )}
                   </div>
                 )}
-                
                 <div className="flex items-end gap-2">
                   <Textarea
                     ref={inputRef}
@@ -881,8 +792,8 @@ If the user is asking for information without requesting a visualization, just p
                     className="flex-1 min-h-[80px] resize-none"
                     disabled={isLoading}
                   />
-                  <Button 
-                    onClick={handleSendMessage} 
+                  <Button
+                    onClick={handleSendMessage}
                     disabled={isLoading || (!userInput.trim() && !imageFile)}
                     className="mb-1"
                   >
@@ -893,7 +804,6 @@ If the user is asking for information without requesting a visualization, just p
                     )}
                   </Button>
                 </div>
-                
                 {error && (
                   <Alert variant="destructive">
                     <AlertTitle>Error</AlertTitle>
@@ -912,4 +822,4 @@ If the user is asking for information without requesting a visualization, just p
       </Card>
     </div>
   );
-}
+      }
