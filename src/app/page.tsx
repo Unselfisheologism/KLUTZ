@@ -130,9 +130,6 @@ const features: Feature[] = [
     href: '/ai-infographics',
     isImplemented: true,
   },
-  {
-    href: '/google83078bd88d6feeca.html',
-  },  
 ];
 
 export default function HomePage() {
