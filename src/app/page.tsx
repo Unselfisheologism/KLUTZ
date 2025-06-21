@@ -132,7 +132,7 @@ const features: Feature[] = [
   },
   {
     href: '/google83078bd88d6feeca.html',
-  }  
+  },  
 ];
 
 export default function HomePage() {
