@@ -690,20 +690,6 @@ Available sheets: ${data.sheets.join(', ')}
   
   // Render cell with appropriate styling
   const renderCell = (cell: { value: string, style?: any }, rowIndex: number, colIndex: number) => {
-    if (!cell) {
-      return (
-        <div 
-          key={`cell-${rowIndex}-${colIndex}`}
-          className={`
-            border border-gray-200 dark:border-gray-700 p-2 min-w-[100px] 
-            ${rowIndex === 0 ? 'bg-muted font-semibold' : 'bg-card'}
-          `}
-        >
-          {''} {/* Render an empty cell if 'cell' is undefined */}
-        </div>
-      );
-    }
-  
     const isHeader = rowIndex === 0;
     const cellStyle = cell.style || {};
     
