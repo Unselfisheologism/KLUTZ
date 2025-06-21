@@ -137,6 +137,7 @@ export default function HomePage() {
     <>
       <Head>
         <link rel="canonical" href="https://klutz.netlify.app/" />
+        <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
       </Head>
     <div className="min-h-screen flex flex-col">
       <div className="flex-grow">
