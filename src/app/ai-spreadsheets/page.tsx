@@ -247,17 +247,6 @@ export default function AISpreadsheetPage() {
                 // Create cell objects with only a value property
                 return Array.isArray(row)
  ? row.map((cell: any) => ({ value: cell !== null && cell !== undefined ? String(cell) : '' }))
- // Ensure cell object is valid and has style
- const validCell = cell || { v: undefined }; // Use 'v' for potential XLSX cell object
-                
-                  let cellValue = '';
- if (validCell.v !== undefined) {
- cellValue = validCell.v.toString();
- } else if (cell !== undefined && cell !== null) {
- // Handle cases where cell might be a primitive directly
- cellValue = cell.toString();
- }
-                
  : [{ value: row !== null && row !== undefined ? String(row) : '' }];
               }),
               activeSheet: firstSheetName,
