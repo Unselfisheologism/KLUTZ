@@ -197,11 +197,12 @@ export default function AISpreadsheetPage() {
             
             // Create spreadsheet data structure
             const newData: SpreadsheetData = {
-              rows: jsonData.map((row: any) => 
-                Array.isArray(row) 
-                  ? row.map((cell: any) => ({ value: cell?.toString() || '' }))
-                  : [{ value: row?.toString() || '' }]
-              ),
+              rows: jsonData.map((row: any) => {
+                const processedRow = Array.isArray(row)
+                  ? row.map((cell: any) => ({ value: cell?.toString() || '', style: {} })) // Ensure style object is always present
+                  : [{ value: row?.toString() || '', style: {} }]; // Ensure style object is always present
+                return processedRow;
+              }),
               activeSheet: firstSheetName,
               sheets: workbook.SheetNames
             };
@@ -210,14 +211,15 @@ export default function AISpreadsheetPage() {
             const maxCols = Math.max(...newData.rows.map(row => row.length), DEFAULT_COLS);
             newData.rows = newData.rows.map(row => {
               while (row.length < maxCols) {
-                row.push({ value: '' });
+                row.push({ value: '', style: {} });
               }
               return row;
             });
             
             // Ensure minimum number of rows
             while (newData.rows.length < DEFAULT_ROWS) {
-              newData.rows.push(Array(maxCols).fill(null).map(() => ({ value: '' })));
+              const colCount = newData.rows[0]?.length || DEFAULT_COLS;
+              newData.rows.push(Array(colCount).fill(null).map(() => ({ value: '', style: {} }))); // Ensure new rows also have style object
             }
             
             setSpreadsheetData(newData);
