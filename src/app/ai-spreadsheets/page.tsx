@@ -148,6 +148,35 @@ export default function AISpreadsheetPage() {
               sheets: workbook.SheetNames
             };
             
+            // Ensure all cells have initialized style properties
+            newData.rows = newData.rows.map(row => {
+            return row.map(cell => {
+              // Ensure cell object is valid
+              const validCell = cell || { value: '' };
+                            
+              return {
+                ...validCell,
+                // Ensure style object exists and has default nested properties
+                style: {
+                  bold: validCell.style?.bold || false,
+                  italic: validCell.style?.italic || false,
+                  color: validCell.style?.color || 'inherit',
+                  backgroundColor: validCell.style?.backgroundColor || 'transparent',
+                  textAlign: validCell.style?.textAlign || 'left',
+                  ...validCell.style // Preserve any existing style properties
+                }
+              };
+            });
+          });
+                        
+          // Format the header row with bold text and light grey background
+          if (newData.rows.length > 0) {
+            newData.rows[0] = newData.rows[0].map(cell => ({
+              ...cell,
+              style: { ...cell.style, bold: true, backgroundColor: '#f0f0f0' }
+            }));
+          }
+                        
             // Ensure all rows have the same number of columns
             const maxCols = Math.max(...newData.rows.map(row => row.length), DEFAULT_COLS);
             newData.rows = newData.rows.map(row => {
