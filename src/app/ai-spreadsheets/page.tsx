@@ -20,6 +20,7 @@ const createEmptySpreadsheet = (rows: number = DEFAULT_ROWS, cols: number = DEFA
   const emptyData: SpreadsheetData = {
     rows: Array(rows).fill(null).map(() => 
       Array(cols).fill(null).map(() => ({ value: '' }))
+ )
     ),
     activeSheet: 'Sheet1',
     sheets: ['Sheet1']
@@ -33,8 +34,8 @@ const ensureGridSize = (data: SpreadsheetData, rowIndex: number, colIndex: numbe
   
   // Ensure we have enough rows
   while (newData.rows.length <= rowIndex) {
-    const newRow = Array(newData.rows[0]?.length || DEFAULT_COLS).fill(null).map(() => ({ value: '' }));
-    newData.rows.push(newRow);
+    const newRow = Array(newData.rows[0]?.length || DEFAULT_COLS).fill(null).map(() => ({ value: '', style: {} }));
+    newData.rows.push(newRow); // Push the new row with initialized style
   }
   
   // Ensure all rows have enough columns
@@ -227,10 +228,10 @@ export default function AISpreadsheetPage() {
             // Create spreadsheet data structure
             const newData: SpreadsheetData = {
               rows: jsonData.map((row: any) => {
-                const processedRow = Array.isArray(row)
-                  ? row.map((cell: any) => ({ value: cell?.toString() || '', style: {} })) // Ensure style object is always present
-                  : [{ value: row?.toString() || '', style: {} }]; // Ensure style object is always present
-                return processedRow;
+                // Ensure style object is always present when mapping imported data
+ return Array.isArray(row)
+ ? row.map((cell: any) => ({ value: cell?.toString() || '', style: {} }))
+ : [{ value: row?.toString() || '', style: {} }];
               }),
               activeSheet: firstSheetName,
               sheets: workbook.SheetNames
@@ -249,7 +250,8 @@ export default function AISpreadsheetPage() {
             while (newData.rows.length < DEFAULT_ROWS) {
               const colCount = newData.rows[0]?.length || DEFAULT_COLS;
               newData.rows.push(Array(colCount).fill(null).map(() => ({ value: '', style: {} }))); // Ensure new rows also have style object
-            }
+ }
+
             
             setSpreadsheetData(newData);
             
@@ -599,7 +601,7 @@ Available sheets: ${data.sheets.join(', ')}
           // Create a new row with the right number of columns
           const colCount = Math.max(newData.rows[0]?.length || 0, values?.length || 0);
           const newRow = Array(colCount).fill(null).map((_, i) => {
-            return { value: values && i < values.length ? values[i].toString() : '' };
+            return { value: values && i < values.length ? values[i].toString() : '', style: {} };
           });
           
           // Insert the new row
@@ -609,7 +611,7 @@ Available sheets: ${data.sheets.join(', ')}
           const maxCols = Math.max(...newData.rows.map(row => row.length));
           newData.rows = newData.rows.map(row => {
             while (row.length < maxCols) {
-              row.push({ value: '' });
+              row.push({ value: '', style: {} });
             }
             return row;
           });
@@ -630,13 +632,13 @@ Available sheets: ${data.sheets.join(', ')}
           // Add the header
           const headerRow = newData.rows[0];
           headerRow.splice(colIndex, 0, { value: header || '' });
-          
+
           // Add values to each row
           for (let i = 1; i < newData.rows.length; i++) {
             const value = values && i - 1 < values.length ? values[i - 1].toString() : '';
-            newData.rows[i].splice(colIndex, 0, { value });
+            newData.rows[i].splice(colIndex, 0, { value, style: {} });
           }
-          
+
           // If values array is longer than existing rows, add new rows
           if (values && values.length > newData.rows.length - 1) {
             for (let i = newData.rows.length - 1; i < values.length; i++) {
@@ -659,7 +661,7 @@ Available sheets: ${data.sheets.join(', ')}
             // Ensure we have at least DEFAULT_ROWS rows
             while (newData.rows.length < DEFAULT_ROWS) {
               const colCount = newData.rows[0]?.length || DEFAULT_COLS;
-              newData.rows.push(Array(colCount).fill(null).map(() => ({ value: '' })));
+              newData.rows.push(Array(colCount).fill(null).map(() => ({ value: '', style: {} })));
             }
           }
           break;
@@ -678,7 +680,7 @@ Available sheets: ${data.sheets.join(', ')}
             // Ensure we have at least DEFAULT_COLS columns
             if (newData.rows[0]?.length < DEFAULT_COLS) {
               newData.rows = newData.rows.map(row => {
-                while (row.length < DEFAULT_COLS) {
+                while (row.length < DEFAULT_COLS) { // Fix: Ensure added cells have style property
                   row.push({ value: '' });
                 }
                 return row;
