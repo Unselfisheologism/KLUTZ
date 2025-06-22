@@ -19,7 +19,7 @@ const DEFAULT_COLS = 5;
 const createEmptySpreadsheet = (rows: number = DEFAULT_ROWS, cols: number = DEFAULT_COLS): SpreadsheetData => {
   const emptyData: SpreadsheetData = {
     rows: Array(rows).fill(null).map(() => 
-      Array(cols).fill(null).map(() => ({ value: '' }))
+      Array(cols).fill(null).map(() => ({ value: '', style: {} })) // Ensure style is initialized
     ),
     activeSheet: 'Sheet1',
     sheets: ['Sheet1']
@@ -41,7 +41,7 @@ const ensureGridSize = (data: SpreadsheetData, rowIndex: number, colIndex: numbe
   for (let i = 0; i < newData.rows.length; i++) {
     while (newData.rows[i].length <= colIndex) {
       newData.rows[i].push({ value: '' });
-    }
+ }
   }
   
   // Ensure all rows have the same number of columns
@@ -49,7 +49,7 @@ const ensureGridSize = (data: SpreadsheetData, rowIndex: number, colIndex: numbe
   for (let i = 0; i < newData.rows.length; i++) {
     while (newData.rows[i].length < maxCols) {
       newData.rows[i].push({ value: '' });
-    }
+ }
   }
   
   return newData;
@@ -140,8 +140,24 @@ export default function AISpreadsheetPage() {
             // Create spreadsheet data structure
             const newData: SpreadsheetData = {
               rows: jsonData.map((row: any) => 
-                Array.isArray(row) 
-                  ? row.map((cell: any) => ({ value: cell?.toString() || '' }))
+ Array.isArray(row)
+ ? row.map((cell: any) => {
+ // Ensure cell object is valid and has style
+ const validCell = cell || { v: undefined }; // Use 'v' for potential XLSX cell object
+                
+                  let cellValue = '';
+ if (validCell.v !== undefined) {
+ cellValue = validCell.v.toString();
+ } else if (cell !== undefined && cell !== null) {
+ // Handle cases where cell might be a primitive directly
+ cellValue = cell.toString();
+ }
+                
+ return {
+ value: cellValue,
+ style: {} // Ensure style object is always present
+ };
+ })
                   : [{ value: row?.toString() || '' }]
               ),
               activeSheet: firstSheetName,
@@ -227,10 +243,22 @@ export default function AISpreadsheetPage() {
             // Create spreadsheet data structure
             const newData: SpreadsheetData = {
               rows: jsonData.map((row: any) => {
-                // Ensure style object is always present when mapping imported data
- return Array.isArray(row)
- ? row.map((cell: any) => ({ value: cell?.toString() || '', style: {} }))
- : [{ value: row?.toString() || '', style: {} }];
+                // Match the cell creation logic from the markdown file's updateSpreadsheetWithParsedData
+                // Create cell objects with only a value property
+                return Array.isArray(row)
+ ? row.map((cell: any) => ({ value: cell !== null && cell !== undefined ? String(cell) : '' }))
+ // Ensure cell object is valid and has style
+ const validCell = cell || { v: undefined }; // Use 'v' for potential XLSX cell object
+                
+                  let cellValue = '';
+ if (validCell.v !== undefined) {
+ cellValue = validCell.v.toString();
+ } else if (cell !== undefined && cell !== null) {
+ // Handle cases where cell might be a primitive directly
+ cellValue = cell.toString();
+ }
+                
+ : [{ value: row !== null && row !== undefined ? String(row) : '' }];
               }),
               activeSheet: firstSheetName,
               sheets: workbook.SheetNames
