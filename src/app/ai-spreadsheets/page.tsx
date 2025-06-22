@@ -509,10 +509,15 @@ Available sheets: ${data.sheets.join(', ')}
             before: newData.rows[operation.details.row]?.[operation.details.col]?.value
           });
 
-
-
           const { row, col, value } = operation.details;
+
+          // Add check for undefined row or cell before accessing
+          if (newData.rows[row] === undefined || newData.rows[row][col] === undefined) {
+            console.warn(`Warning: Attempted to update an undefined cell at row ${row}, col ${col}. Initializing cell.`);
+          }
+          
           // Ensure the grid is large enough
+          // ensureGridSize will handle creation of rows/cols if they don't exist
           newData = ensureGridSize(newData, row, col);
           newData.rows[row][col] = { ...newData.rows[row][col], value: value.toString() };
           break;
