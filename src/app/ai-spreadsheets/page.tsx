@@ -493,11 +493,24 @@ Available sheets: ${data.sheets.join(', ')}
   
   // Apply operations to the spreadsheet
   const applyOperations = (data: SpreadsheetData, operations: SpreadsheetOperation[]): SpreadsheetData => {
+    console.log("Applying operations...");
+    console.log("Initial spreadsheet state:", data.rows.map(row => row.map(cell => cell.value)));
+
     let newData = { ...data, rows: [...data.rows.map(row => [...row])] };
     
     operations.forEach(operation => {
+      console.log("Applying operation:", operation.type, operation.details);
+      
       switch (operation.type) {
         case 'update_cell': {
+          console.log("State before update_cell:", {
+            row: operation.details.row,
+            col: operation.details.col,
+            before: newData.rows[operation.details.row]?.[operation.details.col]?.value
+          });
+
+
+
           const { row, col, value } = operation.details;
           // Ensure the grid is large enough
           newData = ensureGridSize(newData, row, col);
@@ -506,11 +519,19 @@ Available sheets: ${data.sheets.join(', ')}
         }
         
         case 'update_row': {
+          console.log("State before update_row:", {
+            row: operation.details.row,
+            before: newData.rows[operation.details.row]?.map(cell => cell?.value)
+          });
+
           const { row, values } = operation.details;
           // Ensure the grid is large enough
           newData = ensureGridSize(newData, row, values.length - 1);
           values.forEach((value: any, colIndex: number) => {
             if (colIndex < newData.rows[row].length) {
+              if (newData.rows[row][colIndex] === undefined) {
+                console.warn(`Warning: Attempted to update an undefined cell at row ${row}, col ${colIndex}. Initializing cell.`);
+              }
               newData.rows[row][colIndex] = { ...newData.rows[row][colIndex], value: value.toString() };
             }
           });
@@ -518,9 +539,17 @@ Available sheets: ${data.sheets.join(', ')}
         }
         
         case 'update_column': {
+          console.log("State before update_column:", {
+            col: operation.details.col,
+            before: newData.rows.map(row => row[operation.details.col]?.value)
+          });
+
           const { col, values } = operation.details;
           values.forEach((value: any, rowIndex: number) => {
             // Ensure the grid is large enough
+            if (newData.rows[rowIndex]?.[col] === undefined) {
+                 console.warn(`Warning: Attempted to update an undefined cell at row ${rowIndex}, col ${col}. Initializing cell.`);
+            }
             newData = ensureGridSize(newData, rowIndex, col);
             newData.rows[rowIndex][col] = { ...newData.rows[rowIndex][col], value: value.toString() };
           });
@@ -528,6 +557,8 @@ Available sheets: ${data.sheets.join(', ')}
         }
         
         case 'add_row': {
+          console.log("State before add_row. Row count:", newData.rows.length);
+
           const { position = newData.rows.length, values } = operation.details;
           const rowIndex = Math.min(position, newData.rows.length);
           
@@ -552,6 +583,8 @@ Available sheets: ${data.sheets.join(', ')}
         }
         
         case 'add_column': {
+          console.log("State before add_column. Col count:", newData.rows[0]?.length || 0);
+
           const { position = newData.rows[0]?.length || 0, header, values } = operation.details;
           const colIndex = Math.min(position, newData.rows[0]?.length || 0);
           
@@ -583,6 +616,8 @@ Available sheets: ${data.sheets.join(', ')}
         }
         
         case 'delete_row': {
+          console.log("State before delete_row. Row count:", newData.rows.length, "Deleting row:", operation.details.row);
+
           const { row } = operation.details;
           if (row >= 0 && row < newData.rows.length) {
             newData.rows.splice(row, 1);
@@ -597,6 +632,8 @@ Available sheets: ${data.sheets.join(', ')}
         }
         
         case 'delete_column': {
+          console.log("State before delete_column. Col count:", newData.rows[0]?.length || 0, "Deleting col:", operation.details.col);
+
           const { col } = operation.details;
           if (col >= 0 && newData.rows.length > 0 && col < newData.rows[0].length) {
             newData.rows = newData.rows.map(row => {
@@ -618,6 +655,11 @@ Available sheets: ${data.sheets.join(', ')}
         }
         
         case 'format': {
+          console.log("State before format:", {
+            row: operation.details.row,
+            col: operation.details.col,
+            beforeStyle: newData.rows[operation.details.row]?.[operation.details.col]?.style
+          });
           const { row, col, style } = operation.details;
           if (row >= 0 && row < newData.rows.length && 
               col >= 0 && col < newData.rows[row].length) {
@@ -632,6 +674,7 @@ Available sheets: ${data.sheets.join(', ')}
         // Other operation types can be added here
       }
     });
+    console.log("State after applying all operations:", newData.rows.map(row => row.map(cell => cell.value)));
     
     return newData;
   };
