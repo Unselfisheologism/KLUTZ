@@ -20,7 +20,6 @@ const createEmptySpreadsheet = (rows: number = DEFAULT_ROWS, cols: number = DEFA
   const emptyData: SpreadsheetData = {
     rows: Array(rows).fill(null).map(() => 
       Array(cols).fill(null).map(() => ({ value: '' }))
- )
     ),
     activeSheet: 'Sheet1',
     sheets: ['Sheet1']
