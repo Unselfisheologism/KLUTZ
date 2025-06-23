@@ -661,7 +661,11 @@ export default function AISpreadsheetPage() {
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       
       // Add the worksheet to the workbook
-      XLSX.utils.book_remove_sheet(wb, 0); // Remove existing sheet if any
+      // Only attempt to remove a sheet if originalWorkbook exists,
+      // otherwise a new workbook is created and doesn't have a sheet to remove
+      if (originalWorkbook) {
+         XLSX.utils.book_remove_sheet(wb, 0); // Remove existing sheet if any
+      }
       XLSX.utils.book_append_sheet(wb, ws, spreadsheetData.activeSheet);
       
       // Generate the file
