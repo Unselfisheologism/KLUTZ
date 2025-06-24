@@ -200,34 +200,32 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature) => (
-              <Card key={feature.title} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                  <div className="flex items-center mb-3">
-                    <feature.icon className="h-10 w-10 text-accent mr-4" />
-                    <CardTitle className="font-headline text-2xl">{feature.title}</CardTitle>
-                  </div>
-                  <CardDescription className="text-base min-h-[60px]">{feature.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  {/* Additional content can go here if needed */}
-                </CardContent>
-                <CardFooter>
-                  {feature.isImplemented ? (
-                    <Button asChild className="w-full bg-primary hover:bg-primary/90">
-                      <Link href={feature.href}>
-                        Open Tool <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button variant="outline" className="w-full" disabled>
-                      Coming Soon
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 cards">Add commentMore actions
+              {features.map((feature) => (
+                <Card key={feature.title} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="flex items-center mb-3 card">
+                      <feature.icon className="h-10 w-10 text-accent mr-4" />
+                      <CardTitle className="font-headline text-2xl">{feature.title}</CardTitle>
+                    </div>
+                    <CardDescription className="text-base min-h-[60px]">{feature.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow" />
+                  <CardFooter>
+                    {feature.isImplemented ? (
+                      <Button asChild className="w-full bg-primary hover:bg-primary/90">
+                        <Link href={feature.href}>
+                          Open Tool <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="outline" className="w-full" disabled>
+                        Coming Soon
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
           </div>
         </div>
       </div>
