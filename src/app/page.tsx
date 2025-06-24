@@ -200,7 +200,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 cards">Add commentMore actions
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 cards">
               {features.map((feature) => (
                 <Card key={feature.title} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader>
