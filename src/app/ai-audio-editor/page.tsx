@@ -1,6 +1,8 @@
 'use client';
 
+
 import { useState, useEffect, useRef, use } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { AudioEditorState, AudioEditorAction, BassBoosterLevel, ReverbPreset } from './types/ai-audio-editor';
 
 const AIAudioEditorPage = () => {
@@ -25,11 +27,12 @@ const AIAudioEditorPage = () => {
  bassBooster: 'Subtle Subwoofer',
  reverb: 'Vocal Ambience',
     // Add other relevant state properties
-  });
+  }); 
 
   const [chatMessages, setChatMessages] = useState<{ type: 'user' | 'ai'; text: string }[]>([]);
   const [userCommand, setUserCommand] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [originalAudioFile, setOriginalAudioFile] = useState<File | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
 
   const handleAudioAction = (action: AudioEditorAction) => {
@@ -44,6 +47,22 @@ const AIAudioEditorPage = () => {
     // Add handlers for other action types
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setUploadedFileName(file.name);
+      setOriginalAudioFile(file);
+      // In a real application, you would load the audio data here
+      console.log("File uploaded:", file.name);
+      // Reset state for processed audio if necessary
+    }
+  };
+
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+
+
   const handleChatCommand = async (command: string) => {
     if (!command.trim()) return;
     console.log('AI Chat command:', command);
@@ -53,7 +72,12 @@ const AIAudioEditorPage = () => {
  setLoading(true);
 
  if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
- console.error("Puter SDK not available.");
+        console.error("Puter SDK not available.");
+ toast({
+ variant: "destructive",
+ title: "Puter SDK Error",
+ description: "Puter.js SDK is not loaded. Please refresh the page.",
+ });
  setChatMessages((prev) => [...prev, { type: 'ai', text: 'Error: Puter SDK not available. Please refresh the page.' }]);
  setLoading(false);
  return;
@@ -103,6 +127,11 @@ const AIAudioEditorPage = () => {
 
  } catch (error) {
  console.error('Error handling chat command:', error);
+ toast({
+ variant: "destructive",
+ title: "Chat Failed",
+ description: "Failed to process your command.",
+ });
  setChatMessages((prev) => [...prev, { type: 'ai', text: 'Error processing your command.' }]);
  } finally {
  setLoading(false); // Ensure loading state is reset
@@ -119,13 +148,42 @@ const AIAudioEditorPage = () => {
   return (
     <div className="flex h-screen">
       {/* Left Section: Audio Editor Interface */}
-      <div className="w-2/3 p-4 border-r border-gray-200 overflow-auto">
+      <div className="w-2/3 p-4 border-r border-gray-200 dark:border-gray-700 flex flex-col">
  <h1 className="text-2xl font-bold mb-4">AI Native Audio Editor</h1>
  {/* Add file upload/drag and drop area */}
-        <div className="mb-4 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
- <p className="text-gray-500">Drag and drop audio file here, or click to upload</p>
+        <div className="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center relative">
+ {uploadedFileName ? (
+            <p className="text-gray-700 dark:text-gray-300">
+              File loaded: <span className="font-semibold">{uploadedFileName}</span>
+            </p>
+ ) : (
+            <p className="text-gray-500">Drag and drop audio file here, or click to upload</p>
+ )}
  {/* Input type file */}
- <input type="file" accept="audio/*" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" />
+ <input
+ type="file"
+ accept="audio/*"
+            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+            onChange={handleFileUpload}
+          />
+ </div>
+
+        {/* Audio Players and Waveforms */}
+        <div className="flex-grow overflow-y-auto pr-4"> {/* Add padding-right for scrollbar */}
+ <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Original Audio</h2>
+            {/* Placeholder for Original Audio Player Component */}
+ <div className="w-full h-24 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-md border border-gray-300 dark:border-gray-700">Original Audio Player Placeholder</div>
+            {/* Placeholder for Original Audio Waveform Visualization */}
+ <div className="mt-2 h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-md border border-gray-300 dark:border-gray-700">Original Waveform Placeholder</div>
+ </div>
+
+ <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Processed Audio</h2>
+            {/* Placeholder for Processed Audio Player Component */}
+ <div className="w-full h-24 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-md border border-gray-300 dark:border-gray-700">Processed Audio Player Placeholder</div>
+            {/* Placeholder for Processed Audio Waveform Visualization */}
+ <div className="mt-2 h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-md border border-gray-300 dark:border-gray-700">Processed Waveform Placeholder</div>
  </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -138,7 +196,7 @@ const AIAudioEditorPage = () => {
                 type="checkbox"
                 checked={audioState.lofi}
                 onChange={(e) => handleAudioAction({ type: 'SET_LOFI', payload: e.target.checked })}
-                className="mr-2"
+ className="mr-2 form-checkbox"
               />
               Lo-fi
             </label>
@@ -151,7 +209,7 @@ const AIAudioEditorPage = () => {
             <select
               value={audioState.bassBooster}
               onChange={(e) => handleAudioAction({ type: 'SET_BASS_BOOSTER', payload: e.target.value as BassBoosterLevel })}
-              className="border rounded p-1"
+ className="border rounded p-1 dark:bg-gray-900 dark:border-gray-700 dark:text-white"
             >
               <option value="Subtle Subwoofer">Subtle Subwoofer</option>
               <option value="Gentle Boost">Gentle Boost</option>
@@ -164,15 +222,12 @@ const AIAudioEditorPage = () => {
  </div>
           {/* Add more sections for other feature categories */}
         </div>
-        {/* Add audio waveform visualization placeholder */}
-        <div className="mt-8 h-40 bg-gray-100 flex items-center justify-center text-gray-500">
-          Audio Waveform Visualization Placeholder
         </div>
       </div>
 
       {/* Right Section: AI Chatbot Interface */}
       <div className="w-1/3 p-4 flex flex-col">
-        <h1 className="text-2xl font-bold mb-4">AI Chatbot</h1>
+ <h1 className="text-2xl font-bold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">AI Chatbot</h1>
         <div className="flex-grow border border-gray-200 p-4 overflow-y-auto mb-4" ref={chatMessagesRef}>
           {chatMessages.map((message, index) => ( // Iterate over chat messages
  <div key={index} className={`mb-2 ${message.type === 'user' ? 'text-right' : 'text-left'}`}> {/* Align messages */}
@@ -192,7 +247,7 @@ const AIAudioEditorPage = () => {
         <div className="mt-4">
           <textarea
             placeholder="Type commands for the AI..."
-            className="w-full border rounded p-2 resize-none"
+            className="w-full border rounded p-2 resize-none dark:bg-gray-900 dark:border-gray-700 dark:text-white"
             rows={3}
  value={userCommand}
  onChange={(e) => setUserCommand(e.target.value)}
