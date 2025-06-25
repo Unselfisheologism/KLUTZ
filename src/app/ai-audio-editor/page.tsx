@@ -197,16 +197,18 @@ const AIAudioEditorPage = () => {
  {/* Add file upload/drag and drop area */}
         <div className="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center relative overflow-hidden">
  {uploadedFileName ? (
-            <p className="text-gray-700 dark:text-gray-300">
-              File loaded: <span className="font-semibold">{uploadedFileName}</span>
-            </p>
+ <div className="flex flex-col items-center">
+ <p className="text-gray-700 dark:text-gray-300">
+ File loaded: <span className="font-semibold">{uploadedFileName}</span>
+ </p>
  {/* Input type file */}
  <input
  type="file"
  accept="audio/*"
-            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-            onChange={handleFileUpload}
-          />
+ className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+ onChange={handleFileUpload}
+            />
+ </div>
  </div>
         {/* Main Audio Editor Panel */}
         <MainDisplayPanel
