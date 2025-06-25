@@ -1,6 +1,6 @@
 'use client';
 
-import Head from 'next/head';
+import Head from 'next/head'; 
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
-
+import { AudioWaveform } from 'lucide-react';
 interface Feature {
   icon: React.ElementType;
   title: string;
@@ -129,6 +129,12 @@ const features: Feature[] = [
     description: 'Create data-driven infographics powered by AI for impactful visual storytelling.',
     href: '/ai-infographics',
     isImplemented: true,
+  },
+  {
+    icon: AudioWaveform,
+    title: 'AI Native Audio Editor',
+    description: 'Edit and enhance audio files using AI-powered tools and natural language commands.',
+    href: '/ai-audio-editor',
   },
 ];
 
