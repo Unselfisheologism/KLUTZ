@@ -193,41 +193,41 @@ const AIAudioEditorPage = () => {
     <div className="flex h-screen">
       {/* Left Section: Audio Editor Interface */}
       <div className="w-2/3 p-4 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
- <h1 className="text-2xl font-bold mb-4">AI Native Audio Editor</h1>
- {/* Add file upload/drag and drop area */}
+        <h1 className="text-2xl font-bold mb-4">AI Native Audio Editor</h1>
+        {/* Add file upload/drag and drop area */}
         <div className="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center relative overflow-hidden">
- {uploadedFileName ? ( // If file is uploaded, show file name and make the input area clickable
- <div className="flex flex-col items-center w-full h-full">
- <p className="text-gray-700 dark:text-gray-300">
- File loaded: <span className="font-semibold">{uploadedFileName}</span>
- </p>
- {/* Input type file (still covers the area for re-upload) */}
- <input
- type="file"
- accept="audio/*"
- className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
- onChange={handleFileUpload}
+          {uploadedFileName ? ( // If file is uploaded, show file name and make the input area clickable
+          <div className="flex flex-col items-center w-full h-full">
+            <p className="text-gray-700 dark:text-gray-300">
+              File loaded: <span className="font-semibold">{uploadedFileName}</span>
+            </p>
+            {/* Input type file (still covers the area for re-upload) */}
+            <input
+              type="file"
+              accept="audio/*"
+              className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+              onChange={handleFileUpload}
             />
- </div>
- ) : ( // If no file uploaded, show drag and drop text
- <div className="flex flex-col items-center w-full h-full justify-center">
- <p className="text-gray-500">Drag and drop audio file here, or click to upload</p>
- {/* Input type file (covers the area) */}
- <input
- type="file"
- accept="audio/*"
- className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
- onChange={handleFileUpload}
+          </div>
+          ) : ( // If no file uploaded, show drag and drop text
+          <div className="flex flex-col items-center w-full h-full justify-center">
+            <p className="text-gray-500">Drag and drop audio file here, or click to upload</p>
+            {/* Input type file (covers the area) */}
+            <input
+              type="file"
+              accept="audio/*"
+              className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+              onChange={handleFileUpload}
             />
- </div>
- </div>
-        {/* Main Audio Editor Panel */}
-        <MainDisplayPanel
-          originalAudioFile={originalAudioFile}
-          processedAudioBuffer={audioState.processedAudioBuffer}
-          audioState={audioState}
-          handleAudioAction={handleAudioAction}
-        />
+          </div>
+   
+          {/* Main Audio Editor Panel */}
+          <MainDisplayPanel
+            originalAudioFile={originalAudioFile}
+            processedAudioBuffer={audioState.processedAudioBuffer}
+            audioState={audioState}
+            handleAudioAction={handleAudioAction}
+          />
         </div>
       </div>
 
