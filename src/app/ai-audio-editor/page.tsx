@@ -196,12 +196,23 @@ const AIAudioEditorPage = () => {
  <h1 className="text-2xl font-bold mb-4">AI Native Audio Editor</h1>
  {/* Add file upload/drag and drop area */}
         <div className="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center relative overflow-hidden">
- {uploadedFileName ? (
- <div className="flex flex-col items-center">
+ {uploadedFileName ? ( // If file is uploaded, show file name and make the input area clickable
+ <div className="flex flex-col items-center w-full h-full">
  <p className="text-gray-700 dark:text-gray-300">
  File loaded: <span className="font-semibold">{uploadedFileName}</span>
  </p>
- {/* Input type file */}
+ {/* Input type file (still covers the area for re-upload) */}
+ <input
+ type="file"
+ accept="audio/*"
+ className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+ onChange={handleFileUpload}
+            />
+ </div>
+ ) : ( // If no file uploaded, show drag and drop text
+ <div className="flex flex-col items-center w-full h-full justify-center">
+ <p className="text-gray-500">Drag and drop audio file here, or click to upload</p>
+ {/* Input type file (covers the area) */}
  <input
  type="file"
  accept="audio/*"
@@ -213,7 +224,7 @@ const AIAudioEditorPage = () => {
         {/* Main Audio Editor Panel */}
         <MainDisplayPanel
           originalAudioFile={originalAudioFile}
- processedAudioBuffer={audioState.processedAudioBuffer}
+          processedAudioBuffer={audioState.processedAudioBuffer}
           audioState={audioState}
           handleAudioAction={handleAudioAction}
         />
