@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { generateText } from 'genui';
+import { useState, useEffect, useRef, use } from 'react';
 import { AudioEditorState, AudioEditorAction, BassBoosterLevel, ReverbPreset } from './types/ai-audio-editor';
 
 const AIAudioEditorPage = () => {
@@ -53,17 +52,35 @@ const AIAudioEditorPage = () => {
  setUserCommand('');
  setLoading(true);
 
+ if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
+ console.error("Puter SDK not available.");
+ setChatMessages((prev) => [...prev, { type: 'ai', text: 'Error: Puter SDK not available. Please refresh the page.' }]);
+ setLoading(false);
+ return;
+    }
+    const puter = window.puter;
+
  try {
- const aiResponse = await generateText({
+ let isSignedIn = await puter.auth.isSignedIn();
+ if (!isSignedIn) {
+ await puter.auth.signIn();
+ isSignedIn = await puter.auth.isSignedIn();
+ if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
+    }
+
+ const aiResponse = await puter.ai.chat({
  prompt: `You are an AI assistant for an audio editor. Your task is to interpret user commands and suggest audio editing actions in a structured format. Respond with a JSON object containing an array of actions. Each action should have a 'type' and a 'payload'. The available action types and their expected payload types are:\n\n- SET_LOFI: boolean\n- SET_8D_AUDIO: boolean\n- SET_TUNE_TO_432HZ: boolean\n- SET_RESONANCE_ALTERATION: number (0-100)\n- SET_TEMPORAL_MODIFICATION: number (e.g., 0.5 for half speed, 2.0 for double speed)\n- SET_STEREO_WIDENER: number (0-100)\n- SET_AUTOMATED_SWEEP: boolean\n- SET_SUBHARMONIC_INTENSIFIER: number (0-100)\n- SET_FREQUENCY_SCULPTOR: object (details TBD)\n- SET_KEY_TRANSPOSER: number (semitones)\n- SET_PACE_ADJUSTER: number (e.g., 0.9 for 90% pace, 1.1 for 110% pace)\n- SET_ECHO: boolean\n- SET_REVERSE_PLAYBACK: boolean\n- SET_GAIN: number (dB)\n- SET_AUDIO_SPLITTER: boolean\n- SET_RHYTHM_DETECTOR: boolean\n- SET_BASS_BOOSTER: 'Subtle Subwoofer' | 'Gentle Boost' | 'Medium Enhancement' | 'Intense Amplifier' | 'Maximum Overdrive'\n- SET_REVERB: 'Vocal Ambience' | 'Washroom' | 'Small Room' | 'Medium Room' | 'Large Room' | 'Chapel' | 'Hall' | 'Cathedral'\n\nIf you cannot interpret the command as a specific audio action, provide a helpful message in a JSON object with a single property 'message'.\n\nUser command: "${command}"\n\nProvide only the JSON response.`,
  }, {
- apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
- model: 'gemini-1.5-flash', // Or your preferred model, replace with your model
+ model: 'gpt-4o', // Or your preferred Puter.js supported model
  });
 
- console.log('AI Raw Response:', aiResponse.text);
+ console.log('AI Raw Response:', aiResponse?.message?.content);
 
- let aiMessage = aiResponse.text.trim();
+ if (!aiResponse?.message?.content) {
+ throw new Error("AI response was empty.");
+    }
+
+ let aiMessage = aiResponse.message.content.trim();
  // Attempt to parse the response as JSON
       try {
  const parsedResponse = JSON.parse(aiMessage);
@@ -85,7 +102,7 @@ const AIAudioEditorPage = () => {
  }
 
  } catch (error) {
- console.error('Error generating AI response:', error);
+ console.error('Error handling chat command:', error);
  setChatMessages((prev) => [...prev, { type: 'ai', text: 'Error processing your command.' }]);
  } finally {
  setLoading(false); // Ensure loading state is reset
