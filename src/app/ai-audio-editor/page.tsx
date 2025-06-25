@@ -1,7 +1,9 @@
 'use client';
 
 
-import { useState, useEffect, useRef, use } from 'react';
+import MainDisplayPanel from '@/components/MainDisplayPanel'; // Assuming MainDisplayPanel handles the UI for audio controls, players, and waveforms
+import { useState, useEffect, useRef } from 'react';
+import * as audioUtils from '../lib/audio-utils'; // Import all functions from audio-utils.ts
 import { useToast } from '@/hooks/use-toast';
 import { AudioEditorState, AudioEditorAction, BassBoosterLevel, ReverbPreset } from './types/ai-audio-editor';
 
@@ -26,36 +28,78 @@ const AIAudioEditorPage = () => {
     rhythmDetector: false,
  bassBooster: 'Subtle Subwoofer',
  reverb: 'Vocal Ambience',
-    // Add other relevant state properties
-  }); 
-
+    processedAudioBuffer: null, // State to hold the processed audio buffer
+  });
+  // Assuming audio-utils.ts handles the core audio processing functions
+  // You would import specific functions from '../lib/audio-utils' as needed
   const [chatMessages, setChatMessages] = useState<{ type: 'user' | 'ai'; text: string }[]>([]);
   const [userCommand, setUserCommand] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [originalAudioFile, setOriginalAudioFile] = useState<File | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
 
-  const handleAudioAction = (action: AudioEditorAction) => {
-    // This function would handle applying changes based on user interaction
-    // and potentially AI commands.
-    console.log('Applying action:', action);
-    // In a real application, this would modify the audio file and update the state
-    // For this placeholder, we'll just simulate state updates
-    if (action.type === 'SET_LOFI') {
-      setAudioState({ ...audioState, lofi: action.payload });
-    }
-    // Add handlers for other action types
-  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setUploadedFileName(file.name);
-      setOriginalAudioFile(file);
-      // In a real application, you would load the audio data here
-      console.log("File uploaded:", file.name);
+      const reader = new FileReader();
+ reader.onload = async (e) => {
+ const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+ const audioBuffer = await audioContext.decodeAudioData(e.target!.result as ArrayBuffer);
+ setUploadedFileName(file.name);
+ setOriginalAudioFile(file); // Keep the file object if needed later
+      };
       // Reset state for processed audio if necessary
     }
+  };
+  
+  const handleAudioAction = async (action: AudioEditorAction) => {
+    console.log('Applying action:', action);
+    // TODO: Implement actual audio processing using functions from audio-utils.ts
+    if (!originalAudioFile) {
+ console.warn("No audio file uploaded yet.");
+ return;
+    }
+
+    // Use the currently processed audio buffer if available, otherwise use the original
+    let currentAudioBuffer = audioState.processedAudioBuffer || await audioUtils.fileToAudioBuffer(originalAudioFile);
+    let processedBuffer = currentAudioBuffer;
+
+    try {
+ switch (action.type) {
+ case 'SET_LOFI':
+ processedBuffer = await audioUtils.applyLofi(currentAudioBuffer, action.payload);
+ break;
+        case 'SET_BASS_BOOSTER':
+ processedBuffer = await audioUtils.applyBassBoost(currentAudioBuffer, action.payload);
+ break;
+ // Add cases for other action types as you implement them in audio-utils.ts
+ // case 'SET_REVERB':
+ //   processedBuffer = await audioUtils.applyReverb(currentAudioBuffer, action.payload);
+ //   break;
+ // ... other actions
+ default:
+ console.warn(`Unknown action type: ${action.type}`);
+ break;
+      }
+
+      // Update the state with the new processed audio buffer
+      setAudioState(prev => ({
+ ...prev,
+ ...action.payload,
+        processedAudioBuffer: processedBuffer,
+      }));
+
+    } catch (error) {
+ console.error(`Error applying action ${action.type}:`, error);
+ toast({
+ variant: "destructive",
+ title: "Processing Failed",
+ description: `Failed to apply ${action.type} effect.`,
+      });
+    }
+
+    // Update local state
   };
 
   const [loading, setLoading] = useState(false);
@@ -148,17 +192,14 @@ const AIAudioEditorPage = () => {
   return (
     <div className="flex h-screen">
       {/* Left Section: Audio Editor Interface */}
-      <div className="w-2/3 p-4 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+      <div className="w-2/3 p-4 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
  <h1 className="text-2xl font-bold mb-4">AI Native Audio Editor</h1>
  {/* Add file upload/drag and drop area */}
-        <div className="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center relative">
+        <div className="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center relative overflow-hidden">
  {uploadedFileName ? (
             <p className="text-gray-700 dark:text-gray-300">
               File loaded: <span className="font-semibold">{uploadedFileName}</span>
             </p>
- ) : (
-            <p className="text-gray-500">Drag and drop audio file here, or click to upload</p>
- )}
  {/* Input type file */}
  <input
  type="file"
@@ -167,61 +208,13 @@ const AIAudioEditorPage = () => {
             onChange={handleFileUpload}
           />
  </div>
-
-        {/* Audio Players and Waveforms */}
-        <div className="flex-grow overflow-y-auto pr-4"> {/* Add padding-right for scrollbar */}
- <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Original Audio</h2>
-            {/* Placeholder for Original Audio Player Component */}
- <div className="w-full h-24 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-md border border-gray-300 dark:border-gray-700">Original Audio Player Placeholder</div>
-            {/* Placeholder for Original Audio Waveform Visualization */}
- <div className="mt-2 h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-md border border-gray-300 dark:border-gray-700">Original Waveform Placeholder</div>
- </div>
-
- <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Processed Audio</h2>
-            {/* Placeholder for Processed Audio Player Component */}
- <div className="w-full h-24 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-md border border-gray-300 dark:border-gray-700">Processed Audio Player Placeholder</div>
-            {/* Placeholder for Processed Audio Waveform Visualization */}
- <div className="mt-2 h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-md border border-gray-300 dark:border-gray-700">Processed Waveform Placeholder</div>
- </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Placeholder for various audio editing controls */}
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Basic Controls</h2>
-            {/* Example control */}
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={audioState.lofi}
-                onChange={(e) => handleAudioAction({ type: 'SET_LOFI', payload: e.target.checked })}
- className="mr-2 form-checkbox"
-              />
-              Lo-fi
-            </label>
-            {/* Add other basic controls */}
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Effects</h2>
-            {/* Example control */}
-            <label className="block mb-2">Bass Booster:</label>
-            <select
-              value={audioState.bassBooster}
-              onChange={(e) => handleAudioAction({ type: 'SET_BASS_BOOSTER', payload: e.target.value as BassBoosterLevel })}
- className="border rounded p-1 dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-            >
-              <option value="Subtle Subwoofer">Subtle Subwoofer</option>
-              <option value="Gentle Boost">Gentle Boost</option>
-              <option value="Medium Enhancement">Medium Enhancement</option>
-              <option value="Intense Amplifier">Intense Amplifier</option>
-              <option value="Maximum Overdrive">Maximum Overdrive</option>
-            </select>
-            {/* Add other effect controls */}
- {/* Add other controls here */}
- </div>
-          {/* Add more sections for other feature categories */}
-        </div>
+        {/* Main Audio Editor Panel */}
+        <MainDisplayPanel
+          originalAudioFile={originalAudioFile}
+ processedAudioBuffer={audioState.processedAudioBuffer}
+          audioState={audioState}
+          handleAudioAction={handleAudioAction}
+        />
         </div>
       </div>
 
@@ -230,7 +223,7 @@ const AIAudioEditorPage = () => {
  <h1 className="text-2xl font-bold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">AI Chatbot</h1>
         <div className="flex-grow border border-gray-200 p-4 overflow-y-auto mb-4" ref={chatMessagesRef}>
           {chatMessages.map((message, index) => ( // Iterate over chat messages
- <div key={index} className={`mb-2 ${message.type === 'user' ? 'text-right' : 'text-left'}`}> {/* Align messages */}
+ <div key={index} className={`mb-2 whitespace-pre-wrap ${message.type === 'user' ? 'text-right' : 'text-left'}`}> {/* Align messages */}
  <span className={`inline-block p-2 rounded ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}> {/* Style messages */}
  {message.text} {/* Display message text */}
  </span> {/* Closing span for message text */}
