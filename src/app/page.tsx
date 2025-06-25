@@ -135,6 +135,7 @@ const features: Feature[] = [
     title: 'AI Native Audio Editor',
     description: 'Edit and enhance audio files using AI-powered tools and natural language commands.',
     href: '/ai-audio-editor',
+    isImplemented: true,
   },
 ];
 
