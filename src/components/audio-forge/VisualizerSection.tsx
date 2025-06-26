@@ -1,7 +1,7 @@
 'use client';
 
-import { FunctionalFrequencyVisualizer } from './FunctionalFrequencyVisualizer';
-import { FunctionalAmplitudePlotter } from './FunctionalAmplitudePlotter'; 
+import { FunctionalFrequencyVisualizer } from './FrequencyVisualizer';
+import { FunctionalAmplitudePlotter } from './AmplitudePlotter'; 
 
 interface VisualizerSectionProps {
   originalAudioBuffer: AudioBuffer | null;
