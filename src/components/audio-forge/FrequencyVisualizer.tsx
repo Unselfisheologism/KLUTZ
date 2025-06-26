@@ -44,7 +44,7 @@ export function FunctionalFrequencyVisualizer({ audioBuffer, isPlaying }: Functi
 
     // Create worker if not exists
     if (!workerRef.current) {
-      workerRef.current = new Worker(new URL('../../workers/audioWorker.ts', import.meta.url));
+      workerRef.current = new Worker(new URL('@/workers/audioWorker.ts', import.meta.url));
     }
     const worker = workerRef.current;
 

@@ -29,7 +29,7 @@ export function FunctionalAmplitudePlotter({ audioBuffer }: FunctionalAmplitudeP
     }
     // Create worker if not exists
     if (!workerRef.current) {
-      workerRef.current = new Worker(new URL('../../workers/audioWorker.ts', import.meta.url));
+      workerRef.current = new Worker(new URL('@/workers/audioWorker.ts', import.meta.url));
     }
     const worker = workerRef.current;
 
