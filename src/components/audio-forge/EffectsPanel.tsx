@@ -128,7 +128,16 @@ export function EffectsPanel(props) {
         }
       }
 
-      // Call the AI chat without the tools array
+      // Construct the prompt for the AI
+      let prompt = '';
+      // Add context about the current audio file if it exists
+      if (props.currentAudioFile && typeof props.currentAudioFile === 'string' && props.currentAudioFile.trim() !== '') {
+        prompt += `The current audio file is: ${props.currentAudioFile}\n\n`;
+      }
+      // Add the user's input message to the prompt
+      prompt += inputMessage;
+
+      // Call the AI chat with the constructed prompt
       const response = await window.puter.ai.chat(inputMessage, {
         // You can add other options here if needed, like 'model'
       });
