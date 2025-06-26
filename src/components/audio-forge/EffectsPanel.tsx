@@ -114,33 +114,8 @@ export function EffectsPanel(props) {
       <CardContent className="flex-grow overflow-hidden p-4">
         <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
           {/* Placeholder for the 'upload audio' card */}
-          <div className="mb-4">
-            {/* Your 'upload audio' card component would go here */}
-            <Card>
- <CardContent className="p-4"><FileUploadArea onFileLoaded={props.onFileLoaded} isLoading={props.isLoading} /></CardContent>
-            </Card>
-          </div>
-
           {/* Anchor Navigation and Effects Cards */}
           {effectsList.map(effect => (
-            <section id={effect.id} key={effect.id} className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">{effect.name}</h3>
-              {/* Render the actual EffectCard for this effect */}
-              <EffectCard
-                effect={effect}
-                currentSettings={props.effectSettings?.[effect.id] || {}}
-                onApplyEffect={props.onApplyEffect}
-                onParameterChange={props.onParameterChange}
-                isLoading={props.isLoading}
-                isAudioLoaded={props.isAudioLoaded}
-                analysisResult={props.analysisResult}
-                analysisSourceEffectId={props.analysisSourceEffectId}
-              />
-            </section>
-          ))}
-
-          {/* Chat Messages */}
-          {messages.map((message) => (
             <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
               <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
                 {message.text}
