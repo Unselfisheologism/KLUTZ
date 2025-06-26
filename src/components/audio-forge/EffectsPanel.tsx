@@ -161,76 +161,81 @@ export function EffectsPanel(props) {
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardContent className="flex-grow overflow-hidden p-4">
-        <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
-          {/* Anchor Navigation and Effects Cards */}
-          {/* Content above the chat input */}
-          <div>
-            {/* Anchor Navigation */}
-            <nav className="mb-6">
-              <ul className="flex flex-wrap gap-2">
-                {effectsList.map(effect => (
-                  <li key={effect.id}>
-                    <a href={`#${effect.id}`} className="underline text-blue-600">{effect.name}</a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-
-            {/* Scrollable container for effects with glow */}
-            <div className="relative overflow-hidden">
-              <ScrollArea className="h-[300px] pb-4" /* Adjust height as needed */>
-                <div className="grid gap-6 pr-4"> {/* Added padding to avoid scrollbar overlapping content */}
+    <>
+      <Card className="h-full flex flex-col">
+        <CardContent className="flex-grow overflow-hidden p-4">
+          <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
+            {/* Anchor Navigation and Effects Cards */}
+            {/* Content above the chat input */}
+            <div>
+              {/* Anchor Navigation */}
+              <nav className="mb-6">
+                <ul className="flex flex-wrap gap-2">
                   {effectsList.map(effect => (
-                    <section id={effect.id} key={effect.id}>
-                      <EffectCard
-                        effect={effect}
-                        currentSettings={props.effectSettings?.[effect.id] || {}} // Defensive fallback
-                        onApplyEffect={props.onApplyEffect}
-                        onParameterChange={props.onParameterChange}
-                        isLoading={props.isLoading}
-                        isAudioLoaded={props.isAudioLoaded}
-                        analysisResult={props.analysisResult}
-                        analysisSourceEffectId={props.analysisSourceEffectId}
-                      />
-                    </section>
+                    <li key={effect.id}>
+                      <a href={`#${effect.id}`} className="underline text-blue-600">{effect.name}</a>
+                    </li>
                   ))}
-                </div>
-              </ScrollArea>
-              {/* Glow effects - adjust styling as needed */}
-              <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background to-transparent pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
-            </div>
-          </div>
+                </ul>
+              </nav>
 
-          {/* Chat messages */}
-          {messages.map(message => (
-            <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
-              <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                {message.text}
-              </span>
-            </div>  
-          ))}
-        </ScrollArea>
-      </CardContent>
-      <div className="p-4 border-t">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Type your command..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                if (isAiChatReady) {
-                handleSendMessage();
+              {/* Scrollable container for effects with glow */}
+              <div className="relative overflow-hidden">
+                <ScrollArea className="h-[300px] pb-4" /* Adjust height as needed */>
+                  <div className="grid gap-6 pr-4"> {/* Added padding to avoid scrollbar overlapping content */}
+                    {effectsList.map(effect => (
+                      <section id={effect.id} key={effect.id}>
+                        <EffectCard
+                          effect={effect}
+                          currentSettings={props.effectSettings?.[effect.id] || {}} // Defensive fallback
+                          onApplyEffect={props.onApplyEffect}
+                          onParameterChange={props.onParameterChange}
+                          isLoading={props.isLoading}
+                          isAudioLoaded={props.isAudioLoaded}
+                          analysisResult={props.analysisResult}
+                          analysisSourceEffectId={props.analysisSourceEffectId}
+                        />
+                      </section>
+                    ))}
+                  </div>
+                </ScrollArea>
+                {/* Glow effects - adjust styling as needed */}
+                <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background to-transparent pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
+              </div>
+            </div>
+
+            {/* Chat messages */}
+            {messages.map(message => (
+              <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                  {message.text}
+                </span>
+              </div>
+            ))}
+          </ScrollArea>
+        </CardContent>
+        <div className="p-4 border-t">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Type your command..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  if (isAiChatReady) {
+                    handleSendMessage();
+                  }
+                }
               }
-            }}
-            className="flex-grow"
-          />
-          <Button onClick={handleSendMessage}>Send</Button>
+              }
+              className="flex-grow"
+              disabled={!isAiChatReady} // Disable input if AI is not ready
+            />
+            <Button onClick={handleSendMessage} disabled={!isAiChatReady || inputMessage.trim() === ''}>Send</Button> {/* Disable button if AI is not ready or input is empty */}
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </>
   );
 }
