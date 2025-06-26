@@ -27,6 +27,7 @@ export function EffectsPanel(props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isAiChatReady, setIsAiChatReady] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,16 +41,27 @@ export function EffectsPanel(props) {
   }, [messages]);
 
   useEffect(() => {
-    // Check if Puter.js SDK and AI chat functionality are loaded
-    if (typeof window.puter === 'undefined' || typeof window.puter.ai?.chat?.send !== 'function') {
-      console.error('Puter.js SDK or AI chat functionality not loaded.');
-      toast({
-        variant: "destructive",
-        title: "AI Chat Unavailable",
-        description: "The AI chat feature is not fully loaded. Please refresh the page or try again later.",
-        duration: 5000,
-      });
-    }
+    const checkPuterReadiness = () => {
+      if (typeof window.puter !== 'undefined' && typeof window.puter.ai?.chat?.send === 'function') {
+        setIsAiChatReady(true);
+        // Add a message to the chat when the AI is ready
+        setMessages(prevMessages => [
+          ...prevMessages,
+          {
+            id: prevMessages.length + 1,
+            text: "AI audio assistant is ready. How can I help you edit your audio?",
+            sender: 'bot',
+          },
+        ]);
+      } else {
+        console.warn('Puter.js SDK or AI chat functionality not yet loaded.');
+        // You might want to retry checking or display a different message initially
+      }
+    };
+
+    // Check immediately and then potentially poll or wait for a puter event if available
+    checkPuterReadiness();
+    // Note: A more robust solution might involve waiting for a specific Puter.js ready event
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -64,11 +76,27 @@ export function EffectsPanel(props) {
     setMessages([...messages, newUserMessage]);
     setInputMessage('');
 
-    // Process the user message with puter.js
+
+    if (!isAiChatReady) {
+       console.error('AI chat is not ready.');
+       return; // Do not attempt to send if not ready
+    }
     if (window.puter) {
       const response = await window.puter.ai.chat.send(inputMessage, {
         tools: [
-          // Define tools for audio editing commands
+          // Ensure user is signed in for AI interactions that might require it
+          async (prompt) => {
+            if (!window.puter || !window.puter.auth) {
+              throw new Error("Puter SDK or auth module not available.");
+            }
+            let isSignedIn = await window.puter.auth.isSignedIn();
+            if (!isSignedIn) {
+              await window.puter.auth.signIn();
+              isSignedIn = await window.puter.auth.isSignedIn();
+              if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
+            }
+            return null; // This tool doesn't modify the prompt, just ensures auth
+          },
           // Example: A tool to apply a specific effect
           {
             name: 'apply_effect',
@@ -194,6 +222,7 @@ export function EffectsPanel(props) {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
+                if (isAiChatReady) {
                 handleSendMessage();
               }
             }}
@@ -201,7 +230,7 @@ export function EffectsPanel(props) {
           />
           <Button onClick={handleSendMessage}>Send</Button>
         </div>
-      </div>
+
     </Card>
   );
 }
