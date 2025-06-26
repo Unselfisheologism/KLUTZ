@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
-import { effectsList } from '@/app/audio-forge/effects';
+import { effectsList } from '@/types/effects';
 
 
 interface MainDisplayPanelProps {
