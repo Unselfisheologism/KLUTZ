@@ -112,74 +112,93 @@ export function EffectsPanel(props) {
        return; // Do not attempt to send if not ready
     }
     if (window.puter) {
-      const response = await window.puter.ai.chat(inputMessage, {
-        tools: [
-          // Ensure user is signed in for AI interactions that might require it
-          async (prompt) => {
-            if (!window.puter || !window.puter.auth) {
-              throw new Error("Puter SDK or auth module not available.");
-            }
-            let isSignedIn = await window.puter.auth.isSignedIn();
-            if (!isSignedIn) {
-              await window.puter.auth.signIn();
-              isSignedIn = await window.puter.auth.isSignedIn();
-              if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
-            }
-            return null; // This tool doesn't modify the prompt, just ensures auth
-          },
-          // Example: A tool to apply a specific effect
-          {
-            name: 'apply_effect',
-            description: 'Applies an audio effect to the current audio.',
-            parameters: {
-              type: 'object',
-              properties: {
-                effectId: {
-                  type: 'string',
-                  description: 'The ID of the effect to apply (e.g., "eq", "reverb").',
-                },
-                parameters: {
-                  type: 'object',
-                  description: 'Optional parameters for the effect (e.g., { gain: 10, frequency: 200 }).',
-                },
-              },
-              required: ['effectId'],
-            },
-            handler: async ({ effectId, parameters }) => {
-              console.log(`Applying effect: ${effectId} with parameters:`, parameters);
-              // Trigger the actual audio processing logic
-              // This would involve calling props.onApplyEffect with the correct parameters
-              // For now, just return a success message
-              if (props.onApplyEffect) {
-                const effect = effectsList.find(e => e.id === effectId);
-                if (effect) {
-                  props.onApplyEffect(effect, parameters || {});
-                  return `Effect '${effect.name}' applied.`;
-                } else {
-                  return `Effect with ID '${effectId}' not found.`;
-                }
-              }
-              return 'Audio processing not available.';
-            },
-          },
-          // Add more tools for other audio editing actions (e.g., analyze, export)
-        ],
-      });
-
-      // Check if the response contains a tool call for 'apply_effect'
-      if (response.toolCalls && response.toolCalls.length > 0) {
-        // The handler for 'apply_effect' already processes the effect.
-        // The AI response text might be a confirmation or related message.
-        // We can optionally add the AI's text response to the messages if needed.
-        // For this implementation, the tool handler takes care of the audio logic.
+      // Ensure user is signed in before making the AI chat call
+      let isSignedIn = await window.puter.auth.isSignedIn();
+      if (!isSignedIn) {
+        await window.puter.auth.signIn();
+        isSignedIn = await window.puter.auth.isSignedIn();
+        if (!isSignedIn) {
+          const botResponse: Message = {
+            id: messages.length + 2,
+            text: 'Authentication failed or was cancelled. Cannot process command.',
+            sender: 'bot',
+          };
+          setMessages(prevMessages => [...prevMessages, botResponse]);
+          return;
+        }
       }
 
+      // Call the AI chat without the tools array
+      const response = await window.puter.ai.chat(inputMessage, {
+        // You can add other options here if needed, like 'model'
+      });
+
+      // Add the AI's response to the chat
       const botResponse: Message = {
         id: messages.length + 2,
         text: response.text,
         sender: 'bot',
       };
       setMessages(prevMessages => [...prevMessages, botResponse]);
+
+      // Attempt to parse the response text for effect commands
+      try {
+        // Define a pattern to look for a JSON object within the AI's response.
+        // The AI should be instructed to wrap effect commands in a specific JSON structure,
+        // e.g., {"command": "apply_effect", "effectId": "reverb", "parameters": {"decay": 0.5}}
+        const commandMatch = response.text.match(/\{"command":\s*"apply_effect",\s*"effectId":\s*"(.*?)"(?:,\s*"parameters":\s*(\{.*\}))?\}/s);
+
+        if (commandMatch && commandMatch[1]) {
+          const effectId = commandMatch[1];
+          let parameters = {};
+          if (commandMatch[2]) {
+            try {
+              parameters = JSON.parse(commandMatch[2]);
+            } catch (jsonError) {
+              console.error("Failed to parse effect parameters JSON:", jsonError);
+              // Optionally add a message to the chat indicating a parsing error
+              const errorBotResponse: Message = {
+                id: messages.length + 3,
+                text: "Could not parse effect parameters from the AI's response. Please check the format.",
+                sender: 'bot',
+              };
+              setMessages(prevMessages => [...prevMessages, errorBotResponse]);
+              return; // Stop here if parameters are unparsable
+            }
+          }
+
+          console.log(`Detected AI command to apply effect: ${effectId} with parameters:`, parameters);
+
+          const effect = effectsList.find(e => e.id === effectId);
+          if (effect && props.onApplyEffect) {
+            props.onApplyEffect(effect, parameters);
+            // Optionally add a confirmation message to the chat
+            const confirmationBotResponse: Message = {
+              id: messages.length + 3,
+              text: `Applying effect '${effect.name}'...`,
+              sender: 'bot',
+            };
+            setMessages(prevMessages => [...prevMessages, confirmationBotResponse]);
+          } else if (!effect) {
+             const notFoundBotResponse: Message = {
+                id: messages.length + 3,
+                text: `AI requested an unknown effect with ID '${effectId}'.`,
+                sender: 'bot',
+              };
+             setMessages(prevMessages => [...prevMessages, notFoundBotResponse]);
+          }
+        }
+      } catch (parseError) {
+        console.error("Error parsing AI response for effect command:", parseError);
+        // Optionally add a message to the chat indicating a general parsing error
+        const errorBotResponse: Message = {
+          id: messages.length + 3,
+          text: "An error occurred while trying to understand the AI's response for commands.",
+          sender: 'bot',
+        };
+        setMessages(prevMessages => [...prevMessages, errorBotResponse]);
+      }
+
     } else {
       const botResponse: Message = {
         id: messages.length + 2,
