@@ -36,17 +36,13 @@ export function EffectsPanel(props) {
   }, [props.currentAudioFile]);
 
   useEffect(() => {
-    // Scroll to the bottom of the chat when new messages are added
-    if (scrollAreaRef.current) {
-
-  useEffect(() => {
-    // Scroll to the bottom of the chat when new messages are added
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
-    }
+ // Scroll to the bottom of the chat when new messages are added
+ if (scrollAreaRef.current) {
+ scrollAreaRef.current.scrollTo({
+ top: scrollAreaRef.current.scrollHeight,
+ behavior: 'smooth',
+ });
+ }
   }, [messages]);
 
   useEffect(() => {
@@ -142,10 +138,15 @@ export function EffectsPanel(props) {
 
       // Construct the prompt for the AI
       let prompt = '';
-      // Add context about the current audio file if it exists
+
+      // Add a dedicated section for Audio File Context
+      prompt += 'Audio File Context:\n';
       if (props.currentAudioFile && typeof props.currentAudioFile === 'string' && props.currentAudioFile.trim() !== '') {
-        prompt += `The current audio file is: ${props.currentAudioFile}\n\n`;
+        prompt += `Current Audio File: ${props.currentAudioFile}\n`;
+      } else {
+        prompt += 'No audio file currently loaded.\n';
       }
+      prompt += '\n'; // Add a newline to separate context from instructions
 
       prompt += `You are an AI audio assistant that can help edit audio files by applying effects.
 Your primary function is to understand the user's requests and respond in a structured format that the application can parse to apply audio effects.
@@ -175,7 +176,7 @@ User request: "${inputMessage}"
       // Note: We are using the constructed 'prompt' variable here
 
       // Call the AI chat with the constructed prompt
-      const response = await window.puter.ai.chat(inputMessage, {
+      const response = await window.puter.ai.chat(prompt, { // <-- Use the 'prompt' variable here
         // You can add other options here if needed, like 'model'
       });
 
