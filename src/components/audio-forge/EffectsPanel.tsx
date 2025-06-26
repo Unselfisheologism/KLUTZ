@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { FileUploadArea } from './FileUploadArea';
 
 declare global {
   interface Window {
@@ -116,10 +117,7 @@ export function EffectsPanel(props) {
           <div className="mb-4">
             {/* Your 'upload audio' card component would go here */}
             <Card>
-              <CardContent className="p-4">
-                <p>Upload Audio Card Placeholder</p>
-                {/* Include your FileUploadArea or similar component here */}
-              </CardContent>
+ <CardContent className="p-4"><FileUploadArea onFileLoaded={props.onFileLoaded} isLoading={props.isLoading} /></CardContent>
             </Card>
           </div>
 
