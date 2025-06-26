@@ -216,7 +216,6 @@ export function EffectsPanel(props) {
         };
         setMessages(prevMessages => [...prevMessages, botResponse]);
       }  
-    }
   };
   return (
     <>
