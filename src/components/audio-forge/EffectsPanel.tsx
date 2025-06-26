@@ -230,7 +230,7 @@ export function EffectsPanel(props) {
           />
           <Button onClick={handleSendMessage}>Send</Button>
         </div>
-
+      </div>
     </Card>
   );
 }
