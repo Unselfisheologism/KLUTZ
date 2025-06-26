@@ -214,7 +214,7 @@ User request: "${inputMessage}"
             if (props.onApplyEffect) {
               const effect = effectsList.find(e => e.id === effectCommand.effectId);
               if (effect) {
-                props.onApplyEffect(effect, effectCommand.parameters);
+                props.onApplyEffect(effect.id, effectCommand.parameters);
                 // Optionally add a confirmation message to the chat
                 const confirmationMessage: Message = {
                   id: messages.length + 2,
