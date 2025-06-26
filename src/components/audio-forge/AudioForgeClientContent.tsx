@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { AudioControlsPanel } from './AudioControlsPanel';
+
+import ChatbotTips from '@/components/audio-forge/ChatbotTips';
+
 import { MainDisplayPanel } from './MainDisplayPanel';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -343,6 +345,7 @@ export default function AudioForgeClientContent() {
               className="h-full overflow-y-auto" 
             >
               <MainDisplayPanel {...mainDisplayPanelProps} />
+              <ChatbotTips />
             </ResizablePanel>
           </ResizablePanelGroup>
         )}
