@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Download, Settings2, Repeat as LoopIcon } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input'; // Keep this import
 
 interface ExportPanelProps {
   processedAudioDataUrl: string | null;
@@ -108,5 +108,24 @@ export function ExportPanel({ processedAudioDataUrl, onExport, isLoading }: Expo
         </Button>
       </CardFooter>
     </Card>
+
+ <Card className="shadow-md mt-4">
+ <CardHeader>
+ <CardTitle className="flex items-center gap-2 text-xl">
+ Tips for Using Audio Forge with the AI Chatbot
+ </CardTitle>
+ <CardDescription>
+ Maximize your productivity by integrating Audio Forge with the chatbot.
+ </CardDescription>
+ </CardHeader>
+ <CardContent className="space-y-4">
+ <p className="text-sm text-muted-foreground">
+ To use Audio Forge features via the chatbot, always reference the tool by its name.
+ For example, instead of saying "what is the rpm of this song",
+ you should say "run the rpm detector on this audio file".
+ </p>
+ </CardContent>
+ </Card>
+
   );
 }
