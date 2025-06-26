@@ -48,7 +48,7 @@ export function EffectsPanel(props) {
 
     const checkPuterReadiness = () => {
       attempts++;
-      if (window.puter?.ai?.chat?.send) {
+      if (typeof window.puter?.ai?.chat === 'function') {
         setIsAiChatReady(true);
         // Add a message to the chat when the AI is ready
         setMessages(prevMessages => {
