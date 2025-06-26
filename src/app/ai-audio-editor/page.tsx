@@ -1,6 +1,5 @@
 'use client';
 
-
 import MainDisplayPanel from '@/components/MainDisplayPanel'; // Assuming MainDisplayPanel handles the UI for audio controls, players, and waveforms
 import { useState, useEffect, useRef } from 'react';
 import * as audioUtils from '../lib/audio-utils'; // Import all functions from src/lib/audio-utils.ts
@@ -9,6 +8,7 @@ import { AudioEditorState, AudioEditorAction, BassBoosterLevel, ReverbPreset } f
 
 const AIAudioEditorPage = () => {
   const [audioState, setAudioState] = useState<AudioEditorState>({
+    // Initial state properties, reflecting the features and UI needs
     animatedGradient: true,
     colorScheme: 'dark', // Assuming 'dark' or 'light'
     waveformColor: '#3b82f6', // Default blue color
@@ -41,241 +41,323 @@ const AIAudioEditorPage = () => {
     reverb: 'Vocal Ambience', // Added state for Reverb
     processedAudioBuffer: null, // State to hold the currently processed audio buffer
   });
+
   const [chatMessages, setChatMessages] = useState<{ type: 'user' | 'ai'; text: string }[]>([]);
   const [userCommand, setUserCommand] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [originalAudioFile, setOriginalAudioFile] = useState<File | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const audioBuffer = await audioContext.decodeAudioData(e.target!.result as ArrayBuffer);
-        setUploadedFileName(file.name);
-        setOriginalAudioFile(file); // Keep the file object if needed later
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const audioBuffer = await audioContext.decodeAudioData(e.target!.result as ArrayBuffer);
+          setUploadedFileName(file.name);
+          setOriginalAudioFile(file); // Keep the file object if needed later
+          setAudioState(prev => ({
+            ...prev,
+            totalDuration: audioBuffer.duration,
+            showPlaybackControls: true,
+            showWaveform: true,
+            // Initially, processed is same as original
+            processedAudioBuffer: audioBuffer,
+          }));
+          setChatMessages(prev => [...prev, { type: 'ai', text: `Successfully loaded "${file.name}". What audio magic can I perform for you?` }]);
+        } catch (error) {
+          console.error("Error loading audio file:", error);
+          toast({
+            variant: "destructive",
+            title: "Loading Failed",
+            description: "Could not load the audio file. Please ensure it's a valid audio format.",
+          });
+          setUploadedFileName(null);
+          setOriginalAudioFile(null);
+          setAudioState(prev => ({ ...prev, showPlaybackControls: false, showWaveform: false, processedAudioBuffer: null }));
+          setChatMessages(prev => [...prev, { type: 'ai', text: 'Failed to load the audio file. Please try another one.' }]);
+        }
+      };
+      reader.onerror = (error) => {
+        console.error("FileReader error:", error);
+        toast({
+          variant: "destructive",
+          title: "File Read Error",
+          description: "Could not read the audio file.",
+        });
+        setUploadedFileName(null);
+        setOriginalAudioFile(null);
+        setAudioState(prev => ({ ...prev, showPlaybackControls: false, showWaveform: false, processedAudioBuffer: null }));
+        setChatMessages(prev => [...prev, { type: 'ai', text: 'Failed to read the audio file.' }]);
       };
       reader.readAsArrayBuffer(file); // Read the file as an ArrayBuffer
     }
   };
+
   const handleAudioAction = async (action: AudioEditorAction) => {
     console.log('Applying action:', action);
     if (!originalAudioFile) {
-      console.warn("No audio file uploaded yet.");
+      console.warn("No audio file uploaded yet. Cannot apply action.");
+      toast({
+        variant: "warning",
+        title: "No File Loaded",
+        description: "Please upload an audio file before applying effects.",
+      });
       return;
     }
 
-    // Use the currently processed audio buffer if available, otherwise use the original
-    let currentAudioBuffer = audioState.processedAudioBuffer || await audioUtils.fileToAudioBuffer(originalAudioFile);
-    let processedBuffer = currentAudioBuffer;
+    // Use the currently processed audio buffer if available, otherwise convert original file
+    let currentAudioBuffer = audioState.processedAudioBuffer;
+
+    // If no processed buffer, convert original file. This might happen on the first action.
+    if (!currentAudioBuffer) {
+        setLoading(true); // Indicate processing is starting
+        setChatMessages(prev => [...prev, { type: 'ai', text: 'Preparing audio for first processing...' }]);
+        try {
+            currentAudioBuffer = await audioUtils.fileToAudioBuffer(originalAudioFile);
+            setChatMessages(prev => [...prev.slice(0, -1), { type: 'ai', text: 'Audio ready. Applying action...' }]);
+        } catch (error) {
+            console.error("Error converting file to audio buffer:", error);
+            toast({
+                variant: "destructive",
+                title: "Processing Failed",
+                description: "Could not prepare audio for processing.",
+            });
+            setLoading(false);
+            setChatMessages(prev => [...prev.slice(0, -1), { type: 'ai', text: 'Failed to prepare audio for processing.' }]);
+            return;
+        } finally {
+             setLoading(false); // Ensure loading is off if error occurs before next load
+        }
+    }
+
+
+    let processedBuffer = currentAudioBuffer; // Start with the current buffer
+    let effectApplied = false;
+
+    setLoading(true); // Indicate processing is starting
+    setAudioState(prev => ({ ...prev, processingProgress: 0 })); // Reset progress
+
     try {
       switch (action.type) {
         case 'SET_LOFI':
           processedBuffer = await audioUtils.applyLofi(currentAudioBuffer, action.payload);
+          setAudioState(prev => ({ ...prev, lofi: action.payload }));
+          effectApplied = true;
           break;
         case 'SET_BASS_BOOSTER':
           processedBuffer = await audioUtils.applyBassBoost(currentAudioBuffer, action.payload);
+          setAudioState(prev => ({ ...prev, bassBooster: action.payload as BassBoosterLevel }));
+          effectApplied = true;
           break;
-        // Add cases for other action types as you implement them in audio-utils.ts
+        // TODO: Add cases for other action types as you implement them in audio-utils.ts
+        // case 'SET_8D_AUDIO':
+        //   processedBuffer = await audioUtils.apply8DAudio(currentAudioBuffer, action.payload);
+        //   setAudioState(prev => ({ ...prev, eightDAudio: action.payload }));
+        //   effectApplied = true;
+        //   break;
         // case 'SET_REVERB':
-        //   processedBuffer = await audioUtils.applyReverb(currentAudioBuffer, action.payload);\n
-        //   break;\n
+        //   processedBuffer = await audioUtils.applyReverb(currentAudioBuffer, action.payload as ReverbPreset);
+        //   setAudioState(prev => ({ ...prev, reverb: action.payload as ReverbPreset }));
+        //   effectApplied = true;
+        //   break;
         // ... other actions
- default:
- console.warn(`Unknown action type: ${action.type}`);
+
+        default:
+          console.warn(`Unknown or unimplemented action type: ${action.type}`);
+          setChatMessages(prev => [...prev, { type: 'ai', text: `I understand the command, but the effect "${action.type.replace('SET_', '')}" is not yet implemented.` }]);
+          // Do not update processedBuffer or effectApplied for unimplemented actions
           break;
       }
-      // Update the state with the new processed audio buffer
-      setAudioState(prev => ({
-        ...prev,
-        // Assuming the action payload contains the state update for the specific effect
-        // This might need adjustment based on how your actions are structured
-        ...action.payload,
-        processedAudioBuffer: processedBuffer,
-      }));
+
+      if (effectApplied) {
+           // Update the state with the new processed audio buffer and reset progress
+        setAudioState(prev => ({
+            ...prev,
+            processedAudioBuffer: processedBuffer,
+            processingProgress: 100, // Assuming processing is synchronous for simplicity here
+        }));
+        setChatMessages(prev => [...prev, { type: 'ai', text: `${action.type.replace('SET_', '')} effect applied successfully.` }]);
+      }
+
+
     } catch (error) {
       console.error(`Error applying action ${action.type}:`, error);
       toast({
         variant: "destructive",
         title: "Processing Failed",
-        description: `Failed to apply ${action.type} effect.`,
+        description: `Failed to apply ${action.type.replace('SET_', '')} effect.`,
       });
+       setChatMessages(prev => [...prev, { type: 'ai', text: `Failed to apply the ${action.type.replace('SET_', '')} effect.` }]);
+    } finally {
+      setLoading(false); // Ensure loading state is reset
+      setAudioState(prev => ({ ...prev, processingProgress: 0 })); // Reset progress bar visually
     }
-    // Update local state
   };
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+
+
   const handleChatCommand = async (command: string) => {
     if (!command.trim()) return;
     console.log('AI Chat command:', command);
 
-    setChatMessages([...chatMessages, { type: 'user', text: command }]); // Assuming setChatMessages is your state setter
+    const userMessage = { type: 'user' as const, text: command };
+    setChatMessages([...chatMessages, userMessage]);
     setUserCommand('');
     setLoading(true);
 
     if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
-        console.error("Puter SDK not available.");
- toast({
+      console.error("Puter SDK not available.");
+      toast({
         variant: "destructive",
         title: "Puter SDK Error",
- description: "Puter.js SDK is not loaded. Please refresh the page.",
- });
- setChatMessages((prev) => [...prev, { type: 'ai', text: 'Error: Puter SDK not available. Please refresh the page.' }]);
- setLoading(false);
- return;
+        description: "Puter.js SDK is not loaded. Please refresh the page.",
+      });
+      setChatMessages((prev) => [...prev, { type: 'ai', text: 'Error: Puter SDK not available. Please refresh the page.' }]);
+      setLoading(false);
+      return;
     }
     const puter = window.puter;
 
- try {
+    try {
       let isSignedIn = await puter.auth.isSignedIn();
       if (!isSignedIn) {
         await puter.auth.signIn();
         isSignedIn = await puter.auth.isSignedIn();
- if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
-    }
+        if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
+      }
 
- const aiResponse = await puter.ai.chat({
- prompt: `You are an AI assistant for an audio editor. Your task is to interpret user commands and suggest audio editing actions in a structured format. Respond with a JSON object containing an array of actions. Each action should have a 'type' and a 'payload'. The available action types and their expected payload types are:\n\n- SET_LOFI: boolean\n- SET_8D_AUDIO: boolean\n- SET_TUNE_TO_432HZ: boolean\n- SET_RESONANCE_ALTERATION: number (0-100)\n- SET_TEMPORAL_MODIFICATION: number (e.g., 0.5 for half speed, 2.0 for double speed)\n- SET_STEREO_WIDENER: number (0-100)\n- SET_AUTOMATED_SWEEP: boolean\n- SET_SUBHARMONIC_INTENSIFIER: number (0-100)\n- SET_FREQUENCY_SCULPTOR: object (details TBD)\n- SET_KEY_TRANSPOSER: number (semitones)\n- SET_PACE_ADJUSTER: number (e.g., 0.9 for 90% pace, 1.1 for 110% pace)\n- SET_ECHO: boolean\n- SET_REVERSE_PLAYBACK: boolean\n- SET_GAIN: number (dB)\n- SET_AUDIO_SPLITTER: boolean\n- SET_RHYTHM_DETECTOR: boolean\n- SET_BASS_BOOSTER: 'Subtle Subwoofer' | 'Gentle Boost' | 'Medium Enhancement' | 'Intense Amplifier' | 'Maximum Overdrive'\n- SET_REVERB: 'Vocal Ambience' | 'Washroom' | 'Small Room' | 'Medium Room' | 'Large Room' | 'Chapel' | 'Hall' | 'Cathedral'\n\nIf you cannot interpret the command as a specific audio action, provide a helpful message in a JSON object with a single property 'message'.\n\nUser command: "${command}"\n\nProvide only the JSON response.`,
- }, {
- model: 'gpt-4o', // Or your preferred Puter.js supported model
- });
+      const aiResponse = await puter.ai.chat({
+        prompt: `You are an AI assistant for an audio editor. Your task is to interpret user commands and suggest audio editing actions in a structured format. Respond with a JSON object containing an array of actions. Each action should have a 'type' and a 'payload'. The available action types and their expected payload types are:\n\n- SET_LOFI: boolean\n- SET_8D_AUDIO: boolean\n- SET_TUNE_TO_432HZ: boolean\n- SET_RESONANCE_ALTERATION: number (0-100)\n- SET_TEMPORAL_MODIFICATION: number (e.g., 0.5 for half speed, 2.0 for double speed)\n- SET_STEREO_WIDENER: number (0-100)\n- SET_AUTOMATED_SWEEP: boolean\n- SET_SUBHARMONIC_INTENSIFIER: number (0-100)\n- SET_FREQUENCY_SCULPTOR: object (details TBD)\n- SET_KEY_TRANSPOSER: number (semitones)\n- SET_PACE_ADJUSTER: number (e.g., 0.9 for 90% pace, 1.1 for 110% pace)\n- SET_ECHO: boolean\n- SET_REVERSE_PLAYBACK: boolean\n- SET_GAIN: number (dB)\n- SET_AUDIO_SPLITTER: boolean\n- SET_RHYTHM_DETECTOR: boolean\n- SET_BASS_BOOSTER: 'Subtle Subwoofer' | 'Gentle Boost' | 'Medium Enhancement' | 'Intense Amplifier' | 'Maximum Overdrive'\n- SET_REVERB: 'Vocal Ambience' | 'Washroom' | 'Small Room' | 'Medium Room' | 'Large Room' | 'Chapel' | 'Hall' | 'Cathedral'\n\nIf you cannot interpret the command as a specific audio action, provide a helpful message in a JSON object with a single property 'message'.\n\nUser command: "${command}"\n\nProvide only the JSON response.`,
+      }, {
+        model: 'gpt-4o', // Or your preferred Puter.js supported model
+      });
 
       console.log('AI Raw Response:', aiResponse?.message?.content);
 
       if (!aiResponse?.message?.content) {
- throw new Error("AI response was empty.");
+        throw new Error("AI response was empty.");
       }
 
       let aiMessage = aiResponse.message.content.trim();
- // Attempt to parse the response as JSON
+      // Attempt to parse the response as JSON
       try {
- const parsedResponse = JSON.parse(aiMessage);
- if (Array.isArray(parsedResponse)) {
- setChatMessages((prev) => [...prev, { type: 'ai', text: 'Applying actions...' }]);
- parsedResponse.forEach((action: AudioEditorAction) => { // Assuming AudioEditorAction is the type for actions
- handleAudioAction(action);
- });
- setChatMessages((prev) => [...prev.slice(0, -1), { type: 'ai', text: `Applied ${parsedResponse.length} action(s).` }]);
- } else if (parsedResponse.message) {
- setChatMessages((prev) => [...prev, { type: 'ai', text: parsedResponse.message }]);
- } else {
- throw new Error("Unexpected AI response format");
- }
- } catch (jsonError) {
- // If JSON parsing fails, treat the response as a plain message
- console.error("Failed to parse AI response as JSON:", jsonError);
- setChatMessages((prev) => [...prev, { type: 'ai', text: aiMessage }]);
- }
+        const parsedResponse = JSON.parse(aiMessage);
+        if (Array.isArray(parsedResponse)) {
+          setChatMessages((prev) => [...prev, { type: 'ai', text: `Processing ${parsedResponse.length} action(s)...` }]);
+          // Process actions sequentially to apply effects one after another
+          for (const action of parsedResponse) {
+             await handleAudioAction(action as AudioEditorAction); // Ensure action type is correct
+          }
+           setChatMessages((prev) => [...prev, { type: 'ai', text: `Finished applying actions.` }]);
+        } else if (parsedResponse.message) {
+          setChatMessages((prev) => [...prev, { type: 'ai', text: parsedResponse.message }]);
+        } else {
+          throw new Error("Unexpected AI response format");
+        }
+      } catch (jsonError) {
+        // If JSON parsing fails, treat the response as a plain message
+        console.error("Failed to parse AI response as JSON:", jsonError);
+        setChatMessages((prev) => [...prev, { type: 'ai', text: aiMessage }]);
+      }
 
     } catch (error) {
       console.error('Error handling chat command:', error);
       toast({
         variant: "destructive",
- title: "Chat Failed",
+        title: "Chat Failed",
         description: "Failed to process your command.",
- });
- setChatMessages((prev) => [...prev, { type: 'ai', text: 'Error processing your command.' }]);
- } finally {
- setLoading(false); // Ensure loading state is reset
- }
+      });
+      setChatMessages((prev) => [...prev, { type: 'ai', text: 'Error processing your command.' }]);
+    } finally {
+      setLoading(false); // Ensure loading state is reset
+    }
   };
 
- useEffect(() => {
- // Scroll to the bottom of the chat window on new message
- if (chatMessagesRef.current) {
- chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
- }
- }, [chatMessages]);
+  useEffect(() => {
+    // Scroll to the bottom of the chat window on new message
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
 
   return (
     <div className="flex h-screen">
       {/* Left Section: Audio Editor Interface */}
       <div className="w-2/3 p-4 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
         <h1 className="text-2xl font-bold mb-4">AI Native Audio Editor</h1>
-        {/* Add file upload/drag and drop area */}\n
-        <div className="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center relative overflow-hidden">
-          {uploadedFileName ? ( // If file is uploaded, show file name and make the input area clickable\n
-            <div className="flex flex-col items-center w-full h-full">
-              <p className="text-gray-700 dark:text-gray-300">
-                File loaded: <span className="font-semibold">{uploadedFileName}</span>
-              </p>
-              {/* Input type file (still covers the area for re-upload) */}\n
-              <input\n
-                type="file"\n
-                accept="audio/*"\n
-                className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"\n
-                onChange={handleFileUpload}\n
-              />\n
-            </div>\n
-          ) : ( // If no file uploaded, show drag and drop text\n
-            <div className="flex flex-col items-center w-full h-full justify-center">
-              <p className="text-gray-500">Drag and drop audio file here, or click to upload</p>
-              {/* Input type file (covers the area) */}\n
-              <input\n
-                type="file"\n
-                accept="audio/*"\n
-                className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"\n
-                onChange={handleFileUpload}\n
-              />\n
-            </div>\n
-          )}\n
+        {/* File upload/drag and drop area */}
+        <div className="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center relative overflow-hidden cursor-pointer hover:border-gray-400 transition-colors">
+          {/* This input covers the entire div area */}
+          <input
+            type="file"
+            accept="audio/*"
+            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+            onChange={handleFileUpload}
+          />
+          {uploadedFileName ? (
+            <p className="text-gray-700 dark:text-gray-300">
+              File loaded: <span className="font-semibold">{uploadedFileName}</span> (Click to upload a new file)
+            </p>
+          ) : (
+            <p className="text-gray-500">Drag and drop audio file here, or click to upload</p>
+          )}
         </div>
-        {/* Main Audio Editor Panel */}\n
+
+        {/* Main Audio Editor Panel */}
+        {/* MainDisplayPanel will handle displaying audio players and waveforms */}
         <MainDisplayPanel
-          originalAudioFile={originalAudioFile}
+          originalAudioFile={originalAudioFile} // Pass the original file if needed by MainDisplayPanel
           processedAudioBuffer={audioState.processedAudioBuffer}
           audioState={audioState}
-          handleAudioAction={handleAudioAction}
+          handleAudioAction={handleAudioAction} // Pass action handler if MainDisplayPanel has controls that trigger actions
         />
       </div>
 
-      {/* Right Section: AI Chatbot Interface */}\n
-      <div className="w-1/3 p-4 flex flex-col">\n
-        <h1 className="text-2xl font-bold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">AI Chatbot</h1>\n
-        <div className="flex-grow border border-gray-200 p-4 overflow-y-auto mb-4" ref={chatMessagesRef}>\n
-          {chatMessages.map((message, index) => ( // Iterate over chat messages\n
-            <div key={index} className={`mb-2 whitespace-pre-wrap ${message.type === 'user' ? 'text-right' : 'text-left'}`}> {/* Align messages */}\n
-              <span className={`inline-block p-2 rounded ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}> {/* Style messages */}\n
-                {message.text} {/* Display message text */}\n
-              </span> {/* Closing span for message text */}\n
-            </div> /* Closing div for individual message */\n
-          ))} {/* Closing map for chat messages */}\n
-          {loading && ( /* Show loading indicator if loading */\n
-            <div className="text-left"> {/* Align loading indicator */}\n
-              <span className="inline-block p-2 rounded bg-gray-200"> {/* Style loading indicator */}\n
-                Thinking... {/* Loading text */}\n
-              </span> {/* Closing span for loading text */}\n
-            </div>\n
-          )}\n
-        </div>\n
-        <div className="mt-4">\n
-          <textarea\n
-            placeholder="Type commands for the AI..."\n
-            className="w-full border rounded p-2 resize-none dark:bg-gray-900 dark:border-gray-700 dark:text-white"\n
-            rows={3}\n
-            value={userCommand}\n
-            onChange={(e) => setUserCommand(e.target.value)}\n
-            onKeyPress={(e) => {\n
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatCommand(userCommand); } // Handle Enter key press\n
-            }}\n
+      {/* Right Section: AI Chatbot Interface */}
+      <div className="w-1/3 p-4 flex flex-col">
+        <h1 className="text-2xl font-bold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">AI Chatbot</h1>
+        <div className="flex-grow border border-gray-200 dark:border-gray-700 p-4 overflow-y-auto mb-4 rounded-md" ref={chatMessagesRef}>
+          {chatMessages.map((message, index) => (
+            <div key={index} className={`mb-2 whitespace-pre-wrap ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
+              <span className={`inline-block p-2 rounded-lg ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-200'}`}>
+                {message.text}
+              </span>
+            </div>
+          ))}
+          {loading && (
+            <div className="text-left">
+              <span className="inline-block p-2 rounded-lg bg-gray-200 dark:bg-gray-700 dark:text-gray-200">
+                Thinking...
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="mt-4">
+          <textarea
+            placeholder="Type commands for the AI..."
+            className="w-full border rounded-md p-2 resize-none dark:bg-gray-900 dark:border-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={3}
+            value={userCommand}
+            onChange={(e) => setUserCommand(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatCommand(userCommand); }
+            }}
           ></textarea>
-          <button\n
-            className="mt-2 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"\n
-            onClick={() => {\n
-              const textarea = document.querySelector('textarea'); // Get the textarea element\n
-              if (textarea) { // Check if textarea exists\n
- handleChatCommand(userCommand);\n
-              }\n
-            }}\n
-            disabled={loading}\n
-          >\n
-            {loading ? 'Processing...' : 'Send Command'}\n
-          </button>\n
-        </div>\n
-      </div>\n
-    </div>\n
-  );\n
-};\n
+          <button
+            className="mt-2 w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => handleChatCommand(userCommand)}
+            disabled={loading || !userCommand.trim()}
+          >
+            {loading ? 'Processing...' : 'Send Command'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default AIAudioEditorPage;
