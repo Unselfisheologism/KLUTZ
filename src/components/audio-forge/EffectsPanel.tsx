@@ -30,6 +30,15 @@ export function EffectsPanel(props) {
   const [isAiChatReady, setIsAiChatReady] = useState(false);
   const { toast } = useToast();
 
+  // Add useEffect to log currentAudioFile changes
+  useEffect(() => {
+    console.log('currentAudioFile changed:', props.currentAudioFile);
+  }, [props.currentAudioFile]);
+
+  useEffect(() => {
+    // Scroll to the bottom of the chat when new messages are added
+    if (scrollAreaRef.current) {
+
   useEffect(() => {
     // Scroll to the bottom of the chat when new messages are added
     if (scrollAreaRef.current) {
@@ -105,6 +114,9 @@ export function EffectsPanel(props) {
 
     setMessages([...messages, newUserMessage]);
     setInputMessage('');
+
+    // Log currentAudioFile just before constructing the prompt
+    console.log('handleSendMessage - props.currentAudioFile:', props.currentAudioFile);
 
 
     if (!isAiChatReady) {
