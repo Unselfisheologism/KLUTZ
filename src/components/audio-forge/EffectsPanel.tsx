@@ -1,4 +1,4 @@
-import { effectsList } from '@/app/audio-forge/effects';
+import { effectsList } from '@/types/effects';
 import { EffectCard } from './EffectCard';
 
 // You may need to adjust these props to match your actual handlers and state

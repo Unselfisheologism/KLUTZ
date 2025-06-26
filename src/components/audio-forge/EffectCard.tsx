@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { fallbackIcon } from '@/app/audio-forge/effects';
+import { fallbackIcon } from '@/types/effects';
 import { Loader2 } from 'lucide-react';
 
 interface EffectCardProps {
