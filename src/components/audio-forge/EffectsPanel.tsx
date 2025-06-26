@@ -113,14 +113,6 @@ export function EffectsPanel(props) {
     <Card className="h-full flex flex-col">
       <CardContent className="flex-grow overflow-hidden p-4">
         <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
-          {/* Placeholder for the 'upload audio' card */}
- <div className="mb-4">
- <FileUploadArea
- onFileSelect={props.onFileSelect}
- isLoading={props.isLoading}
- />
- </div>
-
           {/* Anchor Navigation and Effects Cards */}
  <nav className="mb-6 sticky top-0 z-10 bg-background">
  <ul className="flex flex-wrap gap-2">
