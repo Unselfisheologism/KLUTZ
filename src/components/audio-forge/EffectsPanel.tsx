@@ -117,14 +117,6 @@ export function EffectsPanel(props) {
           {/* Anchor Navigation and Effects Cards */}
           {/* Content above the chat input */}
           <div>
-            {/* File Upload */}
-            <div className="mb-4">
-              <FileUploadArea
-                onFileSelect={props.onFileSelect}
-                isLoading={props.isLoading}
-              />
-            </div>
-
             {/* Anchor Navigation */}
             <nav className="mb-6">
               <ul className="flex flex-wrap gap-2">
@@ -168,6 +160,7 @@ export function EffectsPanel(props) {
               <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
                 {message.text}
               </span>
+            </div>  
           ))}
         </ScrollArea>
       </CardContent>
