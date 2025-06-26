@@ -99,6 +99,17 @@ export function EffectsPanel(props) {
     };
   }, [messages]);
 
+  const generateAudioFileContext = (currentAudioFile: string | undefined): string => {
+    let context = 'Audio File Context:\n';
+    if (currentAudioFile && typeof currentAudioFile === 'string' && currentAudioFile.trim() !== '') {
+      context += `Current Audio File: ${currentAudioFile}\n`;
+    } else {
+      context += 'No audio file currently loaded.\n';
+    }
+    return context;
+  };
+
+
   const handleSendMessage = async () => {
     if (inputMessage.trim() === '') return;
 
@@ -135,28 +146,23 @@ export function EffectsPanel(props) {
           return;
         }
       }
+     
+      // Generate the audio file context
+      const audioFileContext = generateAudioFileContext(props.currentAudioFile);
 
       // Construct the prompt for the AI
-      let prompt = '';
+      const prompt = `
+${audioFileContext}
 
-      // Add a dedicated section for Audio File Context
-      prompt += 'Audio File Context:\n';
-      if (props.currentAudioFile && typeof props.currentAudioFile === 'string' && props.currentAudioFile.trim() !== '') {
-        prompt += `Current Audio File: ${props.currentAudioFile}\n`;
-      } else {
-        prompt += 'No audio file currently loaded.\n';
-      }
-      prompt += '\n'; // Add a newline to separate context from instructions
-
-      prompt += `You are an AI audio assistant that can help edit audio files by applying effects.
+You are an AI audio assistant that can help edit audio files by applying effects.
 Your primary function is to understand the user's requests and respond in a structured format that the application can parse to apply audio effects.
 
 When the user asks you to apply an audio effect, your response should be a JSON object with the following structure:
 {
-  "effectId": "string", // The ID of the audio effect to apply (must match one of the available effect IDs).
-  "parameters": { // An object containing the parameters for the effect. The keys should be parameter names and the values should be the desired parameter values.
-    // Example: "gain": 0.5, "frequency": 1000
-  }
+"effectId": "string", // The ID of the audio effect to apply (must match one of the available effect IDs).
+"parameters": { // An object containing the parameters for the effect. The keys should be parameter names and the values should be the desired parameter values.
+  // Example: "gain": 0.5, "frequency": 1000
+}
 }
 
 You have access to the following audio effects and their parameters:
@@ -173,10 +179,8 @@ If the user's request is not related to applying an audio effect, or if you cann
 User request: "${inputMessage}"
 `;
 
-      // Note: We are using the constructed 'prompt' variable here
-
       // Call the AI chat with the constructed prompt
-      const response = await window.puter.ai.chat(prompt, { // <-- Use the 'prompt' variable here
+      const response = await window.puter.ai.chat(prompt, {
         // You can add other options here if needed, like 'model'
       });
 
@@ -261,8 +265,10 @@ User request: "${inputMessage}"
           sender: 'bot',
         };
         setMessages(prevMessages => [...prevMessages, botResponse]);
-      }  
+      }
   };
+
+    
   return (
     <>
       <Card className="h-full flex flex-col">
