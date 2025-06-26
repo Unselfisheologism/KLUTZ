@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileUploadArea } from './FileUploadArea';
 
 declare global {
@@ -114,40 +115,60 @@ export function EffectsPanel(props) {
       <CardContent className="flex-grow overflow-hidden p-4">
         <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
           {/* Anchor Navigation and Effects Cards */}
- <nav className="mb-6 sticky top-0 z-10 bg-background">
- <ul className="flex flex-wrap gap-2">
- {effectsList.map(effect => (
- <li key={effect.id}>
- <a href={`#${effect.id}`} className="underline text-blue-600">{effect.name}</a>
- </li>
- ))}
- </ul>
- </nav>
- {/* Chat messages */}
- {messages.map(message => (
- <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
- <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
- {message.text}
- </span>
- </div>
+          {/* Content above the chat input */}
+          <div>
+            {/* File Upload */}
+            <div className="mb-4">
+              <FileUploadArea
+                onFileSelect={props.onFileSelect}
+                isLoading={props.isLoading}
+              />
+            </div>
+
+            {/* Anchor Navigation */}
+            <nav className="mb-6">
+              <ul className="flex flex-wrap gap-2">
+                {effectsList.map(effect => (
+                  <li key={effect.id}>
+                    <a href={`#${effect.id}`} className="underline text-blue-600">{effect.name}</a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            {/* Scrollable container for effects with glow */}
+            <div className="relative overflow-hidden">
+              <ScrollArea className="h-[300px] pb-4" /* Adjust height as needed */>
+                <div className="grid gap-6 pr-4"> {/* Added padding to avoid scrollbar overlapping content */}
+                  {effectsList.map(effect => (
+                    <section id={effect.id} key={effect.id}>
+                      <EffectCard
+                        effect={effect}
+                        currentSettings={props.effectSettings?.[effect.id] || {}} // Defensive fallback
+                        onApplyEffect={props.onApplyEffect}
+                        onParameterChange={props.onParameterChange}
+                        isLoading={props.isLoading}
+                        isAudioLoaded={props.isAudioLoaded}
+                        analysisResult={props.analysisResult}
+                        analysisSourceEffectId={props.analysisSourceEffectId}
+                      />
+                    </section>
+                  ))}
+                </div>
+              </ScrollArea>
+              {/* Glow effects - adjust styling as needed */}
+              <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background to-transparent pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
+            </div>
+          </div>
+
+          {/* Chat messages */}
+          {messages.map(message => (
+            <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+              <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                {message.text}
+              </span>
           ))}
- {/* Render all effects */}
- <div className="grid gap-6">
- {effectsList.map(effect => (
- <section id={effect.id} key={effect.id}>
- <EffectCard
- effect={effect}
- currentSettings={props.effectSettings?.[effect.id] || {}} // Defensive fallback
- onApplyEffect={props.onApplyEffect}
- onParameterChange={props.onParameterChange}
- isLoading={props.isLoading}
- isAudioLoaded={props.isAudioLoaded}
- analysisResult={props.analysisResult}
- analysisSourceEffectId={props.analysisSourceEffectId}
- />
- </section>
- ))}
- </div>
         </ScrollArea>
       </CardContent>
       <div className="p-4 border-t">
