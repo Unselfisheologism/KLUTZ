@@ -165,6 +165,11 @@ When the user asks you to apply an audio effect, your response should be a JSON 
 }
 }
 
+You MUST use one of the following effect IDs in the "effectId" field:
+${effectsList.map(effect => `- ${effect.id}`).join('\n')}
+
+Do NOT use any other effect IDs.
+
 You have access to the following audio effects and their parameters:
 - Reverb: { parameters: { decay: number, density: number, wet: number, dry: number } }
 - Delay: { parameters: { delayTime: number, feedback: number, wet: number, dry: number } }
