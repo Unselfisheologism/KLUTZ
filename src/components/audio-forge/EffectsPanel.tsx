@@ -93,6 +93,14 @@ export function EffectsPanel(props) {
         ],
       });
 
+      // Check if the response contains a tool call for 'apply_effect'
+      if (response.toolCalls && response.toolCalls.length > 0) {
+        // The handler for 'apply_effect' already processes the effect.
+        // The AI response text might be a confirmation or related message.
+        // We can optionally add the AI's text response to the messages if needed.
+        // For this implementation, the tool handler takes care of the audio logic.
+      }
+
       const botResponse: Message = {
         id: messages.length + 2,
         text: response.text,
