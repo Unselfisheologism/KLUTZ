@@ -134,8 +134,33 @@ export function EffectsPanel(props) {
       if (props.currentAudioFile && typeof props.currentAudioFile === 'string' && props.currentAudioFile.trim() !== '') {
         prompt += `The current audio file is: ${props.currentAudioFile}\n\n`;
       }
-      // Add the user's input message to the prompt
-      prompt += inputMessage;
+
+      prompt += `You are an AI audio assistant that can help edit audio files by applying effects.
+Your primary function is to understand the user's requests and respond in a structured format that the application can parse to apply audio effects.
+
+When the user asks you to apply an audio effect, your response should be a JSON object with the following structure:
+{
+  "effectId": "string", // The ID of the audio effect to apply (must match one of the available effect IDs).
+  "parameters": { // An object containing the parameters for the effect. The keys should be parameter names and the values should be the desired parameter values.
+    // Example: "gain": 0.5, "frequency": 1000
+  }
+}
+
+You have access to the following audio effects and their parameters:
+- Reverb: { parameters: { decay: number, density: number, wet: number, dry: number } }
+- Delay: { parameters: { delayTime: number, feedback: number, wet: number, dry: number } }
+- Gain: { parameters: { gain: number } }
+- Equalizer: { parameters: { frequency: number, gain: number, type: string } }
+- Compressor: { parameters: { threshold: number, ratio: number, attack: number, release: number } }
+- Distortion: { parameters: { amount: number } }
+// Add other effects and their parameters here as they are implemented
+
+If the user's request is not related to applying an audio effect, or if you cannot fulfill the request as an audio effect command, respond with a plain text message explaining why or providing a helpful response.
+
+User request: "${inputMessage}"
+`;
+
+      // Note: We are using the constructed 'prompt' variable here
 
       // Call the AI chat with the constructed prompt
       const response = await window.puter.ai.chat(inputMessage, {
@@ -149,12 +174,11 @@ export function EffectsPanel(props) {
       if (!aiResponseText) {
         console.error('Received empty or invalid text response from AI:', response);
         // Add the AI's response to the chat
-        const botResponse: Message = {
-          id: messages.length + 2,
-          text: response.text,
-          sender: 'bot',
-        };
-        setMessages(prevMessages => [...prevMessages, botResponse]);
+         setMessages(prevMessages => [...prevMessages, {
+           id: prevMessages.length + 1,
+           text: 'Received an empty or invalid text response from the AI.',
+           sender: 'bot',
+         }]);
         return;
       }
         // Attempt to parse the response text for effect commands
