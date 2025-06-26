@@ -41,27 +41,51 @@ export function EffectsPanel(props) {
   }, [messages]);
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    const maxAttempts = 50; // Try for about 10 seconds (50 * 200ms)
+    let attempts = 0;
+
     const checkPuterReadiness = () => {
-      if (typeof window.puter !== 'undefined' && typeof window.puter.ai?.chat?.send === 'function') {
+      attempts++;
+      if (window.puter?.ai?.chat?.send) {
         setIsAiChatReady(true);
         // Add a message to the chat when the AI is ready
-        setMessages(prevMessages => [
-          ...prevMessages,
-          {
-            id: prevMessages.length + 1,
-            text: "AI audio assistant is ready. How can I help you edit your audio?",
-            sender: 'bot',
-          },
-        ]);
+        setMessages(prevMessages => {
+          // Avoid adding the "ready" message multiple times
+          if (!prevMessages.some(msg => msg.text.includes("AI audio assistant is ready"))) {
+            return [
+              ...prevMessages,
+              {
+                id: prevMessages.length + 1,
+                text: "AI audio assistant is ready. How can I help you edit your audio?",
+                sender: 'bot',
+              },
+            ];
+          }
+          return prevMessages;
+        });
+        if (intervalId) clearInterval(intervalId);
       } else {
         console.warn('Puter.js SDK or AI chat functionality not yet loaded.');
-        // You might want to retry checking or display a different message initially
+        if (attempts >= maxAttempts && intervalId) {
+          clearInterval(intervalId);
+          console.error('Max attempts reached. Puter.js AI chat functionality not loaded.');
+          toast({
+            variant: "destructive",
+            title: "AI Chat Error",
+            description: "AI chat functionality could not be loaded. Please try refreshing.",
+          });
+        }
       }
     };
 
-    // Check immediately and then potentially poll or wait for a puter event if available
-    checkPuterReadiness();
-    // Note: A more robust solution might involve waiting for a specific Puter.js ready event
+    // Start polling
+    intervalId = setInterval(checkPuterReadiness, 200); // Check every 200ms
+
+    // Clear interval on component unmount
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [messages]);
 
   const handleSendMessage = async () => {
