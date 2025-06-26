@@ -1,6 +1,6 @@
 'use client';
 
-import { MainDisplayPanel }  from '@/components/audio-forge/MainDisplayPanel'; // Assuming MainDisplayPanel handles the UI for audio controls, players, and waveforms
+import { MainDisplayPanel } from '../../components/audio-forge/MainDisplayPanel'; // Assuming MainDisplayPanel handles the UI for audio controls, players, and waveforms
 import { useState, useEffect, useRef } from 'react';
 import * as audioUtils from '../../lib/audio-utils'; // Import all functions from ../../lib/audio-utils
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +40,7 @@ const AIAudioEditorPage = () => {
     bassBooster: 'Subtle Subwoofer', // Added state for Bass Booster
     reverb: 'Vocal Ambience', // Added state for Reverb
     processedAudioBuffer: null, // State to hold the currently processed audio buffer
+    processedAudioDataUrl: null, // Added state for the processed audio Data URL
   });
 
   const [chatMessages, setChatMessages] = useState<{ type: 'user' | 'ai'; text: string }[]>([]);
@@ -47,6 +48,7 @@ const AIAudioEditorPage = () => {
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [originalAudioFile, setOriginalAudioFile] = useState<File | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
+  const [originalAudioDataUrl, setOriginalAudioDataUrl] = useState<string | null>(null); // Added state for original audio Data URL
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -60,10 +62,12 @@ const AIAudioEditorPage = () => {
           const audioBuffer = await audioContext.decodeAudioData(e.target!.result as ArrayBuffer);
           setUploadedFileName(file.name);
           setOriginalAudioFile(file); // Keep the file object if needed later
+          const originalDataUrl = await audioUtils.fileToDataUrl(file); // Generate Data URL for original file
+          setOriginalAudioDataUrl(originalDataUrl); // Store the original Data URL
           setAudioState(prev => ({
             ...prev,
             totalDuration: audioBuffer.duration,
-            showPlaybackControls: true,
+            showPlaybackControls: true, // Show controls when audio is loaded
             showWaveform: true,
             // Initially, processed is same as original
             processedAudioBuffer: audioBuffer,
@@ -78,6 +82,7 @@ const AIAudioEditorPage = () => {
           });
           setUploadedFileName(null);
           setOriginalAudioFile(null);
+          setOriginalAudioDataUrl(null); // Reset original Data URL on failure
           setAudioState(prev => ({ ...prev, showPlaybackControls: false, showWaveform: false, processedAudioBuffer: null }));
           setChatMessages(prev => [...prev, { type: 'ai', text: 'Failed to load the audio file. Please try another one.' }]);
         }
@@ -91,6 +96,7 @@ const AIAudioEditorPage = () => {
         });
         setUploadedFileName(null);
         setOriginalAudioFile(null);
+        setOriginalAudioDataUrl(null); // Reset original Data URL on failure
         setAudioState(prev => ({ ...prev, showPlaybackControls: false, showWaveform: false, processedAudioBuffer: null }));
         setChatMessages(prev => [...prev, { type: 'ai', text: 'Failed to read the audio file.' }]);
       };
@@ -175,9 +181,11 @@ const AIAudioEditorPage = () => {
       }
 
       if (effectApplied) {
-           // Update the state with the new processed audio buffer and reset progress
+           const processedDataUrl = await audioUtils.audioBufferToWavDataUrl(processedBuffer); // Convert processed buffer to Data URL
+           // Update the state with the new processed audio buffer, Data URL, and reset progress
         setAudioState(prev => ({
             ...prev,
+            processedAudioDataUrl: processedDataUrl, // Store the processed Data URL
             processedAudioBuffer: processedBuffer,
             processingProgress: 100, // Assuming processing is synchronous for simplicity here
         }));
@@ -310,6 +318,8 @@ const AIAudioEditorPage = () => {
         {/* Main Audio Editor Panel */}
         {/* MainDisplayPanel will handle displaying audio players and waveforms */}
         <MainDisplayPanel
+          originalAudioDataUrl={originalAudioDataUrl} // Pass original audio Data URL
+          processedAudioDataUrl={audioState.processedAudioDataUrl} // Pass processed audio Data URL
           originalAudioFile={originalAudioFile} // Pass the original file if needed by MainDisplayPanel
           processedAudioBuffer={audioState.processedAudioBuffer}
           audioState={audioState}
