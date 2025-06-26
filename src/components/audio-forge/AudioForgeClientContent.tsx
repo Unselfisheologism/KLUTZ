@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { AppHeader } from '@/components/audio-forge/AppHeader';
+import AppHeader from '@/components/layout/app-header';
 import { AudioControlsPanel } from './AudioControlsPanel';
 import { MainDisplayPanel } from './MainDisplayPanel';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -9,10 +9,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import type { EffectSettings } from '@/types/audio-forge';
 import { useToast } from '@/hooks/use-toast';
 import { audioUtils, fileToDataUrl } from '@/lib/audio-utils';
-import { effectsList } from '@/app/audio-forge/effects';
+import { effectsList } from '@/types/effects';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AppFooter } from './AppFooter';
 import { EffectsPanel } from './EffectsPanel';
 import { FileUploadArea } from './FileUploadArea';
 
@@ -272,7 +271,6 @@ export default function AudioForgeClientContent() {
               </ResizablePanel>
             </ResizablePanelGroup>
           )}
-        <AppFooter />
       </div>
     );
   }
@@ -355,7 +353,6 @@ export default function AudioForgeClientContent() {
             </ResizablePanel>
           </ResizablePanelGroup>
         )}
-      <AppFooter />
     </div>
   );
 }
