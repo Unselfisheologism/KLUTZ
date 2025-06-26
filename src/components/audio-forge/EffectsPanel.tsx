@@ -42,8 +42,9 @@ export function EffectsPanel(props) {
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
-    const maxAttempts = 50; // Try for about 10 seconds (50 * 200ms)
+    const maxAttempts = 100; // Try for about 20 seconds (100 * 200ms) -> Increased to 500ms interval, so 50 seconds total
     let attempts = 0;
+    const intervalDuration = 500; // Increased interval duration
 
     const checkPuterReadiness = () => {
       attempts++;
@@ -67,6 +68,11 @@ export function EffectsPanel(props) {
         if (intervalId) clearInterval(intervalId);
       } else {
         console.warn('Puter.js SDK or AI chat functionality not yet loaded.');
+        console.log(`Attempt ${attempts}:`);
+        console.log('window.puter:', window.puter);
+        console.log('window.puter.ai:', window.puter?.ai);
+        console.log('window.puter.ai.chat:', window.puter?.ai?.chat);
+
         if (attempts >= maxAttempts && intervalId) {
           clearInterval(intervalId);
           console.error('Max attempts reached. Puter.js AI chat functionality not loaded.');
@@ -80,7 +86,7 @@ export function EffectsPanel(props) {
     };
 
     // Start polling
-    intervalId = setInterval(checkPuterReadiness, 200); // Check every 200ms
+    intervalId = setInterval(checkPuterReadiness, intervalDuration); // Check every 500ms
 
     // Clear interval on component unmount
     return () => {
@@ -106,7 +112,7 @@ export function EffectsPanel(props) {
        return; // Do not attempt to send if not ready
     }
     if (window.puter) {
-      const response = await window.puter.ai.chat.send(inputMessage, {
+      const response = await window.puter.ai.chat(inputMessage, {
         tools: [
           // Ensure user is signed in for AI interactions that might require it
           async (prompt) => {
