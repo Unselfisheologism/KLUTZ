@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import AppHeader from '@/components/layout/app-header';
 import { AudioControlsPanel } from './AudioControlsPanel';
 import { MainDisplayPanel } from './MainDisplayPanel';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -252,10 +251,7 @@ export default function AudioForgeClientContent() {
   if (!hasMounted) {
     return (
       <div className="flex flex-col min-h-screen bg-background text-foreground">
-        <AppHeader 
-          isMobile={isMobile} 
-          onOpenEffectsPanel={() => setIsEffectsSheetOpen(true)}
-        />
+
           {isMobile ? (
              <div className="flex-grow p-4 overflow-y-auto">
                 <MainContentSkeleton />
@@ -277,10 +273,7 @@ export default function AudioForgeClientContent() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <AppHeader 
-        isMobile={isMobile}
-        onOpenEffectsPanel={() => setIsEffectsSheetOpen(true)}
-      />
+
         {isMobile ? (
           <>
             <MainDisplayPanel {...mainDisplayPanelProps} />
