@@ -1,6 +1,6 @@
 'use client';
 
-import { MainDisplayPanel } from '../components/MainDisplayPanel'; // Assuming MainDisplayPanel handles the UI for audio controls, players, and waveforms
+import  MainDisplayPanel  from '../components/MainDisplayPanel'; // Assuming MainDisplayPanel handles the UI for audio controls, players, and waveforms
 import { useState, useEffect, useRef } from 'react';
 import * as audioUtils from '../../lib/audio-utils'; // Import all functions from ../../lib/audio-utils
 import { useToast } from '@/hooks/use-toast';
