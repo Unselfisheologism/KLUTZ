@@ -114,14 +114,48 @@ export function EffectsPanel(props) {
       <CardContent className="flex-grow overflow-hidden p-4">
         <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
           {/* Placeholder for the 'upload audio' card */}
+ <div className="mb-4">
+ <FileUploadArea
+ onFileSelect={props.onFileSelect}
+ isLoading={props.isLoading}
+ />
+ </div>
+
           {/* Anchor Navigation and Effects Cards */}
-          {effectsList.map(effect => (
-            <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
-              <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                {message.text}
-              </span>
-            </div>
+ <nav className="mb-6 sticky top-0 z-10 bg-background">
+ <ul className="flex flex-wrap gap-2">
+ {effectsList.map(effect => (
+ <li key={effect.id}>
+ <a href={`#${effect.id}`} className="underline text-blue-600">{effect.name}</a>
+ </li>
+ ))}
+ </ul>
+ </nav>
+ {/* Chat messages */}
+ {messages.map(message => (
+ <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+ <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
+ {message.text}
+ </span>
+ </div>
           ))}
+ {/* Render all effects */}
+ <div className="grid gap-6">
+ {effectsList.map(effect => (
+ <section id={effect.id} key={effect.id}>
+ <EffectCard
+ effect={effect}
+ currentSettings={props.effectSettings?.[effect.id] || {}} // Defensive fallback
+ onApplyEffect={props.onApplyEffect}
+ onParameterChange={props.onParameterChange}
+ isLoading={props.isLoading}
+ isAudioLoaded={props.isAudioLoaded}
+ analysisResult={props.analysisResult}
+ analysisSourceEffectId={props.analysisSourceEffectId}
+ />
+ </section>
+ ))}
+ </div>
         </ScrollArea>
       </CardContent>
       <div className="p-4 border-t">
