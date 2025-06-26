@@ -133,72 +133,83 @@ export function EffectsPanel(props) {
         // You can add other options here if needed, like 'model'
       });
 
-      // Add the AI's response to the chat
-      const botResponse: Message = {
-        id: messages.length + 2,
-        text: response.text,
-        sender: 'bot',
-      };
-      setMessages(prevMessages => [...prevMessages, botResponse]);
+      // Check if the response and response.text are valid before processing
+      if (response && response.text !== null && response.text !== undefined) {
+        // Add the AI's response to the chat
+        const botResponse: Message = {
+          id: messages.length + 2,
+          text: response.text,
+          sender: 'bot',
+        };
+        setMessages(prevMessages => [...prevMessages, botResponse]);
 
-      // Attempt to parse the response text for effect commands
-      try {
-        // Define a pattern to look for a JSON object within the AI's response.
-        // The AI should be instructed to wrap effect commands in a specific JSON structure,
-        // e.g., {"command": "apply_effect", "effectId": "reverb", "parameters": {"decay": 0.5}}
-        const commandMatch = response.text.match(/\{"command":\s*"apply_effect",\s*"effectId":\s*"(.*?)"(?:,\s*"parameters":\s*(\{.*\}))?\}/s);
+        // Attempt to parse the response text for effect commands
+        try {
+          // Define a pattern to look for a JSON object within the AI's response.
+          // The AI should be instructed to wrap effect commands in a specific JSON structure,
+          // e.g., {"command": "apply_effect", "effectId": "reverb", "parameters": {"decay": 0.5}}
+          const commandMatch = response.text.match(/\{"command":\s*"apply_effect",\s*"effectId":\s*"(.*?)"(?:,\s*"parameters":\s*(\{.*\}))?\}/s);
 
-        if (commandMatch && commandMatch[1]) {
-          const effectId = commandMatch[1];
-          let parameters = {};
-          if (commandMatch[2]) {
-            try {
-              parameters = JSON.parse(commandMatch[2]);
-            } catch (jsonError) {
-              console.error("Failed to parse effect parameters JSON:", jsonError);
-              // Optionally add a message to the chat indicating a parsing error
+          if (commandMatch && commandMatch[1]) {
+            const effectId = commandMatch[1];
+            let parameters = {};
+            if (commandMatch[2]) {
+              try {
+                parameters = JSON.parse(commandMatch[2]);
+              } catch (jsonError) {
+                console.error("Failed to parse effect parameters JSON:", jsonError);
+                // Optionally add a message to the chat indicating a parsing error
+                const errorBotResponse: Message = {
+                  id: messages.length + 3,
+                  text: "Could not parse effect parameters from the AI's response. Please check the format.",
+                  sender: 'bot',
+                };
+                setMessages(prevMessages => [...prevMessages, errorBotResponse]);
+                return; // Stop here if parameters are unparsable
+              }
+            }
+
+            console.log(`Detected AI command to apply effect: ${effectId} with parameters:`, parameters);
+
+            const effect = effectsList.find(e => e.id === effectId);
+            if (effect && props.onApplyEffect) {
+              props.onApplyEffect(effect, parameters);
+              // Optionally add a confirmation message to the chat
               const errorBotResponse: Message = {
                 id: messages.length + 3,
-                text: "Could not parse effect parameters from the AI's response. Please check the format.",
+                text: `Applying effect '${effect.name}'...`,
                 sender: 'bot',
               };
               setMessages(prevMessages => [...prevMessages, errorBotResponse]);
-              return; // Stop here if parameters are unparsable
+            } else if (!effect) {
+               const notFoundBotResponse: Message = {
+                  id: messages.length + 3,
+                  text: `AI requested an unknown effect with ID '${effectId}'.`,
+                  sender: 'bot',
+                };
+               setMessages(prevMessages => [...prevMessages, notFoundBotResponse]);
             }
           }
-
-          console.log(`Detected AI command to apply effect: ${effectId} with parameters:`, parameters);
-
-          const effect = effectsList.find(e => e.id === effectId);
-          if (effect && props.onApplyEffect) {
-            props.onApplyEffect(effect, parameters);
-            // Optionally add a confirmation message to the chat
-            const confirmationBotResponse: Message = {
-              id: messages.length + 3,
-              text: `Applying effect '${effect.name}'...`,
-              sender: 'bot',
-            };
-            setMessages(prevMessages => [...prevMessages, confirmationBotResponse]);
-          } else if (!effect) {
-             const notFoundBotResponse: Message = {
-                id: messages.length + 3,
-                text: `AI requested an unknown effect with ID '${effectId}'.`,
-                sender: 'bot',
-              };
-             setMessages(prevMessages => [...prevMessages, notFoundBotResponse]);
-          }
+        } catch (parseError) {
+          console.error("Error parsing AI response for effect command:", parseError);
+          // Optionally add a message to the chat indicating a general parsing error
+          const errorBotResponse: Message = {
+            id: messages.length + 3,
+            text: "An error occurred while trying to understand the AI's response for commands.",
+            sender: 'bot',
+          };
+          setMessages(prevMessages => [...prevMessages, errorBotResponse]);
         }
-      } catch (parseError) {
-        console.error("Error parsing AI response for effect command:", parseError);
-        // Optionally add a message to the chat indicating a general parsing error
+      } else {
+        // Handle cases where response or response.text is null or undefined
+        console.error("Received invalid response from AI:", response);
         const errorBotResponse: Message = {
-          id: messages.length + 3,
-          text: "An error occurred while trying to understand the AI's response for commands.",
+          id: messages.length + 2,
+          text: "Received an empty or invalid response from the AI.",
           sender: 'bot',
-        };
+        }
         setMessages(prevMessages => [...prevMessages, errorBotResponse]);
       }
-
     } else {
       const botResponse: Message = {
         id: messages.length + 2,
