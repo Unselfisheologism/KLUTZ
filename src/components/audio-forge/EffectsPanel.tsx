@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from "@/hooks/use-toast";
 import { FileUploadArea } from './FileUploadArea';
 
 declare global {
@@ -26,6 +27,7 @@ export function EffectsPanel(props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Scroll to the bottom of the chat when new messages are added
@@ -33,6 +35,19 @@ export function EffectsPanel(props) {
       scrollAreaRef.current.scrollTo({
         top: scrollAreaRef.current.scrollHeight,
         behavior: 'smooth',
+      });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    // Check if Puter.js SDK and AI chat functionality are loaded
+    if (typeof window.puter === 'undefined' || typeof window.puter.ai?.chat?.send !== 'function') {
+      console.error('Puter.js SDK or AI chat functionality not loaded.');
+      toast({
+        variant: "destructive",
+        title: "AI Chat Unavailable",
+        description: "The AI chat feature is not fully loaded. Please refresh the page or try again later.",
+        duration: 5000,
       });
     }
   }, [messages]);
