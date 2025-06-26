@@ -110,21 +110,21 @@ export function ExportPanel({ processedAudioDataUrl, onExport, isLoading }: Expo
     </Card>
 
  <Card className="shadow-md mt-4">
- <CardHeader>
- <CardTitle className="flex items-center gap-2 text-xl">
- Tips for Using Audio Forge with the AI Chatbot
- </CardTitle>
- <CardDescription>
- Maximize your productivity by integrating Audio Forge with the chatbot.
- </CardDescription>
- </CardHeader>
- <CardContent className="space-y-4">
- <p className="text-sm text-muted-foreground">
- To use Audio Forge features via the chatbot, always reference the tool by its name.
- For example, instead of saying "what is the rpm of this song",
- you should say "run the rpm detector on this audio file".
- </p>
- </CardContent>
+   <CardHeader>
+     <CardTitle className="flex items-center gap-2 text-xl">
+       Tips for Using Audio Forge with the AI Chatbot
+     </CardTitle>
+     <CardDescription>
+       Maximize your productivity by integrating Audio Forge with the chatbot.
+     </CardDescription>
+   </CardHeader>
+   <CardContent className="space-y-4">
+    <p className="text-sm text-muted-foreground">
+      To use Audio Forge features via the chatbot, always reference the tool by its name.
+      For example, instead of saying "what is the rpm of this song",
+      you should say "run the rpm detector on this audio file".
+    </p>
+   </CardContent>
  </Card>
 
   );
