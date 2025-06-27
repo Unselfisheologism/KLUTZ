@@ -76,12 +76,14 @@ const AITextToSpeechPage = () => {
       setIsLoading(false);
       return;
     }
+
     try {
       const audioStream = await puter.ai.txt2speech(text);
-      if (audioStream) {
+      console.log("puter.ai.txt2speech output:", audioStream); // Log the output
+
+      if (!audioStream) {
         toast({
           title: "Error",
-          description: "Text-to-speech conversion failed.",
           variant: "destructive",
         });
       }
@@ -89,12 +91,20 @@ const AITextToSpeechPage = () => {
       setAudioOutput(audioUrl);
     } catch (e: any) {
       const aiError: AITextToSpeechError = e;
-      setError(e.message || "An error occurred during conversion.");
+      console.error("Error during text-to-speech conversion:", e); // Log the error
+      setError(aiError.message || "An error occurred during conversion.");
       toast({
         title: "Error",
         description: aiError.message || "An unexpected error occurred.",
         variant: "destructive",
       });
+    }
+    try {
+      const audioUrl = URL.createObjectURL(new Blob([audioStream], { type: 'audio/mp3' }));
+ setAudioOutput(audioUrl);
+    } catch (blobError: any) {
+      console.error("Error creating audio object:", blobError);
+      setError("Error creating audio playback.");
     } finally {
       setIsLoading(false);
     }
