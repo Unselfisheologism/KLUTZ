@@ -80,9 +80,13 @@ const AITextToSpeechPage = () => {
     try {
       // The puter.ai.txt2speech function returns an HTML audio element string
       const audioElementHtml = await puter.ai.txt2speech(text);
-      console.log("puter.ai.txt2speech output:", audioElementHtml); // Log the output
-      console.log("Type of puter.ai.txt2speech output:", typeof audioElementHtml); // Log the type of the output
-
+      
+      // Remove zero-width space characters which might be introduced during logging or transfer
+      const cleanedAudioElementHtml = audioElementHtml.replace(/\u200B/g, '');
+      
+      console.log("puter.ai.txt2speech raw output:", audioElementHtml); // Log the raw output
+      console.log("puter.ai.txt2speech cleaned output:", cleanedAudioElementHtml); // Log the cleaned output
+      
       if (!audioElementHtml || typeof audioElementHtml !== 'string') {
         throw new Error("Invalid response from text-to-speech service.");
       }
