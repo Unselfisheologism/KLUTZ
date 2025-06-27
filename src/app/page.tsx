@@ -216,7 +216,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 cards">
               {features.map((feature) => (
-                <Card key={feature.title} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Card key={feature.title} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300 bg-[#17191c]/20 backdrop-blur-sm border border-white/50 rounded-lg shadow-[inset_0_1px_0px_rgba(255,255,255,0.75),0_0_9px_rgba(0,0,0,0.2),0_3px_8px_rgba(0,0,0,0.15)] p-6 text-white relative before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-br before:from-white/60 before:via-transparent before:to-transparent before:opacity-70 before:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:bg-gradient-to-tl after:from-white/30 after:via-transparent after:to-transparent after:opacity-50 after:pointer-events-none">
                   <CardHeader>
                     <div className="flex items-center mb-3 card">
                       <feature.icon className="h-10 w-10 text-accent mr-4" />
@@ -230,9 +230,7 @@ export default function HomePage() {
                       <Button className="w-[60px] h-[50px] border-0 outline-none cursor-pointer select-none touch-manipulation relative transition duration-300 rounded-full overflow-hidden">
                         <span className="absolute inset-0 w-full h-full bg-[rgb(150,50,60)]"></span>
                         <span className="absolute inset-0 w-full h-full flex justify-center items-center font-semibold text-[rgb(150,50,60)] text-[1.2rem] leading-none bg-gradient-to-b from-[rgba(255,90,120,0.6)] via-[rgb(255,90,120)] to-[rgb(255,90,120)] shadow-[0_0.5em_1em_-0.2em_rgba(150,50,60,0.5)] border border-[rgb(150,50,60)] rounded-full transition duration-150 -translate-y-[15%] active:translate-y-0 active:shadow-none">
-                          <Link href={feature.href}>
-                            Open Tool 
-                          </Link>
+                          <Link href={feature.href}></Link>
                         </span>
                       </Button>
                     ) : (
