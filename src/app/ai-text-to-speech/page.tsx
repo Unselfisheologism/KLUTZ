@@ -93,23 +93,24 @@ const AITextToSpeechPage = () => {
       const audioElementHtml = await puter.ai.txt2speech(text);
 
       if (typeof audioElementHtml !== 'string') {
- console.error('Received non-string response from puter.ai.txt2speech:', audioElementHtml);
+        console.error('Received non-string response from puter.ai.txt2speech:', audioElementHtml);
         throw new Error('Invalid response from text-to-speech service.');
       }
-      // Remove zero-width space characters which might be introduced during logging or transfer
 
+      // Remove zero-width space characters which might be introduced during transfer
+      const cleanedAudioElementHtml = audioElementHtml.replace(/\u200B/g, '');
       // Create a temporary DOM element to parse the HTML string
       const parser = new DOMParser();
-      const doc = parser.parseFromString(audioElementHtml, 'text/html');
+      const doc = parser.parseFromString(cleanedAudioElementHtml, 'text/html');
       const audioUrl = doc.querySelector('audio')?.src;
 
       setAudioOutput(audioUrl);
     } catch (blobError: any) {
-      console.error("Text-to-speech conversion error:", blobError);
-      let apiErrorMessage = "An unknown error occurred.";
+      console.error("Error during text-to-speech conversion:", blobError);
+      let displayErrorMessage = "An unknown error occurred.";
       // Check if the error is the specific API error object structure
       if (blobError && typeof blobError === 'object' && blobError.success === false && blobError.error && typeof blobError.error.message === 'string') {
-        apiErrorMessage = blobError.error.message;
+        displayErrorMessage = blobError.error.message;
       } else if (blobError instanceof Error) {
          apiErrorMessage = blobError.message;
       }
@@ -117,7 +118,7 @@ const AITextToSpeechPage = () => {
       // Optionally, show a toast for better user feedback
       toast({ title: "Error", description: `Conversion failed: ${apiErrorMessage}`, variant: "destructive" });
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   };
 
