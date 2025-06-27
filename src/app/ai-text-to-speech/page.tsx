@@ -30,12 +30,17 @@ const AITextToSpeechPage = () => {
     setError(null);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setFileInput(file);
-      setTextInput(""); // Clear text input if file is uploaded
       setError(null);
+      try {
+        const textContent = await file.text();
+        setTextInput(textContent); // Set textInput with file content
+      } catch (readError) {
+        toast({ variant: "destructive", title: "File Read Error", description: "Could not read the text file." });
+      }
     } else {
       setFileInput(null);
     }
