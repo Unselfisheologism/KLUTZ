@@ -81,6 +81,7 @@ const AITextToSpeechPage = () => {
       // The puter.ai.txt2speech function returns an HTML audio element string
       const audioElementHtml = await puter.ai.txt2speech(text);
       console.log("puter.ai.txt2speech output:", audioElementHtml); // Log the output
+      console.log("Type of puter.ai.txt2speech output:", typeof audioElementHtml); // Log the type of the output
 
       if (!audioElementHtml || typeof audioElementHtml !== 'string') {
         throw new Error("Invalid response from text-to-speech service.");
