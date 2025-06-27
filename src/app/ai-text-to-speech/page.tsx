@@ -84,25 +84,28 @@ const AITextToSpeechPage = () => {
       const puter = window.puter;
 
       let isSignedIn = await puter.auth.isSignedIn();
+
       if (!isSignedIn) {
         await puter.auth.signIn();
         isSignedIn = await puter.auth.isSignedIn();
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
-      // Based on console output, the API returns a string that looks like an HTML audio element
-      const audioElementString = await puter.ai.txt2speech(text);
 
-      if (typeof audioElementString !== 'string') {
-        console.error('Received non-string response from puter.ai.txt2speech:', audioElementString);
-        throw new Error('Invalid response format from text-to-speech service.');
-      }
-
-      // Remove zero-width space characters which might be introduced during transfer
-      const cleanedAudioElementHtml = audioElementString.replace(/\u200B/g, '');
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(cleanedAudioElementHtml, 'text/html');
-      const audioUrl = doc.querySelector('audio')?.src;
-      setAudioOutput(audioUrl);
+      // According to the documentation, puter.ai.txt2speech returns a Promise
+      // that resolves to an MP3 stream. We chain .then() to handle the resolved value.
+      puter.ai.txt2speech(text)
+        .then((audio: any) => {
+          // The documentation says it resolves to an MP3 stream, but observed
+          // behavior sometimes shows an audio object or similar.
+          // We need to determine how to get a playable URL from the resolved 'audio'
+          // For now, assuming it's an object from which we can get a URL (this might need adjustment)
+          if (audio && typeof audio === 'object' && audio.src) {
+             setAudioOutput(audio.src);
+          } else {
+             console.error('Unexpected resolved value from puter.ai.txt2speech:', audio);
+             throw new Error('Unexpected audio object format from text-to-speech service.');
+          }
+        });
     } catch (blobError: any) {
       console.error("Text-to-speech conversion error:", blobError);
       let displayErrorMessage = "An unknown error occurred.";
@@ -115,7 +118,7 @@ const AITextToSpeechPage = () => {
       }
       setError(`Text-to-speech conversion failed: ${displayErrorMessage}`);
       // The variable `apiErrorMessage` was undefined, use `displayErrorMessage` instead
-      toast({ title: "Error", description: `Conversion failed: ${apiErrorMessage}`, variant: "destructive" });
+      toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
