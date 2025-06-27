@@ -78,23 +78,25 @@ const AITextToSpeechPage = () => {
     }
 
     try {
+      if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
+        throw new Error("Puter SDK not available. Please refresh.");
+      }
+      const puter = window.puter;
+
+      let isSignedIn = await puter.auth.isSignedIn();
+      if (!isSignedIn) {
+        await puter.auth.signIn();
+        isSignedIn = await puter.auth.isSignedIn();
+        if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
+      }
       // The puter.ai.txt2speech function returns an HTML audio element string
       const audioElementHtml = await puter.ai.txt2speech(text);
 
       if (typeof audioElementHtml !== 'string') {
-        console.error('Received non-string response from puter.ai.txt2speech:', audioElementHtml);
+ console.error('Received non-string response from puter.ai.txt2speech:', audioElementHtml);
         throw new Error('Invalid response from text-to-speech service.');
-      }      
-      
-      // Remove zero-width space characters which might be introduced during logging or transfer
-      const cleanedAudioElementHtml = audioElementHtml.replace(/\u200B/g, '');
-      
-      console.log("puter.ai.txt2speech raw output:", audioElementHtml); // Log the raw output
-      console.log("puter.ai.txt2speech cleaned output:", cleanedAudioElementHtml); // Log the cleaned output
-      
-      if (!audioElementHtml || typeof audioElementHtml !== 'string') {
-        throw new Error("Invalid response from text-to-speech service.");
       }
+      // Remove zero-width space characters which might be introduced during logging or transfer
 
       // Create a temporary DOM element to parse the HTML string
       const parser = new DOMParser();
@@ -103,8 +105,17 @@ const AITextToSpeechPage = () => {
 
       setAudioOutput(audioUrl);
     } catch (blobError: any) {
-      console.error("Error creating audio object:", blobError);
-      setError("Error creating audio playback.");
+      console.error("Text-to-speech conversion error:", blobError);
+      let apiErrorMessage = "An unknown error occurred.";
+      // Check if the error is the specific API error object structure
+      if (blobError && typeof blobError === 'object' && blobError.success === false && blobError.error && typeof blobError.error.message === 'string') {
+        apiErrorMessage = blobError.error.message;
+      } else if (blobError instanceof Error) {
+         apiErrorMessage = blobError.message;
+      }
+      setError(`Text-to-speech conversion failed: ${apiErrorMessage}`);
+      // Optionally, show a toast for better user feedback
+      toast({ title: "Error", description: `Conversion failed: ${apiErrorMessage}`, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
