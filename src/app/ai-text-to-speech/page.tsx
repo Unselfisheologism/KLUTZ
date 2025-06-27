@@ -100,19 +100,21 @@ const AITextToSpeechPage = () => {
       // Remove zero-width space characters which might be introduced during transfer
       const cleanedAudioElementHtml = audioElementHtml.replace(/\u200B/g, '');
       // Create a temporary DOM element to parse the HTML string
+      // Note: DOMParser is safe for parsing trusted HTML strings like the one from Puter.js AI
       const parser = new DOMParser();
       const doc = parser.parseFromString(cleanedAudioElementHtml, 'text/html');
       const audioUrl = doc.querySelector('audio')?.src;
 
       setAudioOutput(audioUrl);
     } catch (blobError: any) {
-      console.error("Error during text-to-speech conversion:", blobError);
+      console.error("Text-to-speech conversion error:", blobError);
       let displayErrorMessage = "An unknown error occurred.";
+
       // Check if the error is the specific API error object structure
       if (blobError && typeof blobError === 'object' && blobError.success === false && blobError.error && typeof blobError.error.message === 'string') {
         displayErrorMessage = blobError.error.message;
       } else if (blobError instanceof Error) {
-         apiErrorMessage = blobError.message;
+        displayErrorMessage = blobError.message;
       }
       setError(`Text-to-speech conversion failed: ${apiErrorMessage}`);
       // Optionally, show a toast for better user feedback
