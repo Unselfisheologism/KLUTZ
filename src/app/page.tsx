@@ -230,7 +230,8 @@ export default function HomePage() {
                       <Button className="w-[60px] h-[50px] border-0 outline-none cursor-pointer select-none touch-manipulation relative transition duration-300 rounded-full overflow-hidden">
                         <span className="absolute inset-0 w-full h-full bg-[rgb(150,50,60)]"></span>
                         <span className="absolute inset-0 w-full h-full flex justify-center items-center font-semibold text-[rgb(150,50,60)] text-[1.2rem] leading-none bg-gradient-to-b from-[rgba(255,90,120,0.6)] via-[rgb(255,90,120)] to-[rgb(255,90,120)] shadow-[0_0.5em_1em_-0.2em_rgba(150,50,60,0.5)] border border-[rgb(150,50,60)] rounded-full transition duration-150 -translate-y-[15%] active:translate-y-0 active:shadow-none">
-                          <Link href={feature.href}></Link>
+                          <Link href={feature.href}>
+                          </Link>
                         </span>
                       </Button>
                     ) : (
