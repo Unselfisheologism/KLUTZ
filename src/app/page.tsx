@@ -137,6 +137,13 @@ const features: Feature[] = [
     href: '/ai-audio-editor',
     isImplemented: true,
   },
+ {
+    icon: AudioWaveform,
+    title: 'AI Text-to-Speech Generator',
+    description: 'Convert text into natural-sounding speech using AI.',
+    href: '/ai-text-to-speech',
+    isImplemented: true,
+  },
 ];
 
 export default function HomePage() {
