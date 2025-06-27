@@ -89,18 +89,19 @@ const AITextToSpeechPage = () => {
         isSignedIn = await puter.auth.isSignedIn();
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
-      // The puter.ai.txt2speech function returns a Promise that resolves to an audio stream
-      const audioBlob = await puter.ai.txt2speech(text);
+      // Based on console output, the API returns a string that looks like an HTML audio element
+      const audioElementString = await puter.ai.txt2speech(text);
 
-      if (!(audioBlob instanceof Blob)) {
-        console.error('Received non-Blob response from puter.ai.txt2speech:', audioBlob);
-        throw new Error('Unexpected response format from text-to-speech service.');
+      if (typeof audioElementString !== 'string') {
+        console.error('Received non-string response from puter.ai.txt2speech:', audioElementString);
+        throw new Error('Invalid response format from text-to-speech service.');
       }
 
-      // Create a URL for the audio blob
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      // Set the audio output URL
+      // Remove zero-width space characters which might be introduced during transfer
+      const cleanedAudioElementHtml = audioElementString.replace(/\u200B/g, '');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(cleanedAudioElementHtml, 'text/html');
+      const audioUrl = doc.querySelector('audio')?.src;
       setAudioOutput(audioUrl);
     } catch (blobError: any) {
       console.error("Text-to-speech conversion error:", blobError);
@@ -113,7 +114,7 @@ const AITextToSpeechPage = () => {
         displayErrorMessage = blobError.message;
       }
       setError(`Text-to-speech conversion failed: ${displayErrorMessage}`);
-      // Show a toast for user feedback
+      // The variable `apiErrorMessage` was undefined, use `displayErrorMessage` instead
       toast({ title: "Error", description: `Conversion failed: ${apiErrorMessage}`, variant: "destructive" });
     } finally {
         setIsLoading(false);
