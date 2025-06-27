@@ -107,7 +107,7 @@ body {
 
 .cssbuttons-io-button {
   background: #606dc0;
-  color: rgb(0, 0, 0);
+  color: rgb(255, 255, 255);
   font-family: inherit;
   padding: 0.35em;
   padding-left: 1.2em;
@@ -126,7 +126,7 @@ body {
 }
 
 .cssbuttons-io-button .icon {
-  background: rgb(0, 0, 0);
+  background: #17191c;
   margin-left: 1em;
   position: absolute;
   display: flex;
