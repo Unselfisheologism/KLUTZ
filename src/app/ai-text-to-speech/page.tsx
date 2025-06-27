@@ -89,22 +89,18 @@ const AITextToSpeechPage = () => {
         isSignedIn = await puter.auth.isSignedIn();
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
-      // The puter.ai.txt2speech function returns an HTML audio element string
-      const audioElementHtml = await puter.ai.txt2speech(text);
+      // The puter.ai.txt2speech function returns a Promise that resolves to an audio stream
+      const audioBlob = await puter.ai.txt2speech(text);
 
-      if (typeof audioElementHtml !== 'string') {
-        console.error('Received non-string response from puter.ai.txt2speech:', audioElementHtml);
-        throw new Error('Invalid response from text-to-speech service.');
+      if (!(audioBlob instanceof Blob)) {
+        console.error('Received non-Blob response from puter.ai.txt2speech:', audioBlob);
+        throw new Error('Unexpected response format from text-to-speech service.');
       }
 
-      // Remove zero-width space characters which might be introduced during transfer
-      const cleanedAudioElementHtml = audioElementHtml.replace(/\u200B/g, '');
-      // Create a temporary DOM element to parse the HTML string
-      // Note: DOMParser is safe for parsing trusted HTML strings like the one from Puter.js AI
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(cleanedAudioElementHtml, 'text/html');
-      const audioUrl = doc.querySelector('audio')?.src;
+      // Create a URL for the audio blob
+      const audioUrl = URL.createObjectURL(audioBlob);
 
+      // Set the audio output URL
       setAudioOutput(audioUrl);
     } catch (blobError: any) {
       console.error("Text-to-speech conversion error:", blobError);
@@ -116,8 +112,8 @@ const AITextToSpeechPage = () => {
       } else if (blobError instanceof Error) {
         displayErrorMessage = blobError.message;
       }
-      setError(`Text-to-speech conversion failed: ${apiErrorMessage}`);
-      // Optionally, show a toast for better user feedback
+      setError(`Text-to-speech conversion failed: ${displayErrorMessage}`);
+      // Show a toast for user feedback
       toast({ title: "Error", description: `Conversion failed: ${apiErrorMessage}`, variant: "destructive" });
     } finally {
         setIsLoading(false);
