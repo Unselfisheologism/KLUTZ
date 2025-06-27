@@ -71,25 +71,25 @@ const AITextToSpeechPage = () => {
   };
 
   const processConversion = async (text: string) => {
+    if (text.length > 3000) {
+      setError("Text is too long. Please limit to 3000 characters.");
+      setIsLoading(false);
+      return;
+    }
     try {
-      const input: AITextToSpeechInput = {
-        text: text,
-      };
-      const output: AITextToSpeechOutput = await puter.ai.txt2speech(input);
-
-      if (output && output.audioUrl) {
-        setAudioOutput(output.audioUrl);
-      } else {
-        setError("Conversion failed. Please try again.");
+      const audioStream = await puter.ai.txt2speech(text);
+      if (audioStream) {
         toast({
           title: "Error",
           description: "Text-to-speech conversion failed.",
           variant: "destructive",
         });
       }
+      const audioUrl = URL.createObjectURL(new Blob([audioStream], { type: 'audio/mp3' }));
+      setAudioOutput(audioUrl);
     } catch (e: any) {
       const aiError: AITextToSpeechError = e;
-      setError(aiError.message || "An error occurred during conversion.");
+      setError(e.message || "An error occurred during conversion.");
       toast({
         title: "Error",
         description: aiError.message || "An unexpected error occurred.",
