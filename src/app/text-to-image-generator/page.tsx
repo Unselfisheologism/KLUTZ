@@ -102,9 +102,9 @@ export default function TextToImageGeneratorPage() {
       setDescription(parsedAnalysis.dalle_prompt);
       toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
     } catch (err: any) {
-      console.error("Image analysis error:", err);
-      setError(getLaymanErrorMessage(err, "Failed to analyze image and generate prompt."));
-      toast({ variant: "destructive", title: "Analysis Failed", description: "Failed to analyze image and generate prompt." });
+        console.error("Image analysis error:", err);
+        setError(getLaymanErrorMessage("Failed to analyze image and generate prompt."));
+        toast({ variant: "destructive", title: "Analysis Failed", description: "Failed to analyze image and generate prompt." });
     } finally {
       setIsLoading(false);
     }
