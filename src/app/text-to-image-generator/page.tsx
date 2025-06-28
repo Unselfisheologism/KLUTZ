@@ -94,17 +94,19 @@ export default function TextToImageGeneratorPage() {
         throw new Error("AI did not return a valid prompt format. Please try again.");
       }
 
+      let parsedAnalysis: ImageAnalysisResult;
       try {
-        const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent);
+        parsedAnalysis = JSON.parse(rawContent);
+        setDescription(parsedAnalysis.dalle_prompt);
+        toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
+      } catch (jsonError) {
         console.error("Failed to parse AI response as JSON:", rawContent, jsonError);
         throw new Error("Failed to parse AI response. The format was unexpected.");
       }
-      setDescription(parsedAnalysis.dalle_prompt);
-      toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
     } catch (err: any) {
-        console.error("Image analysis error:", err);
-        setError(getLaymanErrorMessage("Failed to analyze image and generate prompt."));
-        toast({ variant: "destructive", title: "Analysis Failed", description: "Failed to analyze image and generate prompt." });
+      console.error("Image analysis error:", err);
+      setError(getLaymanErrorMessage("Failed to analyze image and generate prompt."));
+      toast({ variant: "destructive", title: "Analysis Failed", description: "Failed to analyze image and generate prompt." });
     } finally {
       setIsLoading(false);
     }
