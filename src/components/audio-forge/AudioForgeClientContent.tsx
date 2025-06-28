@@ -280,10 +280,10 @@ export default function AudioForgeClientContent() {
         {isMobile ? (
           <>
             <MainDisplayPanel {...mainDisplayPanelProps} />
-            {/* Button to open the effects and chat sheet on mobile */}
-            <Button className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-sm" onClick={() => setIsEffectsSheetOpen(true)}>
+            {/* Button to open the effects, upload, and chat sheet on mobile */}
+            <Button className="w-full mb-4" onClick={() => setIsEffectsSheetOpen(true)}>
               Edit Audio & Get Tips
-            </Button>
+           </Button>
             <Sheet open={isEffectsSheetOpen} onOpenChange={setIsEffectsSheetOpen}>
               <SheetContent side="left" className="w-[85vw] max-w-md p-0 flex flex-col h-full">
                 <SheetHeader className="p-4 border-b">
