@@ -16,15 +16,7 @@ import { getLaymanErrorMessage } from '@/lib/error-utils';
 import { downloadTextFile } from '@/lib/utils';
 import { preprocessImage } from '@/lib/image-utils';
 
-const cleanJsonString = (rawString: string): string => {
-  let cleanedString = rawString.trim();
-  if (cleanedString.startsWith("```json") && cleanedString.endsWith("```")) {
-    cleanedString = cleanedString.substring(7, cleanedString.length - 3).trim();
-  } else if (cleanedString.startsWith("```") && cleanedString.endsWith("```")) {
-    cleanedString = cleanedString.substring(3, cleanedString.length - 3).trim();
-  }
-  return cleanedString;
-};
+
 
 export default function TextToImageGeneratorPage() {
   const [description, setDescription] = useState<string>('');
