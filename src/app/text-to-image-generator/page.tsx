@@ -83,7 +83,7 @@ export default function TextToImageGeneratorPage() {
       if (!rawContent.startsWith('{') && !rawContent.endsWith('}')) {
         throw new Error("AI did not return a valid prompt format. Please try again.");
       }
-      const parsedAnalysis = JSON.parse(rawContent);
+      const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent);
  setDescription(parsedAnalysis.dalle_prompt);
  toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
     } catch (err: any) {

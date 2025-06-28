@@ -5,6 +5,10 @@ export interface TextToImageGenerationInput {
   additionalContext?: string;
 }
 
+export interface ImageAnalysisResult {
+  dalle_prompt: string;
+}
+
 export interface TextToImageGenerationReport {
   generated_image: string;
   prompt_used: string;
