@@ -94,7 +94,6 @@ export default function TextToImageGeneratorPage() {
         throw new Error("AI did not return a valid prompt format. Please try again.");
       }
 
-      let parsedAnalysis: ImageAnalysisResult;
       try {
         parsedAnalysis = JSON.parse(rawContent);
         setDescription(parsedAnalysis.dalle_prompt);
