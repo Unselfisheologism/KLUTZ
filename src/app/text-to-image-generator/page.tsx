@@ -51,7 +51,7 @@ export default function TextToImageGeneratorPage() {
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file) {
          toast({ variant: "destructive", title: "Missing Input", description: "Please upload an image of the object to measure." });
         return;
       }
