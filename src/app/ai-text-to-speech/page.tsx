@@ -9,6 +9,12 @@ import { useToast } from "@/hooks/use-toast";
 import {
   AITextToSpeechInput,
   AITextToSpeechOutput,
+  AITextToSpeechLanguageCode, // Assuming you have this type or similar
+} from "@/types/ai-text-to-speech"; // Assume this type exists
+import {
+  Select,
+  SelectContent,
+  SelectItem,
   AITextToSpeechError,
 } from "@/types/ai-text-to-speech"; // Assume this type exists
 import { Progress } from "@/components/ui/progress";
@@ -22,6 +28,7 @@ const AITextToSpeechPage = () => {
   const [audioOutput, setAudioOutput] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en-US');
   const { toast } = useToast();
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -98,7 +105,7 @@ const AITextToSpeechPage = () => {
 
       // According to the documentation, puter.ai.txt2speech returns a Promise
       // that resolves to an MP3 stream. We chain .then() to handle the resolved value.
-      puter.ai.txt2speech(text)
+      puter.ai.txt2speech(text, selectedLanguage)
         .then((audio: any) => {
           // The documentation says it resolves to an MP3 stream, but observed
           // behavior sometimes shows an audio object or similar.
@@ -122,13 +129,6 @@ const AITextToSpeechPage = () => {
         displayErrorMessage = blobError.message;
       }
       setError(`Text-to-speech conversion failed: ${displayErrorMessage}`);
-      // The variable `apiErrorMessage` was undefined, use `displayErrorMessage` instead
-      toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
-    } finally {
-        setIsLoading(false);
-    }
-  };
-
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">AI Text to Speech Generator</h1>
@@ -167,6 +167,54 @@ const AITextToSpeechPage = () => {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="mt-4">
+        <Label htmlFor="language-select">Select Language</Label>
+        <Select value={selectedLanguage} onValueChange={setSelectedLanguage} disabled={isLoading}>
+          <SelectTrigger id="language-select">
+            <SelectValue placeholder="Select a language" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ar-AE">Arabic (ar-AE)</SelectItem>
+            <SelectItem value="ca-ES">Catalan (ca-ES)</SelectItem>
+            <SelectItem value="yue-CN">Chinese (Cantonese) (yue-CN)</SelectItem>
+            <SelectItem value="cmn-CN">Chinese (Mandarin) (cmn-CN)</SelectItem>
+            <SelectItem value="da-DK">Danish (da-DK)</SelectItem>
+            <SelectItem value="nl-BE">Dutch (Belgian) (nl-BE)</SelectItem>
+            <SelectItem value="nl-NL">Dutch (nl-NL)</SelectItem>
+            <SelectItem value="en-AU">English (Australian) (en-AU)</SelectItem>
+            <SelectItem value="en-GB">English (British) (en-GB)</SelectItem>
+            <SelectItem value="en-IN">English (Indian) (en-IN)</SelectItem>
+            <SelectItem value="en-NZ">English (New Zealand) (en-NZ)</SelectItem>
+            <SelectItem value="en-ZA">English (South African) (en-ZA)</SelectItem>
+            <SelectItem value="en-US">English (US) (en-US)</SelectItem>
+            <SelectItem value="en-GB-WLS">English (Welsh) (en-GB-WLS)</SelectItem>
+            <SelectItem value="fi-FI">Finnish (fi-FI)</SelectItem>
+            <SelectItem value="fr-FR">French (fr-FR)</SelectItem>
+            <SelectItem value="fr-BE">French (Belgian) (fr-BE)</SelectItem>
+            <SelectItem value="fr-CA">French (Canadian) (fr-CA)</SelectItem>
+            <SelectItem value="de-DE">German (de-DE)</SelectItem>
+            <SelectItem value="de-AT">German (Austrian) (de-AT)</SelectItem>
+            <SelectItem value="hi-IN">Hindi (hi-IN)</SelectItem>
+            <SelectItem value="is-IS">Icelandic (is-IS)</SelectItem>
+            <SelectItem value="it-IT">Italian (it-IT)</SelectItem>
+            <SelectItem value="ja-JP">Japanese (ja-JP)</SelectItem>
+            <SelectItem value="ko-KR">Korean (ko-KR)</SelectItem>
+            <SelectItem value="nb-NO">Norwegian (nb-NO)</SelectItem>
+            <SelectItem value="pl-PL">Polish (pl-PL)</SelectItem>
+            <SelectItem value="pt-BR">Portuguese (Brazilian) (pt-BR)</SelectItem>
+            <SelectItem value="pt-PT">Portuguese (European) (pt-PT)</SelectItem>
+            <SelectItem value="ro-RO">Romanian (ro-RO)</SelectItem>
+            <SelectItem value="ru-RU">Russian (ru-RU)</SelectItem>
+            <SelectItem value="es-ES">Spanish (European) (es-ES)</SelectItem>
+            <SelectItem value="es-MX">Spanish (Mexican) (es-MX)</SelectItem>
+            <SelectItem value="es-US">Spanish (US) (es-US)</SelectItem>
+            <SelectItem value="sv-SE">Swedish (sv-SE)</SelectItem>
+            <SelectItem value="tr-TR">Turkish (tr-TR)</SelectItem>
+            <SelectItem value="cy-GB">Welsh (cy-GB)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="mt-6">
