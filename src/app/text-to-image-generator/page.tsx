@@ -83,13 +83,12 @@ export default function TextToImageGeneratorPage() {
  throw new Error("Failed to preprocess image.");
  }
 
-      const analysisResponse = await puter.ai.chat(
-        [{
- role: 'user',
- content: `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`,
-        }],
- { model: 'gpt-4-vision', base64Image } // Pass base64 image as the second argument
-      );
+const preProcessedDataUrl = await base64Image;
+
+const imagePrompt = `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`;
+
+
+      const analysisResponse = await puter.ai.chat(imagePrompt, preProcessedDataUrl )
 
       if (!analysisResponse?.message?.content) {
  throw new Error("Failed to analyze image and generate prompt: Empty response from AI.");
