@@ -59,7 +59,7 @@ export default function TextToImageGeneratorPage() {
     // Clear previous states related to generation/analysis
     setDescription('');
  setGeneratedImage(null);
-    setError(null);
+ setError(null);
   };
 
   const analyzeImageAndGeneratePrompt = async () => {
@@ -81,14 +81,14 @@ export default function TextToImageGeneratorPage() {
       const base64Image = await preprocessImage(selectedImage as File); // Cast selectedImage to File
       if (!base64Image) {
  throw new Error("Failed to preprocess image.");
-      }
-      
+ }
+
       const analysisResponse = await puter.ai.chat(
         [{
-          role: 'user',
+ role: 'user',
  content: `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`,
         }],
-        { model: 'gpt-4o', image: base64Image }
+ base64Image // Pass base64 image as the second argument
       );
 
       if (!analysisResponse?.message?.content) {
