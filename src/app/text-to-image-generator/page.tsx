@@ -85,7 +85,7 @@ export default function TextToImageGeneratorPage() {
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
 
-      const base64Image = await preprocessImage(selectedImage as File); // Cast selectedImage to File
+      const base64Image = await preprocessImage(File, 1024); // Cast selectedImage to File
       console.log(base64Image); // Add this line to log the output
       if (!base64Image) {
         throw new Error("Failed to preprocess image.");
