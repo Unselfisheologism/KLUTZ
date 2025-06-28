@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, AlertTriangle, Info, Download, ImageIcon } from 'lucide-react';
-import type { TextToImageGenerationReport } from '@/types/text-to-image-generator';
+import type { TextToImageGenerationReport, ImageAnalysisResult } from '@/types/text-to-image-generator';
 import { getLaymanErrorMessage } from '@/lib/error-utils';
 import { downloadTextFile } from '@/lib/utils';
+import { preprocessImage } from '@/lib/image-utils';
 
 const cleanJsonString = (rawString: string): string => {
   let cleanedString = rawString.trim();
@@ -30,6 +31,7 @@ export default function TextToImageGeneratorPage() {
   const [style, setStyle] = useState<string>('');
   const [aspectRatio, setAspectRatio] = useState<string>('');
   const [additionalContext, setAdditionalContext] = useState<string>('');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   
   const [generatedImage, setGeneratedImage] = useState<TextToImageGenerationReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +48,50 @@ export default function TextToImageGeneratorPage() {
       });
     }
   }, [toast]);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      // Optionally clear previous results or messages
+      setDescription('');
+      setGeneratedImage(null);
+      setError(null);
+    }
+  };
+
+  const analyzeImageAndGeneratePrompt = async () => {
+    if (!selectedImage) {
+      toast({ variant: "destructive", title: "Missing Image", description: "Please upload an image to analyze." });
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    toast({ title: "Analyzing Image", description: "AI is analyzing your image to generate a prompt..." });
+
+    try {
+      const base64Image = await preprocessImage(selectedImage);
+
+      const analysisResponse = await puter.ai.chat(
+        `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`,
+        { model: 'gpt-4o', image: base64Image }
+      );
+
+      if (!analysisResponse?.message?.content) {
+        throw new Error("Failed to analyze image and generate prompt.");
+      }
+      const parsedAnalysis = JSON.parse(cleanJsonString(analysisResponse.message.content));
+      setDescription(parsedAnalysis.dalle_prompt);
+      toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
+    } catch (err: any) {
+      console.error("Image analysis error:", err);
+      setError(getLaymanErrorMessage(err, "Failed to analyze image and generate prompt."));
+      toast({ variant: "destructive", title: "Analysis Failed", description: "Failed to analyze image and generate prompt." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const generateImage = async () => {
     if (!description.trim()) {
@@ -214,6 +260,28 @@ export default function TextToImageGeneratorPage() {
           </Alert>
 
           <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+                <div className="flex-grow">
+                  <Label htmlFor="image-upload" className="text-lg font-medium">Upload Image (Optional)</Label>
+                  <Input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  />
+                   {selectedImage && (
+                     <p className="text-sm text-muted-foreground mt-1">Selected: {selectedImage.name}</p>
+                   )}
+                </div>
+                <Button onClick={analyzeImageAndGeneratePrompt} disabled={isLoading || !selectedImage} className="self-end">
+                  {isLoading && selectedImage ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  Analyze Image</Button>
+            </div>
             <div>
               <Label htmlFor="description" className="text-lg font-medium">Image Description</Label>
               <Textarea
@@ -275,7 +343,7 @@ export default function TextToImageGeneratorPage() {
 
           <Button 
             onClick={generateImage} 
-            disabled={isLoading || !description.trim()} 
+            disabled={isLoading || (!description.trim() && !selectedImage)} 
             className="w-full"
           >
             {isLoading ? (
