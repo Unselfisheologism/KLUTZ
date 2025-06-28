@@ -88,7 +88,7 @@ export default function TextToImageGeneratorPage() {
  role: 'user',
  content: `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`,
         }],
- base64Image // Pass base64 image as the second argument
+ { model: 'gpt-4-vision', base64Image } // Pass base64 image as the second argument
       );
 
       if (!analysisResponse?.message?.content) {
