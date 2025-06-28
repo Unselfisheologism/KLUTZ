@@ -73,8 +73,16 @@ export default function TextToImageGeneratorPage() {
     toast({ title: "Analyzing Image", description: "AI is analyzing your image to generate a prompt..." });
 
     try {
-      const base64Image = await preprocessImage(selectedImage);
+      if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
+ throw new Error("Puter SDK not available. Please refresh.");
+      }
+      const puter = window.puter;
 
+      const base64Image = await preprocessImage(selectedImage as File); // Cast selectedImage to File
+      if (!base64Image) {
+ throw new Error("Failed to preprocess image.");
+      }
+      
       const analysisResponse = await puter.ai.chat(
         [{
           role: 'user',
