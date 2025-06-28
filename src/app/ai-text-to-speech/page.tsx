@@ -1,3 +1,4 @@
+'use client';
 "use client";
 
 import { useState } from "react";
@@ -6,11 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import {
-  AITextToSpeechInput,
-  AITextToSpeechOutput,
-  AITextToSpeechLanguageCode, // Assuming you have this type or similar
-} from "@/types/ai-text-to-speech"; // Assume this type exists
+
+
 import {
   Select,
   SelectContent,
@@ -129,7 +127,7 @@ const AITextToSpeechPage = () => {
         displayErrorMessage = blobError.message;
       }
       setError(`Text-to-speech conversion failed: ${displayErrorMessage}`);
-  return (
+      toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">AI Text to Speech Generator</h1>
 
