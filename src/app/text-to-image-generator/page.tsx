@@ -101,23 +101,23 @@ export default function TextToImageGeneratorPage() {
       throw new Error("Failed to analyze image and generate prompt: Empty response from AI.");
       }
       const rawContent = cleanJsonString(analysisResponse.message.content);
-    }
-    try {
-      const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent);
-      setDescription(parsedAnalysis.dalle_prompt);
-      toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
-    } catch (jsonError) {
-        console.error("Failed to parse AI response as JSON:", rawContent);
-        throw new Error("AI returned an invalid format. Please try again.");
+
+      try {
+        const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent);
+        setDescription(parsedAnalysis.dalle_prompt);
+        toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
+      } catch (jsonError) {
+          console.error("Failed to parse AI response as JSON:", rawContent);
+          throw new Error("AI returned an invalid format. Please try again.");
+        }
+      } catch (err: any) {
+          console.error("Image analysis error:", err);
+          setError(getLaymanErrorMessage("Failed to analyze image and generate prompt."));
+          toast({ variant: "destructive", title: "Analysis Failed", description: "Failed to analyze image and generate prompt." });
+        } finally {
+        setIsLoading(false);
       }
-    } catch (err: any) {
-      console.error("Image analysis error:", err);
-      setError(getLaymanErrorMessage("Failed to analyze image and generate prompt."));
-      toast({ variant: "destructive", title: "Analysis Failed", description: "Failed to analyze image and generate prompt." });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
   const generateImage = async () => {
     if (!description.trim()) {
