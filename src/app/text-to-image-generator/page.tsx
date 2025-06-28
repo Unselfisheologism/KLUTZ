@@ -74,34 +74,42 @@ export default function TextToImageGeneratorPage() {
 
     try {
       if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
- throw new Error("Puter SDK not available. Please refresh.");
+        throw new Error("Puter SDK not available. Please refresh.");
       }
       const puter = window.puter;
 
+      let isSignedIn = await puter.auth.isSignedIn();
+      if (!isSignedIn) {
+        await puter.auth.signIn();
+        isSignedIn = await puter.auth.isSignedIn();
+        if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
+      }
+
       const base64Image = await preprocessImage(selectedImage as File); // Cast selectedImage to File
       if (!base64Image) {
- throw new Error("Failed to preprocess image.");
- }
+        throw new Error("Failed to preprocess image.");
+      }
 
-const preProcessedDataUrl = await base64Image;
+      const preProcessedDataUrl = await base64Image;
 
-const imagePrompt = `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`;
+      const imagePrompt = `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`;
 
 
       const analysisResponse = await puter.ai.chat(imagePrompt, preProcessedDataUrl )
 
       if (!analysisResponse?.message?.content) {
- throw new Error("Failed to analyze image and generate prompt: Empty response from AI.");
+      throw new Error("Failed to analyze image and generate prompt: Empty response from AI.");
       }
       const rawContent = cleanJsonString(analysisResponse.message.content);
- try {
-        const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent);
- setDescription(parsedAnalysis.dalle_prompt);
- toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
- } catch (jsonError) {
- console.error("Failed to parse AI response as JSON:", rawContent);
- throw new Error("AI returned an invalid format. Please try again.");
- }
+    }
+    try {
+      const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent);
+      setDescription(parsedAnalysis.dalle_prompt);
+      toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
+    } catch (jsonError) {
+        console.error("Failed to parse AI response as JSON:", rawContent);
+        throw new Error("AI returned an invalid format. Please try again.");
+      }
     } catch (err: any) {
       console.error("Image analysis error:", err);
       setError(getLaymanErrorMessage("Failed to analyze image and generate prompt."));
