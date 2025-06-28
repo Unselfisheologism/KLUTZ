@@ -94,10 +94,8 @@ export default function TextToImageGeneratorPage() {
         throw new Error("AI did not return a valid prompt format. Please try again.");
       }
 
-      let parsedAnalysis: ImageAnalysisResult;
       try {
-        parsedAnalysis = JSON.parse(rawContent);
-      } catch (jsonError) {
+        const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent);
         console.error("Failed to parse AI response as JSON:", rawContent, jsonError);
         throw new Error("Failed to parse AI response. The format was unexpected.");
       }
