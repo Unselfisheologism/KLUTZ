@@ -128,6 +128,11 @@ const AITextToSpeechPage = () => {
       }
       setError(`Text-to-speech conversion failed: ${displayErrorMessage}`);
       toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  };      
+  return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">AI Text to Speech Generator</h1>
 
