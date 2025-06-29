@@ -33,7 +33,7 @@ export default function ImageToPromptGeneratorPage() {
   const [inputType, setInputType] = useState<'image' | 'text'>('image');
   const [textInput, setTextInput] = useState<string>('');
   const [textType, setTextType] = useState<string>('General');
-  const [textLanguage, setTextLanguage] = useState<string>('English');
+  const [textLanguage, setTextLanguage] = useState<string>('Auto-detect');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -211,7 +211,7 @@ export default function ImageToPromptGeneratorPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="text-type" className="text-lg font-medium">Text Type</Label>
-                      <Select value={textType} onValueChange={setTextType} defaultValue='Geneal'>
+                      <Select value={textType} onValueChange={setTextType}>
                         <SelectTrigger id="text-type">
                           <SelectValue placeholder="Select text type" />
                         </SelectTrigger>
@@ -253,7 +253,7 @@ export default function ImageToPromptGeneratorPage() {
                     </div>
                      <div className="space-y-2">
                       <Label htmlFor="text-language" className="text-lg font-medium">Language</Label>
-                      <Select value={textLanguage} onValueChange={setTextLanguage} defaultValue='Auto-detect'>
+                      <Select value={textLanguage} onValueChange={setTextLanguage}>
                         <SelectTrigger id="text-language">
                           <SelectValue placeholder="Select language" />
                         </SelectTrigger>
