@@ -116,6 +116,13 @@ const features: Feature[] = [
     isImplemented: true,
   },
   {
+    icon: Sparkles,
+    title: 'AI Prompt Generator',
+    description: 'Generate creative text prompts from images using AI analysis.',
+    href: '/prompt-generator',
+    isImplemented: true,
+  },
+  {
     icon: FileSpreadsheet,
     title: 'AI-Native Spreadsheets',
     description: 'Create and modify spreadsheets through natural language with an AI assistant that understands your data.',
