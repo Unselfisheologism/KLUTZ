@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'KLUTZ',
   description: 'Suite of AI-powered Image Analysis Tools',
   icons: {
-    icon: 'https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749123324/Image_fx__7_-removebg-preview_bxjg0s.png',
+    icon: 'https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png',
   },
 };
 
