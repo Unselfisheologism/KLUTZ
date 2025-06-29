@@ -309,12 +309,23 @@ function ChatComponent() {
        }
      }
 
-     const response = await window.puter.ai.chat(inputMessage, { model: selectedModel 
-      // You can add other options here if needed, like 'model'
-    });
+      let response;
+      try {
+        response = await window.puter.ai.chat(inputMessage, { model: selectedModel });
+      } catch (error) {
+        console.error(`Error during AI chat request for model ${selectedModel}:`, error);
+        const botErrorResponse: Message = {
+          id: messages.length + 2,
+          text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later.`,
+          sender: 'bot',
+        };
+        setMessages(prevMessages => [...prevMessages, botErrorResponse]);
+        return; // Stop processing if the API call failed
+      }
 
-    // Get AI response text, prioritizing response.message.content
-    const aiResponseText = response?.message?.content || response?.text;
+    // Get AI response text, prioritizing response.message.content, then response.text, and checking for other potential structures
+    const aiResponseText = response?.message?.content || response?.text || response?.choices?.[0]?.message?.content || JSON.stringify(response);
+    
 
     // Check if the response and response.text are valid before processing
     if (!aiResponseText) {
