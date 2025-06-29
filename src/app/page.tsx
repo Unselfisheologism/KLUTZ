@@ -309,44 +309,39 @@ function ChatComponent() {
        }
      }
 
-      let response;
+      // Add a temporary bot message to show streaming is in progress
+      const streamingBotMessage: Message = {
+        id: messages.length + 2,
+        text: '', // Start with empty text
+        sender: 'bot',
+      };
+      setMessages(prevMessages => [...prevMessages, streamingBotMessage]);
+
+      let accumulatedText = '';
+      const messageIdToUpdate = messages.length + 2; // The ID of the streaming bot message
+
       try {
-        response = await window.puter.ai.chat(inputMessage, { model: selectedModel });
+        const streamResponse = await window.puter.ai.chat(inputMessage, { model: selectedModel, stream: true });
+
+        for await (const part of streamResponse) {
+          const partText = part?.message?.content || part?.text || '';
+          if (partText) {
+            accumulatedText += partText;
+            // Update the last message in the chat with the streamed text
+            setMessages(prevMessages =>
+              prevMessages.map(msg =>
+                msg.id === messageIdToUpdate ? { ...msg, text: accumulatedText } : msg
+              )
+            );
+          }
+        }
       } catch (error) {
         console.error(`Error during AI chat request for model "${selectedModel}":`, error);
-        const botErrorResponse: Message = {
-          id: messages.length + 2,
-          text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later.`,
-          sender: 'bot',
-        };
+        // If an error occurs, update the last message to an error message
+        const botErrorResponse: Message = { id: messageIdToUpdate, text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later.`, sender: 'bot' };
         setMessages(prevMessages => [...prevMessages, botErrorResponse]);
         return; // Stop processing if the API call failed
       }
-
-    // Get AI response text, prioritizing response.message.content, then response.text, and checking for other potential structures
-    const aiResponseText = response?.message?.content || response?.text || response?.choices?.[0]?.message?.content || JSON.stringify(response);
-    
-
-    // Check if the response and response.text are valid before processing
-    if (!aiResponseText) {
-      console.error('Received empty or invalid text response from AI:', response);
-      // Add the AI's response to the chat
-       setMessages(prevMessages => [...prevMessages, {
-         id: prevMessages.length + 1,
-         text: 'Received an empty or invalid text response from the AI.',
-         sender: 'bot',
-       }]);
-      return;
-    }
-
-    const botResponse: Message = {
-      id: messages.length + 2,
-      text: aiResponseText,
-      sender: 'bot',
-    };
-
-    setMessages(prevMessages => [...prevMessages, botResponse]);
-    // Do not clear inputMessage here if you want to allow consecutive messages
   }
 };
 
