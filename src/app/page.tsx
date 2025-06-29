@@ -209,7 +209,6 @@ function ChatComponent() {
     'meta-llama/llama-3.3-70b-instruct',
     'meta-llama/llama-3.2-3b-instruct',
     'meta-llama/llama-3.2-1b-instruct',
-    'meta-llama/llama-3.1-405b',
     'meta-llama/llama-3.1-8b-instruct',
     'meta-llama/llama-3.1-405b-instruct',
     'meta-llama/llama-3.1-70b-instruct',
@@ -220,7 +219,6 @@ function ChatComponent() {
     'meta-llama/llama-guard-3-8b',
     'meta-llama/llama-guard-2-8b',
     'mistral-large-latest',
-    'pixtral-large-latest',
     'codestral-latest',
     // Adding other models from your research list if not already present or to use explicit names
     'google/gemma-2-27b-it',
