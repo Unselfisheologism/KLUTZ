@@ -324,7 +324,15 @@ function ChatComponent() {
         const streamResponse = await window.puter.ai.chat(inputMessage, { model: selectedModel, stream: true });
 
         for await (const part of streamResponse) {
-          const partText = part?.message?.content || part?.text || '';
+          let partText = '';
+          if (part?.message?.content) {
+            partText = part.message.content;
+          } else if (part?.text) {
+            partText = part.text;
+          } else {
+            // Log the structure of 'part' if text is not found in the usual places
+            console.warn('Unexpected streamed part structure:', part);
+          }
           if (partText) {
             accumulatedText += partText;
             // Update the last message in the chat with the streamed text
