@@ -183,7 +183,7 @@ export default function HomePage() {
                 {/* === PRODUCT HUNT BADGE REPLACEMENT END === */}
               </div>  
               <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
-                Image generators, Text, Date, Content Analysis, Translating, Problem-solving AI tools 
+                AI—Overpowered, but Underrated
               </h1>
               <div className="flex flex-col items-center">
                 <span className="text-sm font-medium mb-1">Made in</span>
@@ -216,7 +216,7 @@ export default function HomePage() {
               </div>
             </div>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Explore our suite of tools designed to provide insights and enhance your content using advanced AI capabilities.
+              ACID PITS (Audio, Chat, Infographics, Date-Time, Problem-Solving, Image, Text, Spreadsheets)😆
             </p>
           </div>
 

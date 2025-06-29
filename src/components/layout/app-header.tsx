@@ -12,7 +12,7 @@ export default function AppHeader() {
           <img
             src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png"
             alt="Klutz Logo"
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-lg"
           />
           <h1 className="text-2xl font-headline font-semibold text-foreground">
             Klutz
