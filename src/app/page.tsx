@@ -169,7 +169,7 @@ const features: Feature[] = [
   },
 ];
 
- function EffectsPanel (props) {
+function EffectsPanel (props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -292,7 +292,7 @@ const features: Feature[] = [
       return;
     }
   }
-}
+}}
 
 export default function HomePage() {
   return (
@@ -545,57 +545,6 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
-  );
-    </> 
-)
-      }
-
-function ChatComponent() {
-  const [input, setInput] = useState('');
-  const [response, setResponse] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    setLoading(true);
-    setResponse(''); // Clear previous response
-    try {
-      // Assuming puter is available globally
-      const chatResponse = await puter.ai.chat(input);
-      setResponse(chatResponse.text);
-    } catch (error) {
-      console.error("Error during AI chat:", error);
-      setResponse("Sorry, I couldn't process that request. Please try again.");
-    } finally {
-      setLoading(false);
-      setInput('');
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSend();
-    }
-  };
-
-  return (
-    <div className="flex flex-col space-y-4">
-      <Input
-        type="text"
-        placeholder="Ask me anything about KLUTZ..."
-        value={input}
-        onChange={handleInputChange}
-        onKeyPress={handleKeyPress}
-        disabled={loading}
-      />
-      <Button onClick={handleSend} disabled={!input.trim() || loading}>Send</Button>
-      {loading && <p className="text-sm text-muted-foreground">Thinking...</p>}
-      {response && <p className="text-base text-foreground mt-4">{response}</p>}
-    </div>
+   </> 
   );
 }
