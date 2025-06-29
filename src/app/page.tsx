@@ -1,7 +1,7 @@
 'use client';
 
 import Head from 'next/head'; 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area'; 
 import { Separator } from '@/components/ui/separator';
+import { useToast } from "@/hooks/use-toast";
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
@@ -168,17 +169,12 @@ const features: Feature[] = [
   },
 ];
 
-export function EffectsPanel(props) {
+ function EffectsPanel (props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isAiChatReady, setIsAiChatReady] = useState(false);
   const { toast } = useToast();
-
-  // Add useEffect to log currentAudioFile changes
-  useEffect(() => {
-    console.log('currentAudioFile changed:', props.currentAudioFile);
-  }, [props.currentAudioFile]);
 
   useEffect(() => {
  // Scroll to the bottom of the chat when new messages are added
@@ -297,6 +293,7 @@ export function EffectsPanel(props) {
     }
   }
 }
+
 export default function HomePage() {
   return (
     <>
@@ -364,7 +361,7 @@ export default function HomePage() {
               ACID PITS (Audio, Chat, Infographics, Date-Time, Problem-Solving, Image, Text, Spreadsheets)😆
             </p>
           </div>
-
+          
           <Card className="h-full flex flex-col">
             <CardContent className="flex-grow overflow-hidden p-4">
               <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
