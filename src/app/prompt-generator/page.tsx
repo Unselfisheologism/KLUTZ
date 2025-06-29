@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, Sparkles, AlertTriangle, Info, ImageIcon } from 'lucide-react';
 import type { ImageAnalysisResult } from '@/types/text-to-image-generator'; // Assuming this type is suitable
 import { getLaymanErrorMessage } from '@/lib/error-utils';
@@ -29,6 +29,8 @@ const cleanJsonString = (rawString: string): string => {
 export default function ImageToPromptGeneratorPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
+  const [inputType, setInputType] = useState<'image' | 'text'>('image');
+  const [textInput, setTextInput] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,10 +59,15 @@ export default function ImageToPromptGeneratorPage() {
     }
   };
 
-  const analyzeImageAndGeneratePrompt = async () => {
-    if (!selectedImage) {
-      toast({ variant: "destructive", title: "Missing Image", description: "Please upload an image to analyze." });
+  const analyzeContentAndGeneratePrompt = async () => {
+    if (inputType === 'image' && !selectedImage) {
+      toast({ variant: "destructive", title: "Missing Image", description: "Please upload an image to analyze or switch to Text Analysis." });
       return;
+    }
+    if (inputType === 'text' && !textInput.trim()) {
+      toast({ variant: "destructive", title: "Missing Text", description: "Please enter text to analyze or switch to Image Analysis." });
+      setTextInput(''); // Clear potentially whitespace-only input
+      return
     }
 
     setIsLoading(true);
@@ -81,33 +88,45 @@ export default function ImageToPromptGeneratorPage() {
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
 
-      const base64Image = await preprocessImage(selectedImage, 1024);
-      if (!base64Image) {
-        throw new Error("Failed to preprocess image.");
+      let analysisResponse;
+
+      if (inputType === 'image' && selectedImage) {
+        const base64Image = await preprocessImage(selectedImage, 1024);
+        if (!base64Image) {
+          throw new Error("Failed to preprocess image.");
+        }
+
+        const imagePrompt = `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`;
+
+        analysisResponse = await puter.ai.chat(imagePrompt, base64Image);
+
+      } else if (inputType === 'text' && textInput.trim()) {
+        const textAnalysisPrompt = `Analyze the following text and generate a creative and detailed text-to-image prompt that captures the essence, mood, and key elements described in the text. Structure the output as a JSON object like this: {"dalle_prompt": "Your generated prompt here"}. Text: "${textInput}"`;
+
+        analysisResponse = await puter.ai.chat(textAnalysisPrompt);
       }
-
-      const preProcessedDataUrl = base64Image;
-
-      const imagePrompt = `Analyze the following image and generate a detailed, high-quality DALL-E 3 text-to-image prompt to recreate a similar image. Focus on key visual elements, style, mood, lighting, and composition. Provide the prompt directly as a string in a JSON object like this: {"dalle_prompt": "Your generated prompt here"}.`;
-
-
-      const analysisResponse = await puter.ai.chat(imagePrompt, preProcessedDataUrl);
 
       if (!analysisResponse?.message?.content) {
         throw new Error("Failed to analyze image and generate prompt: Empty response from AI.");
       }
+
       const rawContent = cleanJsonString(analysisResponse.message.content);
 
       try {
         const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent);
-        setGeneratedPrompt(parsedAnalysis.dalle_prompt);
-        toast({ title: "Prompt Generated", description: "Image analysis complete. Prompt is ready for review." });
+        if (parsedAnalysis.dalle_prompt) {
+          setGeneratedPrompt(parsedAnalysis.dalle_prompt);
+          toast({ title: "Prompt Generated", description: "Analysis complete. Prompt is ready for review." });
+        } else {
+          console.error("Parsed JSON did not contain 'dalle_prompt':", parsedAnalysis);
+          throw new Error("AI response missing 'dalle_prompt'. Please try again.");
+        }
       } catch (jsonError) {
         console.error("Failed to parse AI response as JSON:", rawContent);
         throw new Error("AI returned an invalid format. Please try again.");
       }
     } catch (err: any) {
-      console.error("Image analysis error:", err);
+      console.error("Analysis error:", err);
       setError(getLaymanErrorMessage("Failed to analyze image and generate prompt."));
       toast({ variant: "destructive", title: "Analysis Failed", description: "Failed to analyze image and generate prompt." });
     } finally {
@@ -124,7 +143,7 @@ export default function ImageToPromptGeneratorPage() {
         <Card className="max-w-3xl mx-auto shadow-xl">
           <CardHeader>
             <CardTitle className="font-headline text-3xl text-primary flex items-center">
-              <ImageIcon className="mr-3 h-8 w-8" />
+              <Sparkles className="mr-3 h-8 w-8" />
               AI Image to Prompt Generator
             </CardTitle>
             <CardDescription>
@@ -135,12 +154,40 @@ export default function ImageToPromptGeneratorPage() {
             <Alert variant="default" className="bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
               <Info className="h-5 w-5 text-blue-500" />
               <AlertTitle className="font-semibold">How it works</AlertTitle>
+              {inputType === 'image' ? (
               <AlertDescription>
                 Upload an image, and the AI will analyze its visual elements, style, and mood to create a detailed text prompt you can use for generating similar images.
               </AlertDescription>
+              ) : (
+                <AlertDescription>
+                Enter text describing the image you want to generate, and the AI will refine it into a detailed text prompt suitable for image generation models.
+              </AlertDescription>
+              )}
             </Alert>
 
             <div className="space-y-4">
+               <div className="flex items-center justify-center space-x-4">
+                <Button
+                  variant={inputType === 'image' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setInputType('image');
+                    setTextInput(''); // Clear text when switching to image
+                    setGeneratedPrompt('');
+                    setError(null);
+                  }}
+                >
+                  Image Analysis
+                </Button>
+                <Button
+                  variant={inputType === 'text' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setInputType('text');
+                    setSelectedImage(null); // Clear image when switching to text
+                    setGeneratedPrompt('');
+                    setError(null);
+                  }}>Text Analysis</Button>
+              </div>
+            {inputType === 'image' && (
               <div>
                 <Label htmlFor="image-upload" className="text-lg font-medium">Upload Image</Label>
                 <Input
@@ -154,11 +201,21 @@ export default function ImageToPromptGeneratorPage() {
                   <p className="text-sm text-muted-foreground mt-1">Selected: {selectedImage.name}</p>
                 )}
               </div>
+            )}
+
+             {inputType === 'text' && (
+                <div className="space-y-2">
+                  <Label htmlFor="text-input" className="text-lg font-medium">Enter Text</Label>
+                  <Textarea id="text-input" placeholder="Describe the image you want to create..." value={textInput} onChange={(e) => setTextInput(e.target.value)} className="min-h-[100px]" />
+                </div>
+              )}
+
 
               <Button
-                onClick={analyzeImageAndGeneratePrompt}
-                disabled={isLoading || !selectedImage}
+                onClick={analyzeContentAndGeneratePrompt}
+                disabled={isLoading || (inputType === 'image' && !selectedImage) || (inputType === 'text' && !textInput.trim())}
                 className="w-full"
+                variant={inputType === 'image' ? 'default' : 'secondary'}
               >
                 {isLoading ? (
                   <>
@@ -193,17 +250,17 @@ export default function ImageToPromptGeneratorPage() {
                 </div>
               )}
 
-              {!generatedPrompt && !isLoading && !error && !selectedImage && (
+              {!generatedPrompt && !isLoading && !error && inputType === 'image' && !selectedImage && (
                 <div className="mt-6 p-4 border border-dashed rounded-md text-center text-muted-foreground">
                   <Info className="mx-auto h-8 w-8 mb-2" />
                   <p>Upload an image to generate a text prompt.</p>
                 </div>
               )}
-               {!generatedPrompt && !isLoading && !error && selectedImage && (
+               {!generatedPrompt && !isLoading && !error && inputType === 'image' && selectedImage && (
                 <div className="mt-6 p-4 border border-dashed rounded-md text-center text-muted-foreground">
                   <Info className="mx-auto h-8 w-8 mb-2" />
                   <p>Click "Generate Prompt" to analyze the uploaded image.</p>
-                </div>
+                </div>  
               )}
             </div>
           </CardContent>
