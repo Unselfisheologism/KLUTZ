@@ -295,7 +295,8 @@ export function EffectsPanel(props) {
        }]);
       return;
     }
-
+  }
+}
 export default function HomePage() {
   return (
     <>
