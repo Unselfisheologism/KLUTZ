@@ -1,6 +1,8 @@
 'use client';
 
 import Head from 'next/head'; 
+import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +12,7 @@ import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap,
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 interface Feature {
   icon: React.ElementType;
-  title: string;
+ title: string;
   description: string;
   href: string;
   isImplemented: boolean;
@@ -220,6 +222,16 @@ export default function HomePage() {
             </p>
           </div>
 
+ {/* AI Chat Section */}
+ <div className="mb-12 p-6 bg-card rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-primary mb-4">Ask AI</h2>
+            <p className="text-muted-foreground mb-4">
+              Have questions about the tools or anything else? Chat with our AI assistant.
+            </p>
+ <ChatComponent />
+          </div>
+
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature) => (
                 <Card key={feature.title} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -372,3 +384,53 @@ export default function HomePage() {
     </> 
 )
       }
+
+function ChatComponent() {
+  const [input, setInput] = useState('');
+  const [response, setResponse] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    setLoading(true);
+    setResponse(''); // Clear previous response
+    try {
+      // Assuming puter is available globally or imported
+      const chatResponse = await puter.ai.chat(input);
+      setResponse(chatResponse.text);
+    } catch (error) {
+      console.error("Error during AI chat:", error);
+      setResponse("Sorry, I couldn't process that request. Please try again.");
+    } finally {
+      setLoading(false);
+      setInput('');
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSend();
+    }
+  };
+
+  return (
+    <div className="flex flex-col space-y-4">
+      <Input
+        type="text"
+        placeholder="Ask me anything about KLUTZ..."
+        value={input}
+        onChange={handleInputChange}
+        onKeyPress={handleKeyPress}
+        disabled={loading}
+      />
+      <Button onClick={handleSend} disabled={!input.trim() || loading}>Send</Button>
+      {loading && <p className="text-sm text-muted-foreground">Thinking...</p>}
+      {response && <p className="text-base text-foreground mt-4">{response}</p>}
+    </div>
+  );
+}
