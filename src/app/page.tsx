@@ -116,7 +116,7 @@ const features: Feature[] = [
     isImplemented: true,
   },
   {
-    icon: Sparkles,
+    icon: Wand,
     title: 'AI Prompt Generator',
     description: 'Generate creative text prompts from images using AI analysis.',
     href: '/prompt-generator',
