@@ -309,7 +309,7 @@ function ChatComponent() {
        }
      }
 
-     const response = await window.puter.ai.chat(inputMessage, { model: selectedModel ;
+     const response = await window.puter.ai.chat(inputMessage, { model: selectedModel 
       // You can add other options here if needed, like 'model'
     });
 
