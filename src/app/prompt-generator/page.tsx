@@ -104,7 +104,7 @@ export default function ImageToPromptGeneratorPage() {
         analysisResponse = await puter.ai.chat(imagePrompt, base64Image);
 
       } else if (inputType === 'text' && textInput.trim()) {
-        const textAnalysisPrompt = `Analyze the following text and generate a creative and detailed prompt for a text generation model (like GPT-4) that captures the core themes, style, and mood of the input text. Consider the desired text type is "${textType}" and the language is "${textLanguage}". The generated prompt should be suitable for creating similar textual content. Structure the output as a JSON object like this: {"generated_prompt": "Your generated prompt here"}. Text: "${textInput}"`;
+        const textAnalysisPrompt = `Analyze the following text and generate a creative and detailed prompt for a text generation model (like GPT-4) that captures the core themes, style, and mood of the input text. Consider the desired text type is "${textType}" and the language is "${textLanguage}". The generated prompt should be suitable for creating similar textual content. Structure the output as a JSON object like this: {"dalle_prompt": "Your generated prompt here"}. Text: "${textInput}"`;
 
         analysisResponse = await puter.ai.chat(textAnalysisPrompt);
       }
@@ -116,9 +116,9 @@ export default function ImageToPromptGeneratorPage() {
       const rawContent = cleanJsonString(analysisResponse.message.content);
 
       try {
-        const parsedAnalysis: any = JSON.parse(rawContent); // Use any as the structure might differ slightly for text
-        if (parsedAnalysis.generated_prompt) {
-          setGeneratedPrompt(parsedAnalysis.generated_prompt);
+        const parsedAnalysis: ImageAnalysisResult = JSON.parse(rawContent); // Use any as the structure might differ slightly for text
+        if (parsedAnalysis.dalle_prompt) {
+          setGeneratedPrompt(parsedAnalysis.dalle_prompt);
           toast({ title: "Prompt Generated", description: "Analysis complete. Prompt is ready for review." });
         } else {
           console.error("Parsed JSON did not contain 'dalle_prompt':", parsedAnalysis);
