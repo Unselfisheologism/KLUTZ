@@ -179,7 +179,7 @@ function ChatComponent() {
   const { toast } = useToast();
   const [selectedModel, setSelectedModel] = useState<string>('gpt-4o-mini'); // State for selected model
 
-  const availableModels: string[] = [
+  const availableModels: string[] = [ // Updated based on puter.com/docs
     'gpt-4o-mini',
     'gpt-4o',
     'o1',
@@ -196,16 +196,23 @@ function ChatComponent() {
     'claude-opus-4',
     'claude-3-7-sonnet',
     'claude-3-5-sonnet',
-    'deepseek-chat',
-    'deepseek-reasoner',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
+    'deepseek-chat', // Kept as is from your list
+    'deepseek-reasoner', // Kept as is from your list
+    // Updated Gemini model IDs based on your research
+    'google/gemini-2.5-flash-preview',
+    'google/gemini-2.5-flash-preview:thinking',
+    'google/gemini-2.5-pro-exp-03-25:free',
+    'google/gemini-2.0-flash-lite-001',
+    'google/gemini-2.0-flash-001',
+    'google/gemini-pro-1.5', // This is likely what 'gemini-1.5-flash' mapped to
+    'google/gemini-pro', // This is likely what 'gemini-pro' mapped to
     'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
     'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
     'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo',
     'mistral-large-latest',
     'pixtral-large-latest',
     'codestral-latest',
+    // Adding other models from your research list if not already present or to use explicit names
     'google/gemma-2-27b-it',
     'grok-beta',
   ];
