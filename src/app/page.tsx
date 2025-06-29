@@ -169,7 +169,9 @@ const features: Feature[] = [
   },
 ];
 
-function EffectsPanel (props) {
+
+
+export default function HomePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -292,9 +294,6 @@ function EffectsPanel (props) {
       return;
     }
   }
-}}
-
-export default function HomePage() {
   return (
     <>
       <Head>
