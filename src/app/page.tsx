@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area'; 
 import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
@@ -176,6 +177,41 @@ function ChatComponent() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isAiChatReady, setIsAiChatReady] = useState(false);
   const { toast } = useToast();
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o-mini'); // State for selected model
+
+  const availableModels: string[] = [
+    'gpt-4o-mini',
+    'gpt-4o',
+    'o1',
+    'o1-mini',
+    'o1-pro',
+    'o3',
+    'o3-mini',
+    'o4-mini',
+    'gpt-4.1',
+    'gpt-4.1-mini',
+    'gpt-4.1-nano',
+    'gpt-4.5-preview',
+    'claude-sonnet-4',
+    'claude-opus-4',
+    'claude-3-7-sonnet',
+    'claude-3-5-sonnet',
+    'deepseek-chat',
+    'deepseek-reasoner',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+    'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
+    'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo',
+    'mistral-large-latest',
+    'pixtral-large-latest',
+    'codestral-latest',
+    'google/gemma-2-27b-it',
+    'grok-beta',
+  ];
+
+
+
 
   useEffect(() => {
  // Scroll to the bottom of the chat when new messages are added
@@ -273,7 +309,7 @@ function ChatComponent() {
        }
      }
 
-     const response = await window.puter.ai.chat(inputMessage, { // Changed prompt to inputMessage
+     const response = await window.puter.ai.chat(inputMessage, { model: selectedModel ;
       // You can add other options here if needed, like 'model'
     });
 
@@ -332,6 +368,17 @@ function ChatComponent() {
             className="flex-grow"
             disabled={!isAiChatReady}
           />
+ <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
+ <SelectTrigger className="w-[180px]" disabled={!isAiChatReady}>
+ <SelectValue placeholder="Select Model" />
+ </SelectTrigger>
+ <SelectContent>
+ {availableModels.map(model => (
+ <SelectItem key={model} value={model}>{model}</SelectItem>
+ ))}
+ </SelectContent>
+ </Select>
+
           <Button onClick={handleSendMessage} disabled={!isAiChatReady || inputMessage.trim() === ''}>Send</Button>
         </div>
       </div>
