@@ -7,9 +7,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area'; 
 import { Separator } from '@/components/ui/separator';
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
+
+declare global {
+  interface Window {
+    puter: any; // Replace 'any' with a more specific type if available
+  }
+}
+
+interface Message {
+  id: number;
+  text: string;
+  sender: 'user' | 'bot';
+}
+
 interface Feature {
   icon: React.ElementType;
  title: string;
@@ -154,6 +168,134 @@ const features: Feature[] = [
   },
 ];
 
+export function EffectsPanel(props) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isAiChatReady, setIsAiChatReady] = useState(false);
+  const { toast } = useToast();
+
+  // Add useEffect to log currentAudioFile changes
+  useEffect(() => {
+    console.log('currentAudioFile changed:', props.currentAudioFile);
+  }, [props.currentAudioFile]);
+
+  useEffect(() => {
+ // Scroll to the bottom of the chat when new messages are added
+ if (scrollAreaRef.current) {
+ scrollAreaRef.current.scrollTo({
+ top: scrollAreaRef.current.scrollHeight,
+ behavior: 'smooth',
+ });
+ }
+  }, [messages]);
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    const maxAttempts = 100; // Try for about 20 seconds (100 * 200ms) -> Increased to 500ms interval, so 50 seconds total
+    let attempts = 0;
+    const intervalDuration = 500; // Increased interval duration
+
+    const checkPuterReadiness = () => {
+      attempts++;
+      if (typeof window.puter?.ai?.chat === 'function') {
+        setIsAiChatReady(true);
+        // Add a message to the chat when the AI is ready
+        setMessages(prevMessages => {
+          // Avoid adding the "ready" message multiple times
+          if (!prevMessages.some(msg => msg.text.includes("AI audio assistant is ready"))) {
+            return [
+              ...prevMessages,
+              {
+                id: prevMessages.length + 1,
+                text: "AI audio assistant is ready. How can I help you edit your audio?",
+                sender: 'bot',
+              },
+            ];
+          }
+          return prevMessages;
+        });
+        if (intervalId) clearInterval(intervalId);
+      } else {
+        console.warn('Puter.js SDK or AI chat functionality not yet loaded.');
+        console.log(`Attempt ${attempts}:`);
+        console.log('window.puter:', window.puter);
+        console.log('window.puter.ai:', window.puter?.ai);
+        console.log('window.puter.ai.chat:', window.puter?.ai?.chat);
+
+        if (attempts >= maxAttempts && intervalId) {
+          clearInterval(intervalId);
+          console.error('Max attempts reached. Puter.js AI chat functionality not loaded.');
+          toast({
+            variant: "destructive",
+            title: "AI Chat Error",
+            description: "AI chat functionality could not be loaded. Please try refreshing.",
+          });
+        }
+      }
+    };
+
+    // Start polling
+    intervalId = setInterval(checkPuterReadiness, intervalDuration); // Check every 500ms
+
+    // Clear interval on component unmount
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (inputMessage.trim() === '') return;
+
+    const newUserMessage: Message = {
+      id: messages.length + 1,
+      text: inputMessage,
+      sender: 'user',
+    };
+
+    setMessages([...messages, newUserMessage]);
+    setInputMessage('')
+
+    if (!isAiChatReady) {
+      console.error('AI chat is not ready.');
+      return; // Do not attempt to send if not ready
+   }
+   if (window.puter) {
+     // Ensure user is signed in before making the AI chat call
+     let isSignedIn = await window.puter.auth.isSignedIn();
+     if (!isSignedIn) {
+       await window.puter.auth.signIn();
+       isSignedIn = await window.puter.auth.isSignedIn();
+       if (!isSignedIn) {
+         const botResponse: Message = {
+           id: messages.length + 2,
+           text: 'Authentication failed or was cancelled. Cannot process command.',
+           sender: 'bot',
+         };
+         setMessages(prevMessages => [...prevMessages, botResponse]);
+         return;
+       }
+     }
+
+     const response = await window.puter.ai.chat(prompt, {
+      // You can add other options here if needed, like 'model'
+    });
+
+    // Get AI response text, prioritizing response.message.content
+    const aiResponseText = response?.message?.content || response?.text;
+
+    // Check if the response and response.text are valid before processing
+    if (!aiResponseText) {
+      console.error('Received empty or invalid text response from AI:', response);
+      // Add the AI's response to the chat
+       setMessages(prevMessages => [...prevMessages, {
+         id: prevMessages.length + 1,
+         text: 'Received an empty or invalid text response from the AI.',
+         sender: 'bot',
+       }]);
+      return;
+    }
+
 export default function HomePage() {
   return (
     <>
@@ -222,15 +364,40 @@ export default function HomePage() {
             </p>
           </div>
 
- {/* AI Chat Section */}
- <div className="mb-12 p-6 bg-card rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold text-primary mb-4">Ask AI</h2>
-            <p className="text-muted-foreground mb-4">
-              Have questions about the tools or anything else? Chat with our AI assistant.
-            </p>
- <ChatComponent />
-          </div>
-
+          <Card className="h-full flex flex-col">
+            <CardContent className="flex-grow overflow-hidden p-4">
+              <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
+                {/* Chat messages */}
+                {messages.map(message => (
+                  <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                    <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                      {message.text}
+                    </span>
+                  </div>
+                ))}
+              </ScrollArea>
+            </CardContent>
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Type your command..."
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      if (isAiChatReady) {
+                        handleSendMessage();
+                      }
+                    }
+                  }
+                  }
+                  className="flex-grow"
+                  disabled={!isAiChatReady} // Disable input if AI is not ready
+                />
+                <Button onClick={handleSendMessage} disabled={!isAiChatReady || inputMessage.trim() === ''}>Send</Button> {/* Disable button if AI is not ready or input is empty */}
+              </div>
+            </div>
+          </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature) => (
@@ -396,7 +563,7 @@ function ChatComponent() {
     setLoading(true);
     setResponse(''); // Clear previous response
     try {
-      // Assuming puter is available globally or imported
+      // Assuming puter is available globally
       const chatResponse = await puter.ai.chat(input);
       setResponse(chatResponse.text);
     } catch (error) {

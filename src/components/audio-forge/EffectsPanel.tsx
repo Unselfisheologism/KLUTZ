@@ -153,7 +153,7 @@ export function EffectsPanel(props) {
       // Construct the prompt for the AI
       const prompt = `
 ${audioFileContext}
-The current audio file you are working with is: ${props.currentAudioFile || 'No audio file loaded'}
+The current audio file you are working with is: ${props.currentAudioFile}
 
 
 You are an AI audio assistant that can help edit audio files by applying effects.
