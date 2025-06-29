@@ -101,7 +101,7 @@ export default function ImageToPromptGeneratorPage() {
         analysisResponse = await puter.ai.chat(imagePrompt, base64Image);
 
       } else if (inputType === 'text' && textInput.trim()) {
-        const textAnalysisPrompt = `Analyze the following text and generate a creative and detailed text-to-image prompt that captures the essence, mood, and key elements described in the text. Structure the output as a JSON object like this: {"dalle_prompt": "Your generated prompt here"}. Text: "${textInput}"`;
+        const textAnalysisPrompt = `Analyze the following text and generate a creative and detailed prompt for a text generation model (like GPT-4) that captures the core themes, style, and mood of the input text. The generated prompt should be suitable for creating similar textual content. Structure the output as a JSON object like this: {"prompt": "Your generated prompt here"}. Text: "${textInput}"`;
 
         analysisResponse = await puter.ai.chat(textAnalysisPrompt);
       }
