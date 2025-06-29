@@ -211,7 +211,7 @@ export default function ImageToPromptGeneratorPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="text-type" className="text-lg font-medium">Text Type</Label>
-                      <Select value={textType} onValueChange={setTextType}>
+                      <Select value={textType} onValueChange={setTextType} defaultValue='Geneal'>
                         <SelectTrigger id="text-type">
                           <SelectValue placeholder="Select text type" />
                         </SelectTrigger>
@@ -253,7 +253,7 @@ export default function ImageToPromptGeneratorPage() {
                     </div>
                      <div className="space-y-2">
                       <Label htmlFor="text-language" className="text-lg font-medium">Language</Label>
-                      <Select value={textLanguage} onValueChange={setTextLanguage}>
+                      <Select value={textLanguage} onValueChange={setTextLanguage} defaultValue='Auto-detect'>
                         <SelectTrigger id="text-language">
                           <SelectValue placeholder="Select language" />
                         </SelectTrigger>
