@@ -313,7 +313,7 @@ function ChatComponent() {
       try {
         response = await window.puter.ai.chat(inputMessage, { model: selectedModel });
       } catch (error) {
-        console.error(`Error during AI chat request for model ${selectedModel}:`, error);
+        console.error(`Error during AI chat request for model "${selectedModel}":`, error);
         const botErrorResponse: Message = {
           id: messages.length + 2,
           text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later.`,
