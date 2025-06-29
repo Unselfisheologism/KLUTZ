@@ -170,6 +170,175 @@ const features: Feature[] = [
 ];
 
 
+function ChatComponent() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isAiChatReady, setIsAiChatReady] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+ // Scroll to the bottom of the chat when new messages are added
+ if (scrollAreaRef.current) {
+ scrollAreaRef.current.scrollTo({
+ top: scrollAreaRef.current.scrollHeight,
+ behavior: 'smooth',
+ });
+ }
+  }, [messages]);
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    const maxAttempts = 100; // Try for about 20 seconds (100 * 200ms) -> Increased to 500ms interval, so 50 seconds total
+    let attempts = 0;
+    const intervalDuration = 500; // Increased interval duration
+
+    const checkPuterReadiness = () => {
+      attempts++;
+      if (typeof window.puter?.ai?.chat === 'function') {
+        setIsAiChatReady(true);
+        // Add a message to the chat when the AI is ready
+        setMessages(prevMessages => {
+          // Avoid adding the "ready" message multiple times
+          if (!prevMessages.some(msg => msg.text.includes("AI audio assistant is ready"))) {
+            return [
+              ...prevMessages,
+              {
+                id: prevMessages.length + 1,
+                text: "AI audio assistant is ready. How can I help you edit your audio?",
+                sender: 'bot',
+              },
+            ];
+          }
+          return prevMessages;
+        });
+        if (intervalId) clearInterval(intervalId);
+      } else {
+        console.warn('Puter.js SDK or AI chat functionality not yet loaded.');
+        console.log(`Attempt ${attempts}:`);
+        console.log('window.puter:', window.puter);
+        console.log('window.puter.ai:', window.puter?.ai);
+        console.log('window.puter.ai.chat:', window.puter?.ai?.chat);
+
+        if (attempts >= maxAttempts && intervalId) {
+          clearInterval(intervalId);
+          console.error('Max attempts reached. Puter.js AI chat functionality not loaded.');
+          toast({
+            variant: "destructive",
+            title: "AI Chat Error",
+            description: "AI chat functionality could not be loaded. Please try refreshing.",
+          });
+        }
+      }
+    };
+
+    // Start polling
+    intervalId = setInterval(checkPuterReadiness, intervalDuration); // Check every 500ms
+
+    // Clear interval on component unmount
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (inputMessage.trim() === '') return;
+
+    const newUserMessage: Message = {
+      id: messages.length + 1,
+      text: inputMessage,
+      sender: 'user',
+    };
+
+    setMessages([...messages, newUserMessage]);
+    setInputMessage('');
+
+    if (!isAiChatReady) {
+      console.error('AI chat is not ready.');
+      return; // Do not attempt to send if not ready
+   }
+   if (window.puter) {
+     let isSignedIn = await window.puter.auth.isSignedIn();
+     if (!isSignedIn) {
+       await window.puter.auth.signIn();
+       isSignedIn = await window.puter.auth.isSignedIn();
+       if (!isSignedIn) {
+         const botResponse: Message = {
+           id: messages.length + 2,
+           text: 'Authentication failed or was cancelled. Cannot process command.',
+           sender: 'bot',
+         };
+         setMessages(prevMessages => [...prevMessages, botResponse]);
+         return;
+       }
+     }
+
+     const response = await window.puter.ai.chat(inputMessage, { // Changed prompt to inputMessage
+      // You can add other options here if needed, like 'model'
+    });
+
+    // Get AI response text, prioritizing response.message.content
+    const aiResponseText = response?.message?.content || response?.text;
+
+    // Check if the response and response.text are valid before processing
+    if (!aiResponseText) {
+      console.error('Received empty or invalid text response from AI:', response);
+      // Add the AI's response to the chat
+       setMessages(prevMessages => [...prevMessages, {
+         id: prevMessages.length + 1,
+         text: 'Received an empty or invalid text response from the AI.',
+         sender: 'bot',
+       }]);
+      return;
+    }
+
+    const botResponse: Message = {
+      id: messages.length + 2,
+      text: aiResponseText,
+      sender: 'bot',
+    };
+
+    setMessages(prevMessages => [...prevMessages, botResponse]);
+    // Do not clear inputMessage here if you want to allow consecutive messages
+  }
+};
+
+  return (
+    <Card className="h-full flex flex-col">
+      <CardContent className="flex-grow overflow-hidden p-4">
+        <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
+          {messages.map(message => (
+            <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+              <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                {message.text}
+              </span>
+            </div>
+          ))}
+        </ScrollArea>
+      </CardContent>
+      <div className="p-4 border-t">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Type your command..."
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                if (isAiChatReady) {
+                  handleSendMessage();
+                }
+              }
+            }}
+            className="flex-grow"
+            disabled={!isAiChatReady}
+          />
+          <Button onClick={handleSendMessage} disabled={!isAiChatReady || inputMessage.trim() === ''}>Send</Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 
 export default function HomePage() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -361,40 +530,7 @@ export default function HomePage() {
             </p>
           </div>
           
-          <Card className="h-full flex flex-col">
-            <CardContent className="flex-grow overflow-hidden p-4">
-              <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
-                {/* Chat messages */}
-                {messages.map(message => (
-                  <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                    <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                      {message.text}
-                    </span>
-                  </div>
-                ))}
-              </ScrollArea>
-            </CardContent>
-            <div className="p-4 border-t">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Type your command..."
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      if (isAiChatReady) {
-                        handleSendMessage();
-                      }
-                    }
-                  }
-                  }
-                  className="flex-grow"
-                  disabled={!isAiChatReady} // Disable input if AI is not ready
-                />
-                <Button onClick={handleSendMessage} disabled={!isAiChatReady || inputMessage.trim() === ''}>Send</Button> {/* Disable button if AI is not ready or input is empty */}
-              </div>
-            </div>
-          </Card>
+         <ChatComponent />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature) => (
