@@ -27,7 +27,7 @@ const AITextToSpeechPage = () => {
   const [audioOutput, setAudioOutput] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en-GB');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('Text-to-Speech Reader');
   const { toast } = useToast();
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -93,7 +93,7 @@ const AITextToSpeechPage = () => {
     setAudioOutput(null); // Clear any previous audio output
 
     // --- Browser TTS Option ---
-    if (selectedLanguage === 'browser-tts') {
+    if (selectedLanguage === 'Text-to-Speech Reader') {
       if ('speechSynthesis' in window) {
         console.log("Using browser speech synthesis as requested.");
         try {
@@ -103,7 +103,7 @@ const AITextToSpeechPage = () => {
           // add a separate dropdown for browser voices if needed.
           // We will not explicitly set utterance.lang here
           // to allow the browser to use its default or inferred language.
-           utterance.lang = selectedLanguage !== 'browser-tts' ? selectedLanguage : ''; // Set language if not browser-tts
+           utterance.lang = selectedLanguage !== 'Text-to-Speech Reader' ? selectedLanguage : ''; // Set language if not Text-to-Speech Reader
 
           utterance.onstart = () => {
             setIsLoading(true);
@@ -224,7 +224,7 @@ const AITextToSpeechPage = () => {
       </div>
 
       <div className="mt-4">
-        <Label htmlFor="language-select">Select Language</Label>
+        <Label htmlFor="language-select">Select Voice</Label>
         <Select value={selectedLanguage} onValueChange={setSelectedLanguage} disabled={isLoading}>
           <SelectTrigger id="language-select">
             <SelectValue placeholder="Select a language" />
@@ -254,7 +254,7 @@ const AITextToSpeechPage = () => {
             <SelectItem value="es-MX">Spanish (Mexican) (es-MX)</SelectItem>
             <SelectItem value="es-US">Spanish (US) (es-US)</SelectItem>
             <SelectItem value="cy-GB">Welsh (cy-GB)</SelectItem>
-            <SelectItem value="browser-tts">Browser TTS (Browser Built-in)</SelectItem>
+            <SelectItem value="Text-to-Speech Reader">Text-to-Speech Reader</SelectItem>
           </SelectContent>
         </Select>
       </div>
