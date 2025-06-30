@@ -92,6 +92,50 @@ const AITextToSpeechPage = () => {
     setError(null);
     setAudioOutput(null); // Clear any previous audio output
 
+    // --- Browser TTS Option ---
+    if (selectedLanguage === 'browser-tts') {
+      if ('speechSynthesis' in window) {
+        console.log("Using browser speech synthesis as requested.");
+        try {
+          const utterance = new SpeechSynthesisUtterance(text);
+          // For browser TTS, we can potentially let the browser
+          // decide the voice based on the text content, or we could
+          // add a separate dropdown for browser voices if needed.
+          // We will not explicitly set utterance.lang here
+          // to allow the browser to use its default or inferred language.
+           utterance.lang = selectedLanguage !== 'browser-tts' ? selectedLanguage : ''; // Set language if not browser-tts
+
+          utterance.onstart = () => {
+            setIsLoading(true);
+            setError(null);
+            setAudioOutput(null);
+          };
+
+          utterance.onend = () => {
+            setIsLoading(false);
+          };
+
+          utterance.onerror = (event) => {
+            console.error('Browser speech synthesis error:', event);
+            setError(`Browser speech synthesis failed: ${event.error}.`);
+            setIsLoading(false);
+          };
+
+          speechSynthesis.speak(utterance);
+
+        } catch (browserSpeechError: any) {
+          console.error("Browser speech synthesis error:", browserSpeechError);
+          setError(`Browser text-to-speech failed: ${browserSpeechError.message}`);
+          setIsLoading(false);
+        }
+      } else {
+        setError("Browser speech synthesis is not supported in your browser.");
+        setIsLoading(false);
+      }
+      return; // Exit the function after attempting browser TTS
+    }
+
+    // --- Puter AI Service (for other languages) ---
     try {
       if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
         throw new Error("Puter SDK not available. Please refresh.");
@@ -128,57 +172,68 @@ const AITextToSpeechPage = () => {
     } catch (puterError: any) {
       console.error("Puter text-to-speech conversion error:", puterError);
 
-      // If Puter call fails, try the browser's Web Speech API as a fallback
-      if ('speechSynthesis' in window) {
-        console.log("Puter failed, attempting to use browser speech synthesis.");
+      // Fallback to browser API ONLY if Puter failed and it's not the browser-tts option
+      if (selectedLanguage !== 'browser-tts' && 'speechSynthesis' in window) {
+        console.log("Puter failed, attempting to use browser speech synthesis as fallback.");
         try {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = selectedLanguage; // Use the selected language
+           const utterance = new SpeechSynthesisUtterance(text);
+           utterance.lang = selectedLanguage; // Use the selected language from the dropdown
 
-          utterance.onstart = () => {
-            // Update status to indicate browser speech is active
-            setIsLoading(true); // Keep loading state while browser speaks
-            setError(null); // Clear Puter error when browser speech starts
-            setAudioOutput(null); // Clear previous audio output
-          };
+           utterance.onstart = () => {
+              setIsLoading(true);
+              setError(null); // Clear previous error when browser speech starts
+              setAudioOutput(null);
+              // Indicate fallback status
+           };
 
-          utterance.onend = () => {
-            // Update status to indicate browser speech is finished
-            setIsLoading(false);
-          };
+           utterance.onend = () => {
+              setIsLoading(false);
+           };
 
-          utterance.onerror = (event) => {
-            console.error('Browser speech synthesis error:', event);
-            setError(`Browser speech synthesis failed: ${event.error}.`);
-            // Update status to indicate browser speech error
-            setIsLoading(false);
-          };
+           utterance.onerror = (event) => {
+              console.error('Browser speech synthesis fallback error:', event);
+              setError(`Puter failed. Browser speech synthesis fallback failed: ${event.error}.`);
+              setIsLoading(false);
+           };
 
-          speechSynthesis.speak(utterance);
-
-          // Browser speech does not provide an audio URL in the same way
-          // The audio plays directly.
-          setAudioOutput(null); // Ensure audioOutput is null when using browser API
+           speechSynthesis.speak(utterance);
 
         } catch (browserSpeechError: any) {
-          console.error("Browser speech synthesis error:", browserSpeechError);
-          setError(`Text-to-speech failed: ${browserSpeechError.message}`);
-          setIsLoading(false);
+           console.error("Browser speech synthesis fallback error:", browserSpeechError);
+           let displayErrorMessage = "Puter text-to-speech failed.";
+            if (puterError && typeof puterError === 'object' && puterError.success === false && puterError.error && typeof puterError.error.message === 'string') {
+             displayErrorMessage = puterError.error.message;
+           } else if (puterError instanceof Error) {
+             displayErrorMessage = puterError.message;
+           }
+           setError(`${displayErrorMessage} Browser speech synthesis fallback also failed: ${browserSpeechError.message}`);
+           toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
+           setIsLoading(false);
         }
-      } else {
-        // If Puter fails and browser API is not supported
-        let displayErrorMessage = "Text-to-speech conversion failed.";
-         if (puterError && typeof puterError === 'object' && puterError.success === false && puterError.error && typeof puterError.error.message === 'string') {
-          displayErrorMessage = puterError.error.message;
-        } else if (puterError instanceof Error) {
-          displayErrorMessage = puterError.message;
-        }
-        setError(`Text-to-speech conversion failed: ${displayErrorMessage}. Browser speech synthesis is also not supported.`);
-        toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
-        setIsLoading(false);
-      }
-    }
-  };      
+
+     } else {
+       // If Puter fails and browser API is not supported OR user explicitly selected browser-tts and browser API is not supported
+       let displayErrorMessage = "Text-to-speech conversion failed.";
+        if (puterError && typeof puterError === 'object' && puterError.success === false && puterError.error && typeof puterError.error.message === 'string') {
+         displayErrorMessage = puterError.error.message;
+       } else if (puterError instanceof Error) {
+         displayErrorMessage = puterError.message;
+       }
+
+       if (selectedLanguage === 'browser-tts' && !('speechSynthesis' in window)) {
+            setError("Browser speech synthesis is not supported in your browser.");
+       } else {
+           setError(`Text-to-speech conversion failed: ${displayErrorMessage}.`);
+           toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
+       }
+       setIsLoading(false);
+     }
+   } finally {
+       // The isLoading state is managed within the try/catch blocks now
+       // and the browser API event handlers.
+       // No need for a finally block to set isLoading to false.
+   }
+ };
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">AI Text to Speech Generator</h1>
