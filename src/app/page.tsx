@@ -475,9 +475,9 @@ export default function HomePage() {
               </div>
             </div>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              ACID PITS (Audio, Chat, Infographics, Date-Time, Problem-Solving, Image, Text, Spreadsheets)😆
+              ACID TIPS (Audio, Chat, Infographics, Date-Time, Text, Image, Problem-Solving, Spreadsheets)😆
             </p>
-          </div>
+          </div>t
           
           <div className="mb-8">
             <ChatComponent />
