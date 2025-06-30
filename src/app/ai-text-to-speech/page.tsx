@@ -151,18 +151,13 @@ const AITextToSpeechPage = () => {
 
       // Attempt to use the Puter AI service
       let apiCall;
-      if (selectedLanguage === 'en-US') {
-         // Based on previous observation, omit language for en-US to use default
-         apiCall = puter.ai.txt2speech(text);
-      } else {
-         apiCall = puter.ai.txt2speech(text, selectedLanguage);
-      }
+      apiCall = puter.ai.txt2speech(text, selectedLanguage);
 
       const audio = await apiCall; // Use await to handle the Promise
 
       if (audio && typeof audio === 'object' && audio.src) {
         setAudioOutput(audio.src);
-        // Consider adding a success status here
+        setError(null);
       } else {
         console.error('Unexpected resolved value from puter.ai.txt2speech:', audio);
         throw new Error('Unexpected audio object format from text-to-speech service.');
@@ -172,62 +167,16 @@ const AITextToSpeechPage = () => {
     } catch (puterError: any) {
       console.error("Puter text-to-speech conversion error:", puterError);
 
-      // Fallback to browser API ONLY if Puter failed and it's not the browser-tts option
-      if (selectedLanguage !== 'browser-tts' && 'speechSynthesis' in window) {
-        console.log("Puter failed, attempting to use browser speech synthesis as fallback.");
-        try {
-           const utterance = new SpeechSynthesisUtterance(text);
-           utterance.lang = selectedLanguage; // Use the selected language from the dropdown
-
-           utterance.onstart = () => {
-              setIsLoading(true);
-              setError(null); // Clear previous error when browser speech starts
-              setAudioOutput(null);
-              // Indicate fallback status
-           };
-
-           utterance.onend = () => {
-              setIsLoading(false);
-           };
-
-           utterance.onerror = (event) => {
-              console.error('Browser speech synthesis fallback error:', event);
-              setError(`Puter failed. Browser speech synthesis fallback failed: ${event.error}.`);
-              setIsLoading(false);
-           };
-
-           speechSynthesis.speak(utterance);
-
-        } catch (browserSpeechError: any) {
-           console.error("Browser speech synthesis fallback error:", browserSpeechError);
-           let displayErrorMessage = "Puter text-to-speech failed.";
-            if (puterError && typeof puterError === 'object' && puterError.success === false && puterError.error && typeof puterError.error.message === 'string') {
-             displayErrorMessage = puterError.error.message;
-           } else if (puterError instanceof Error) {
-             displayErrorMessage = puterError.message;
-           }
-           setError(`${displayErrorMessage} Browser speech synthesis fallback also failed: ${browserSpeechError.message}`);
-           toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
-           setIsLoading(false);
+      
+        let displayErrorMessage = "Puter text-to-speech failed.";
+         if (puterError && typeof puterError === 'object' && puterError.success === false && puterError.error && typeof puterError.error.message === 'string') {
+          displayErrorMessage = puterError.error.message;
+        } else if (puterError instanceof Error) {
+          displayErrorMessage = puterError.message;
         }
-
-     } else {
-       // If Puter fails and browser API is not supported OR user explicitly selected browser-tts and browser API is not supported
-       let displayErrorMessage = "Text-to-speech conversion failed.";
-        if (puterError && typeof puterError === 'object' && puterError.success === false && puterError.error && typeof puterError.error.message === 'string') {
-         displayErrorMessage = puterError.error.message;
-       } else if (puterError instanceof Error) {
-         displayErrorMessage = puterError.message;
-       }
-
-       if (selectedLanguage === 'browser-tts' && !('speechSynthesis' in window)) {
-            setError("Browser speech synthesis is not supported in your browser.");
-       } else {
-           setError(`Text-to-speech conversion failed: ${displayErrorMessage}.`);
-           toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
-       }
-       setIsLoading(false);
-     }
+        setError(`${displayErrorMessage} Browser speech synthesis fallback also failed: ${browserSpeechError.message}`);
+        toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
+        setIsLoading(false);
    } finally {
        // The isLoading state is managed within the try/catch blocks now
        // and the browser API event handlers.
@@ -281,32 +230,21 @@ const AITextToSpeechPage = () => {
             <SelectValue placeholder="Select a language" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ar-AE">Arabic (ar-AE)</SelectItem>
-            <SelectItem value="ca-ES">Catalan (ca-ES)</SelectItem>
-            <SelectItem value="yue-CN">Chinese (Cantonese) (yue-CN)</SelectItem>
             <SelectItem value="cmn-CN">Chinese (Mandarin) (cmn-CN)</SelectItem>
             <SelectItem value="da-DK">Danish (da-DK)</SelectItem>
-            <SelectItem value="nl-BE">Dutch (Belgian) (nl-BE)</SelectItem>
             <SelectItem value="nl-NL">Dutch (nl-NL)</SelectItem>
             <SelectItem value="en-AU">English (Australian) (en-AU)</SelectItem>
             <SelectItem value="en-GB">English (British) (en-GB)</SelectItem>
             <SelectItem value="en-IN">English (Indian) (en-IN)</SelectItem>
-            <SelectItem value="en-NZ">English (New Zealand) (en-NZ)</SelectItem>
-            <SelectItem value="en-ZA">English (South African) (en-ZA)</SelectItem>
-            <SelectItem value="en-US">English (US) (en-US)</SelectItem>
             <SelectItem value="en-GB-WLS">English (Welsh) (en-GB-WLS)</SelectItem>
             <SelectItem value="fi-FI">Finnish (fi-FI)</SelectItem>
             <SelectItem value="fr-FR">French (fr-FR)</SelectItem>
-            <SelectItem value="fr-BE">French (Belgian) (fr-BE)</SelectItem>
             <SelectItem value="fr-CA">French (Canadian) (fr-CA)</SelectItem>
             <SelectItem value="de-DE">German (de-DE)</SelectItem>
             <SelectItem value="de-AT">German (Austrian) (de-AT)</SelectItem>
             <SelectItem value="hi-IN">Hindi (hi-IN)</SelectItem>
             <SelectItem value="is-IS">Icelandic (is-IS)</SelectItem>
             <SelectItem value="it-IT">Italian (it-IT)</SelectItem>
-            <SelectItem value="ja-JP">Japanese (ja-JP)</SelectItem>
-            <SelectItem value="ko-KR">Korean (ko-KR)</SelectItem>
-            <SelectItem value="nb-NO">Norwegian (nb-NO)</SelectItem>
             <SelectItem value="pl-PL">Polish (pl-PL)</SelectItem>
             <SelectItem value="pt-BR">Portuguese (Brazilian) (pt-BR)</SelectItem>
             <SelectItem value="pt-PT">Portuguese (European) (pt-PT)</SelectItem>
@@ -315,9 +253,8 @@ const AITextToSpeechPage = () => {
             <SelectItem value="es-ES">Spanish (European) (es-ES)</SelectItem>
             <SelectItem value="es-MX">Spanish (Mexican) (es-MX)</SelectItem>
             <SelectItem value="es-US">Spanish (US) (es-US)</SelectItem>
-            <SelectItem value="sv-SE">Swedish (sv-SE)</SelectItem>
-            <SelectItem value="tr-TR">Turkish (tr-TR)</SelectItem>
             <SelectItem value="cy-GB">Welsh (cy-GB)</SelectItem>
+            <SelectItem value="browser-tts">Browser TTS (Browser Built-in)</SelectItem>
           </SelectContent>
         </Select>
       </div>
