@@ -58,7 +58,6 @@ const AITextToSpeechPage = () => {
       return;
     }
 
-    setIsLoading(true);
     setAudioOutput(null);
     setError(null);
 
@@ -84,9 +83,14 @@ const AITextToSpeechPage = () => {
   const processConversion = async (text: string) => {
     if (text.length > 3000) {
       setError("Text is too long. Please limit to 3000 characters.");
+      // Do not set isLoading to false here, it's handled in convertTextToSpeech finally or browser API handlers
       setIsLoading(false);
       return;
     }
+
+    setIsLoading(true);
+    setError(null);
+    setAudioOutput(null); // Clear any previous audio output
 
     try {
       if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
@@ -95,42 +99,84 @@ const AITextToSpeechPage = () => {
       const puter = window.puter;
 
       let isSignedIn = await puter.auth.isSignedIn();
-
       if (!isSignedIn) {
         await puter.auth.signIn();
         isSignedIn = await puter.auth.isSignedIn();
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
 
-      // According to the documentation, puter.ai.txt2speech returns a Promise
-      // that resolves to an MP3 stream. We chain .then() to handle the resolved value.
-      puter.ai.txt2speech(text, selectedLanguage)
-        .then((audio: any) => {
-          // The documentation says it resolves to an MP3 stream, but observed
-          // behavior sometimes shows an audio object or similar.
-          // We need to determine how to get a playable URL from the resolved 'audio'
-          // For now, assuming it's an object from which we can get a URL (this might need adjustment)
-          if (audio && typeof audio === 'object' && audio.src) {
-             setAudioOutput(audio.src);
-          } else {
-             console.error('Unexpected resolved value from puter.ai.txt2speech:', audio);
-             throw new Error('Unexpected audio object format from text-to-speech service.');
-          }
-        });
-    } catch (blobError: any) {
-      console.error("Text-to-speech conversion error:", blobError);
-      let displayErrorMessage = "An unknown error occurred.";
-
-      // Check if the error is the specific API error object structure
-      if (blobError && typeof blobError === 'object' && blobError.success === false && blobError.error && typeof blobError.error.message === 'string') {
-        displayErrorMessage = blobError.error.message;
-      } else if (blobError instanceof Error) {
-        displayErrorMessage = blobError.message;
+      // Attempt to use the Puter AI service
+      let apiCall;
+      if (selectedLanguage === 'en-US') {
+         // Based on previous observation, omit language for en-US to use default
+         apiCall = puter.ai.txt2speech(text);
+      } else {
+         apiCall = puter.ai.txt2speech(text, selectedLanguage);
       }
-      setError(`Text-to-speech conversion failed: ${displayErrorMessage}`);
-      toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
-    } finally {
+
+      const audio = await apiCall; // Use await to handle the Promise
+
+      if (audio && typeof audio === 'object' && audio.src) {
+        setAudioOutput(audio.src);
+        // Consider adding a success status here
+      } else {
+        console.error('Unexpected resolved value from puter.ai.txt2speech:', audio);
+        throw new Error('Unexpected audio object format from text-to-speech service.');
+      }
+      setIsLoading(false); // Set loading to false on successful Puter conversion
+
+    } catch (puterError: any) {
+      console.error("Puter text-to-speech conversion error:", puterError);
+
+      // If Puter call fails, try the browser's Web Speech API as a fallback
+      if ('speechSynthesis' in window) {
+        console.log("Puter failed, attempting to use browser speech synthesis.");
+        try {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = selectedLanguage; // Use the selected language
+
+          utterance.onstart = () => {
+            // Update status to indicate browser speech is active
+            setIsLoading(true); // Keep loading state while browser speaks
+            setError(null); // Clear Puter error when browser speech starts
+            setAudioOutput(null); // Clear previous audio output
+          };
+
+          utterance.onend = () => {
+            // Update status to indicate browser speech is finished
+            setIsLoading(false);
+          };
+
+          utterance.onerror = (event) => {
+            console.error('Browser speech synthesis error:', event);
+            setError(`Browser speech synthesis failed: ${event.error}.`);
+            // Update status to indicate browser speech error
+            setIsLoading(false);
+          };
+
+          speechSynthesis.speak(utterance);
+
+          // Browser speech does not provide an audio URL in the same way
+          // The audio plays directly.
+          setAudioOutput(null); // Ensure audioOutput is null when using browser API
+
+        } catch (browserSpeechError: any) {
+          console.error("Browser speech synthesis error:", browserSpeechError);
+          setError(`Text-to-speech failed: ${browserSpeechError.message}`);
+          setIsLoading(false);
+        }
+      } else {
+        // If Puter fails and browser API is not supported
+        let displayErrorMessage = "Text-to-speech conversion failed.";
+         if (puterError && typeof puterError === 'object' && puterError.success === false && puterError.error && typeof puterError.error.message === 'string') {
+          displayErrorMessage = puterError.error.message;
+        } else if (puterError instanceof Error) {
+          displayErrorMessage = puterError.message;
+        }
+        setError(`Text-to-speech conversion failed: ${displayErrorMessage}. Browser speech synthesis is also not supported.`);
+        toast({ title: "Error", description: `Conversion failed: ${displayErrorMessage}`, variant: "destructive" });
         setIsLoading(false);
+      }
     }
   };      
   return (
