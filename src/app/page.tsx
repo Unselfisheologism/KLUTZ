@@ -246,12 +246,12 @@ function ChatComponent() {
         // Add a message to the chat when the AI is ready
         setMessages(prevMessages => {
           // Avoid adding the "ready" message multiple times
-          if (!prevMessages.some(msg => msg.text.includes("AI audio assistant is ready"))) {
+          if (!prevMessages.some(msg => msg.text.includes("Ask And You Shall Receive."))) {
             return [
               ...prevMessages,
               {
                 id: prevMessages.length + 1,
-                text: "AI audio assistant is ready. How can I help you edit your audio?",
+                text: "Ask And You Shall Receive.",
                 sender: 'bot',
               },
             ];
