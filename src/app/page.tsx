@@ -251,7 +251,7 @@ function ChatComponent() {
               ...prevMessages,
               {
                 id: prevMessages.length + 1,
-                text: "AI audio assistant is ready. How can I help you edit your audio?",
+                text: "Ask And You Shall Receive.",
                 sender: 'bot',
               },
             ];
@@ -418,7 +418,14 @@ export default function HomePage() {
         <link rel="canonical" href="https://klutz.netlify.app/" />
         <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
       </Head>
-    <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col"
+        style={{
+          backgroundImage: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png", // Replace with your image URL
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
       <div className="flex-grow">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
