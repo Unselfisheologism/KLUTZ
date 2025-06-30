@@ -27,7 +27,7 @@ const AITextToSpeechPage = () => {
   const [audioOutput, setAudioOutput] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('fr-FR');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en-GB');
   const { toast } = useToast();
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
