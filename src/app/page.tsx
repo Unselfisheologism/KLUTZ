@@ -212,12 +212,7 @@ function ChatComponent() {
     'meta-llama/llama-3.1-8b-instruct',
     'meta-llama/llama-3.1-405b-instruct',
     'meta-llama/llama-3.1-70b-instruct',
-    'meta-llama/llama-3-8b-instruct',
     'meta-llama/llama-3-70b-instruct',
-    'meta-llama/llama-2-70b-chat',
-    'meta-llama/llama-2-13b-chat',
-    'meta-llama/llama-guard-3-8b',
-    'meta-llama/llama-guard-2-8b',
     'mistral-large-latest',
     'codestral-latest',
     // Adding other models from your research list if not already present or to use explicit names
