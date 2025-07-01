@@ -16,6 +16,10 @@ import { useToast } from "@/hooks/use-toast";
 import { preprocessImage } from "@/lib/image-utils";
 import ImagePreview from "@/components/medi-scan/image-preview";
 
+declare global {
+  interface Window { puter: any; }
+}
+
 const cleanJsonString = (rawString: string): string => {
   let cleanedString = rawString.trim();
   // Remove leading and trailing markdown code block fences if they exist
@@ -71,8 +75,7 @@ export default function MedicalImageAnalyzerPage() {
 
     setIsLoading(true);
     setAnalysisResult(null); // Clear previous results
-    const request: MedicalImageAnalysisRequest = {
-      imageType: imageType as MedicalImageType,
+ const request: MedicalImageAnalysisRequest = { imageType: imageType as MedicalImageType,
       additionalInfo,
  image: '' // Will be replaced by preprocessed image data URL
     };
@@ -90,15 +93,27 @@ export default function MedicalImageAnalyzerPage() {
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
 
-      const preprocessedDataUrl = await preprocessImage(imageFile, 1024);
-      request.image = preprocessedDataUrl;
+ const preprocessedDataUrl = await preprocessImage(imageFile, 1024);
+      const imagePrompt = `
+        You are an AI assistant specialized in analyzing medical images.
+        Analyze the provided ${imageType} medical image and generate a structured report.
+        Include:
+        1. Identified abnormalities (if any). If none, state clearly.
+        2. A potential diagnosis based on the findings (clearly state this is NOT a substitute for professional medical advice)
+        3. Suggested next steps or recommendations (again, non-diagnostic)
+        Consider the additional information: ${additionalInfo || 'None provided.'}
 
-      const response = await puter.ai.chat("generateMedicalReport", { request });
-      if (!response) {
-        throw new Error("AI analysis did not return a response.");
+        Return the analysis as a JSON object with the following keys:
+        - "abnormalities": (string) Description of any abnormalities found.
+        - "diagnosis": (string) Potential diagnosis (clearly marked as NOT professional medical advice).
+        - "nextSteps": (string) Suggested next steps (clearly marked as non-diagnostic).
+      `;
+
+      if (!response?.message?.content) {
+        throw new Error("AI analysis did not return content.");
       }
-      // Assuming the response content is directly the analysis result string
-      // You might need to parse this if the AI returns structured data
+
+      const response = await puter.ai.chat(imagePrompt, preprocessedDataUrl);
       setAnalysisResult({ abnormalities: response.message.content || 'N/A', diagnosis: 'N/A', nextSteps: 'N/A' }); // Placeholder parsing
 
       toast({ title: "Analysis Complete", variant: "default", className: "bg-green-500 text-white dark:bg-green-600" });
@@ -110,7 +125,15 @@ export default function MedicalImageAnalyzerPage() {
       else if ((error as any).error && (error as any).error.message) errorMessage = (error as any).error.message;
       setError(errorMessage);
       toast({ variant: "destructive", title: "Analysis Failed", description: errorMessage });
-      // Handle error displaying to the user
+
+      const cleanedResponse = cleanJsonString(response.message.content);
+      try {
+        const parsedResponse: MedicalImageAnalysisResponse = JSON.parse(cleanedResponse);
+        setAnalysisResult(parsedResponse);
+      } catch (parseError) {
+        console.error("Error parsing AI response:", parseError);
+        setError("AI returned content, but it could not be parsed correctly. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
