@@ -22,10 +22,9 @@ declare global {
 
 const cleanJsonString = (rawString: string): string => {
   let cleanedString = rawString.trim();
-  // Remove leading and trailing markdown code block fences if they exist
-  if (cleanedString.startsWith("json") && cleanedString.endsWith("")) {
+  if (cleanedString.startsWith("```json") && cleanedString.endsWith("```")) {
     cleanedString = cleanedString.substring(7, cleanedString.length - 3).trim();
-  } else if (cleanedString.startsWith("") && cleanedString.endsWith("")) {
+  } else if (cleanedString.startsWith("```") && cleanedString.endsWith("```")) {
     cleanedString = cleanedString.substring(3, cleanedString.length - 3).trim();
   }
   return cleanedString;
@@ -37,27 +36,12 @@ export default function MedicalImageAnalyzerPage() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [imageType, setImageType] = useState<MedicalImageType | "">("");
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [analysisResult, setAnalysisResult] = useState<MedicalImageAnalysisResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setImageFile(event.target.files?.[0] || null);
-    const file = event.target.files?.[0];
-    if (file) {
-      const previewDataUrl = URL.createObjectURL(file);
-      setImageDataUrl(previewDataUrl);
-    } else {
-      setImageDataUrl(null);
-    }
-    // Clear previous results and errors when a new image is uploaded
-  };
-
-  const [analysisResult, setAnalysisResult] = useState<MedicalImageAnalysisResponse | null>(null);
-  useEffect(() => {
-    // Optional: Add logic here that depends on analysisResult changing
-  }, [analysisResult]); // Add analysisResult as a dependency if needed
   useEffect(() => {
     if (typeof window.puter === 'undefined') {
       toast({
@@ -67,18 +51,36 @@ export default function MedicalImageAnalyzerPage() {
       });
     }
   }, [toast]);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      try {
+        const previewDataUrl = URL.createObjectURL(file);
+        setImageDataUrl(previewDataUrl);
+        setAnalysisResult(null);
+        setError(null);
+      } catch (error) {
+        toast({ variant: "destructive", title: "Preview Error", description: "Could not generate image preview." });
+        setImageDataUrl(null);
+      }
+    } else {
+      setImageFile(null);
+      setImageDataUrl(null);
+    }
+  };
+
   const handleAnalyze = async () => {
-    if (!imageFile || !imageType) {
-      toast({ variant: "destructive", title: "Missing Input", description: "Please upload a medical image and select the image type." });
+    if (!imageFile) {
+      toast({ variant: "destructive", title: "Missing Input", description: "Please upload an image containing text." });
       return;
     }
 
     setIsLoading(true);
-    setAnalysisResult(null); // Clear previous results
- const request: MedicalImageAnalysisRequest = { imageType: imageType as MedicalImageType,
-      additionalInfo,
- image: '' // Will be replaced by preprocessed image data URL
-    };
+    setAnalysisResult(null);
+    setError(null);
+    toast({ title: "Analysis Started", description: "AI is extracting text from your image..." });
 
     try {
       if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
@@ -93,7 +95,8 @@ export default function MedicalImageAnalyzerPage() {
         if (!isSignedIn) throw new Error("Authentication failed or was cancelled.");
       }
 
- const preprocessedDataUrl = await preprocessImage(imageFile, 1024);
+      const preprocessedDataUrl = await preprocessImage(imageFile, 1024);
+
       const imagePrompt = `
         You are an AI assistant specialized in analyzing medical images.
         Analyze the provided ${imageType} medical image and generate a structured report.
@@ -109,32 +112,24 @@ export default function MedicalImageAnalyzerPage() {
         - "nextSteps": (string) Suggested next steps (clearly marked as non-diagnostic).
       `;
 
+      const response = await puter.ai.chat(imagePrompt, preprocessedDataUrl);
+      
       if (!response?.message?.content) {
         throw new Error("AI analysis did not return content.");
       }
 
-      const response = await puter.ai.chat(imagePrompt, preprocessedDataUrl);
-      setAnalysisResult({ abnormalities: response.message.content || 'N/A', diagnosis: 'N/A', nextSteps: 'N/A' }); // Placeholder parsing
-
+      const parsedResponse: MedicalImageAnalysisResponse = JSON.parse(cleanJsonString(response.message.content));
+      setAnalysisResult(parsedResponse);
       toast({ title: "Analysis Complete", variant: "default", className: "bg-green-500 text-white dark:bg-green-600" });
-    } catch (error) {
-      console.error("Error analyzing image:", error);
+
+    } catch (err: any) {
+      console.error("Analysis error:", err);
       let errorMessage = "An error occurred during analysis.";
-      if (error instanceof Error) errorMessage = error.message;
-      else if (typeof error === 'string') errorMessage = error;
-      else if ((error as any).error && (error as any).error.message) errorMessage = (error as any).error.message;
+      if (err instanceof Error) errorMessage = err.message;
+      else if (typeof err === 'string') errorMessage = err;
+      else if (err.error && err.error.message) errorMessage = err.error.message;
       setError(errorMessage);
       toast({ variant: "destructive", title: "Analysis Failed", description: errorMessage });
-      
-      const cleanedResponse = cleanJsonString(response.message.content);
-      try {
-        const parsedResponse: MedicalImageAnalysisResponse = JSON.parse(cleanedResponse);
-        setAnalysisResult(parsedResponse);
-      } catch (parseError) {
-        console.error("Error parsing AI response:", parseError);
-        setError("AI returned content, but it could not be parsed correctly. Please try again.");
-      }
-
     } finally {
       setIsLoading(false);
     }
