@@ -64,6 +64,13 @@ const features: Feature[] = [
     isImplemented: true,
   },
   {
+    icon: ScanLine,
+    title: 'MediScan AI',
+    description: 'Analyze medical images (X-rays, MRI, CT scans) using AI for insights.',
+    href: '/mediscan',
+    isImplemented: true,
+  },
+  {
     icon: Layers, 
     title: 'Thumbnail Title Consistency Checker',
     description: 'Ensure your video thumbnails and titles are aligned for better engagement.',
