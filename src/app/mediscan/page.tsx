@@ -50,7 +50,7 @@ const cleanJsonString = (rawString: string): string => {
 
   const [analysisResult, setAnalysisResult] = useState<MedicalImageAnalysisResponse | null>(null);
   useEffect(() => {
-  };
+  }),
 
   useEffect(() => {
     if (typeof window.puter === 'undefined') {
