@@ -97,7 +97,7 @@ export default function MedicalImageAnalyzerPage() {
       const imagePrompt = `
         You are an AI assistant specialized in analyzing medical images.
         Analyze the provided ${imageType} medical image and generate a structured report.
-        Include:
+        Include: 
         1. Identified abnormalities (if any). If none, state clearly.
         2. A potential diagnosis based on the findings (clearly state this is NOT a substitute for professional medical advice)
         3. Suggested next steps or recommendations (again, non-diagnostic)
@@ -125,7 +125,7 @@ export default function MedicalImageAnalyzerPage() {
       else if ((error as any).error && (error as any).error.message) errorMessage = (error as any).error.message;
       setError(errorMessage);
       toast({ variant: "destructive", title: "Analysis Failed", description: errorMessage });
-
+      
       const cleanedResponse = cleanJsonString(response.message.content);
       try {
         const parsedResponse: MedicalImageAnalysisResponse = JSON.parse(cleanedResponse);
@@ -134,6 +134,7 @@ export default function MedicalImageAnalyzerPage() {
         console.error("Error parsing AI response:", parseError);
         setError("AI returned content, but it could not be parsed correctly. Please try again.");
       }
+
     } finally {
       setIsLoading(false);
     }
