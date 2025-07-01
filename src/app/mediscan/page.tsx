@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, Loader2, AlertTriangle } from 'lucide-react';
 import { MedicalImageAnalysisRequest, MedicalImageAnalysisResponse, MedicalImageType } from "@/types/mediscan";
@@ -15,6 +15,7 @@ import puter from "puter";
 import { useToast } from "@/hooks/use-toast";
 import { preprocessImage } from "@/lib/image-utils";
 import ImagePreview from "@/components/medi-scan/image-preview";
+import { Copy, Download } from 'lucide-react';
 
 declare global {
   interface Window { puter: any; }
@@ -28,6 +29,12 @@ const cleanJsonString = (rawString: string): string => {
     cleanedString = cleanedString.substring(3, cleanedString.length - 3).trim();
   }
   return cleanedString;
+};
+
+const downloadTextFile = (text: string, filename: string) => {
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  window.puter.fs.download(url, filename);
 };
 
 export default function MedicalImageAnalyzerPage() {
@@ -80,7 +87,7 @@ export default function MedicalImageAnalyzerPage() {
     setIsLoading(true);
     setAnalysisResult(null);
     setError(null);
-    toast({ title: "Analysis Started", description: "AI is extracting text from your image..." });
+    toast({ title: "Analysis Started", description: "AI is Analyzing The Medical Image..." });
 
     try {
       if (typeof window.puter === 'undefined' || !window.puter.auth || !window.puter.ai) {
@@ -134,6 +141,48 @@ export default function MedicalImageAnalyzerPage() {
       setIsLoading(false);
     }
   };
+
+  const handleCopyReport = () => {
+    if (!analysisResult) return;
+    const reportString = `
+Medical Image Analysis Report
+===========================
+
+Abnormalities Found:
+-------------------
+${analysisResult.abnormalities}
+
+Potential Diagnosis:
+------------------
+${analysisResult.diagnosis}
+
+Suggested Next Steps:
+-------------------
+${analysisResult.nextSteps}
+
+Disclaimer: This is an AI-generated analysis and NOT a substitute for professional medical advice. Always consult a healthcare professional for diagnosis and treatment.
+`;
+    navigator.clipboard.writeText(reportString.trim())
+      .then(() => {
+        toast({ title: "Report Copied", description: "Analysis report copied to clipboard." });
+      })
+      .catch(() => {
+        toast({ variant: "destructive", title: "Copy Failed", description: "Could not copy report to clipboard." });
+      });
+  };
+
+  const handleDownloadReport = () => {
+    if (!analysisResult) return;
+    const reportString = `Medical Image Analysis Report\n\nAbnormalities Found:\n${analysisResult.abnormalities}\n\nPotential Diagnosis:\n${analysisResult.diagnosis}\n\nSuggested Next Steps:\n${analysisResult.nextSteps}\n\nDisclaimer: This is an AI-generated analysis and NOT a substitute for professional medical advice. Always consult a healthcare professional for diagnosis and treatment.`;
+    const timestamp = new Date().toISOString().replace(/[:.-]/g, '').slice(0, 14);
+    downloadTextFile(reportString, `KLUTZ_MediScan_Report_${timestamp}.txt`);
+    toast({ title: "Report Downloaded", description: "Analysis report downloaded as a text file." });
+  };
+
+  const disclaimer = "Disclaimer: This is an AI-generated analysis and NOT a substitute for professional medical advice. Always consult a healthcare professional for diagnosis and treatment.";
+
+
+
 
   return (
     <>
@@ -197,31 +246,50 @@ export default function MedicalImageAnalyzerPage() {
           </div>
 
           {analysisResult && (
-            <>
-              <Card className="mb-4">
+            <div className="space-y-4">
+              <Card className="border-green-500 dark:border-green-700 bg-green-50 dark:bg-green-900/20">
                 <CardHeader>
-                  <CardTitle>Abnormalities Found</CardTitle>
+                  <CardTitle className="text-green-700 dark:text-green-300">Abnormalities Found</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>{analysisResult.abnormalities}</p>
+                  <p className="text-green-800 dark:text-green-200">{analysisResult.abnormalities}</p>
                 </CardContent>
               </Card>
 
-              <Card className="mb-4">
+              <Card className="border-blue-500 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
                 <CardHeader>
-                  <CardTitle>Diagnosis</CardTitle>
+                  <CardTitle className="text-blue-700 dark:text-blue-300">Potential Diagnosis</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>{analysisResult.diagnosis}</p>
+                  <p className="text-blue-800 dark:text-blue-200">{analysisResult.diagnosis}</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-purple-500 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20">
                 <CardHeader>
-                  <CardTitle>Next Steps</CardTitle>
+                  <CardTitle className="text-purple-700 dark:text-purple-300">Suggested Next Steps</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>{analysisResult.nextSteps}</p>
+                  <p className="text-purple-800 dark:text-purple-200">{analysisResult.nextSteps}</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-yellow-500 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20">
+                 <CardHeader>
+                  <CardTitle className="text-yellow-700 dark:text-yellow-300">Disclaimer</CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                  <p className="text-yellow-800 dark:text-yellow-200 text-sm italic">{disclaimer}</p>
+                 </CardContent>
+              </Card>
+
+              <Card className="p-4 flex gap-4 bg-muted/30">
+                 <Button onClick={handleCopyReport} className="flex-1">
+                  <Copy className="mr-2 h-4 w-4" /> Copy Report
+                 </Button>
+                 <Button onClick={handleDownloadReport} className="flex-1">
+                  <Download className="mr-2 h-4 w-4" /> Download Report
+                 </Button>
                 </CardContent>
               </Card>
             </>
