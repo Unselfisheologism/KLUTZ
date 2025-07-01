@@ -246,12 +246,12 @@ function ChatComponent() {
         // Add a message to the chat when the AI is ready
         setMessages(prevMessages => {
           // Avoid adding the "ready" message multiple times
-          if (!prevMessages.some(msg => msg.text.includes("Ask And You Shall Receive."))) {
+          if (!prevMessages.some(msg => msg.text.includes("Ask—Anything."))) {
             return [
               ...prevMessages,
               {
                 id: prevMessages.length + 1,
-                text: "Ask And You Shall Receive.",
+                text: "Ask—Anything.",
                 sender: 'bot',
               },
             ];
