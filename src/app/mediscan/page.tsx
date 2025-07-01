@@ -290,9 +290,8 @@ Disclaimer: This is an AI-generated analysis and NOT a substitute for profession
                  <Button onClick={handleDownloadReport} className="flex-1">
                   <Download className="mr-2 h-4 w-4" /> Download Report
                  </Button>
-                </CardContent>
               </Card>
-            </>
+            </div>
           )}
 
           {error && !isLoading && (
