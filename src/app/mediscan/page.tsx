@@ -191,7 +191,7 @@ Disclaimer: This is an AI-generated analysis and NOT a substitute for profession
         <title>Medical Image Analyzer - KLUTZ</title>
         <meta name="description" content="Upload medical images (X-rays, MRIs, CT scans) for AI-powered analysis and insights with KLUTZ Medical Scan." />
       </Head>
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-bold mb-4">Medical Image Analyzer</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
