@@ -27,6 +27,8 @@ const cleanJsonString = (rawString: string): string => {
   return cleanedString;
 };
 
+export default function MedicalImageAnalyzerPage() {
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [imageType, setImageType] = useState<MedicalImageType | "">("");
@@ -50,8 +52,8 @@ const cleanJsonString = (rawString: string): string => {
 
   const [analysisResult, setAnalysisResult] = useState<MedicalImageAnalysisResponse | null>(null);
   useEffect(() => {
-  }),
-
+    // Optional: Add logic here that depends on analysisResult changing
+  }, [analysisResult]); // Add analysisResult as a dependency if needed
   useEffect(() => {
     if (typeof window.puter === 'undefined') {
       toast({
@@ -215,6 +217,6 @@ const cleanJsonString = (rawString: string): string => {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
