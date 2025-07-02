@@ -289,12 +289,11 @@ function ChatComponent() {
     };
   }, [messages]);
 
- const handleSendMessage = async (messageText: string, context?: string) => {
-    if (inputMessage.trim() === '') return;
-
+ const handleSendMessage = async (messageText: string, context?: string, isUrlContext = false) => {
+ if (messageText.trim() === '' && !isUrlContext) return;
     const newUserMessage: Message = {
       id: messages.length + 1,
-      text: inputMessage,
+      text: isUrlContext ? `Analyzing content for: ${context}` : messageText,
       sender: 'user',
     };
 
@@ -332,12 +331,12 @@ function ChatComponent() {
       let accumulatedText = '';
       const messageIdToUpdate = messages.length + 2; // The ID of the streaming bot message
 
+      let finalMessage = messageText;
+      if (context) {
+        finalMessage = `Context from URL: ${context}\n\nUser Query: ${messageText}`;
+      }
      try {
-       let finalMessage = messageText;
-       if (context) {
-         finalMessage = `Context from URL: ${context}\n\nUser Query: ${messageText}`;
-       }
-        const streamResponse = await window.puter.ai.chat(inputMessage, { model: selectedModel, stream: true });
+        const streamResponse = await window.puter.ai.chat(finalMessage, { model: selectedModel, stream: true });
 
         for await (const part of streamResponse) {
           let partText = '';
@@ -371,15 +370,16 @@ function ChatComponent() {
 
 const handleSendUrl = async () => {
   if (urlInput.trim() === '') return;
+
   const userUrlMessage: Message = {
     id: messages.length + 1,
     text: `Visiting URL: ${urlInput}`,
     sender: 'user',
   };
   setMessages([...messages, userUrlMessage]);
-  setUrlInput('');
   setShowUrlInput(false); // Hide URL input after sending
   if (!isAiChatReady) {
+ setUrlInput('');
     console.error('AI chat is not ready.');
     return;
   }
@@ -399,10 +399,15 @@ const handleSendUrl = async () => {
       }
     }
 
-      // Add a temporary bot message to show processing
+    // Add a temporary bot message to show processing
       const processingMessage: Message = {
         id: messages.length + 2,
         text: `Fetching content from ${urlInput}...`,
+        sender: 'bot',
+      };
+       setMessages(prevMessages => [...prevMessages, processingMessage]);
+       const processingMessageId = messages.length + 2;
+      const urlToFetch = urlInput; // Store the URL
         sender: 'bot',
       };
     try {
@@ -410,13 +415,17 @@ const handleSendUrl = async () => {
       // Provide the fetched content as context to the AI
       const aiPrompt = `Here is the content from the URL "${urlInput}":\n\n${websiteContent}\n\nPlease analyze or summarize this content.`;
       await handleSendMessage(aiPrompt); // Send this as a message to the AI
+
+      setUrlInput(''); // Clear URL input after successful fetch and send
+
     } catch (error) {
       console.error(`Error fetching URL content: ${error}`);
       // Handle errors, e.g., display an error message to the user
       const botErrorResponse: Message = {
-        id: messages.length + 2, // This should target the processing message
-        text: `Error fetching content from ${urlInput}. Details: ${error.message}`,
+        id: processingMessageId, // Update the processing message
+        text: `Error fetching content from ${urlToFetch}. Details: ${error.message}`,
         sender: 'bot',
+
       };
       setMessages(prevMessages => [...prevMessages, botErrorResponse]);
     }
@@ -444,7 +453,7 @@ const handleSendUrl = async () => {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && inputMessage.trim() !== '') {
-               if (isAiChatReady && !showUrlInput) { // Only send chat message if URL input is not visible
+               if (isAiChatReady && !showUrlInput) {
                   handleSendMessage(inputMessage);
                 }
               }
