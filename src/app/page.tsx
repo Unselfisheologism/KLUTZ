@@ -400,20 +400,14 @@ const handleSendUrl = async () => {
     }
 
     // Add a temporary bot message to show processing
-      const processingMessage: Message = {
+    const processingMessage: Message = {
         id: messages.length + 2,
         text: `Fetching content from ${urlInput}...`,
         sender: 'bot',
       };
-       setMessages(prevMessages => [...prevMessages, processingMessage]);
-       const processingMessageId = messages.length + 2;
-      const urlToFetch = urlInput; // Store the URL
-        sender: 'bot',
-      };
+    setMessages(prevMessages => [...prevMessages, processingMessage]);
     try {
-      const websiteContent = await window.puter.fs.read_file(urlInput);
-      // Provide the fetched content as context to the AI
-      const aiPrompt = `Here is the content from the URL "${urlInput}":\n\n${websiteContent}\n\nPlease analyze or summarize this content.`;
+      const aiPrompt = `Here is the content from the URL "${urlInput}":\n\n${await fetchUrlContent(urlInput)}\n\nPlease analyze or summarize this content.`;
       await handleSendMessage(aiPrompt); // Send this as a message to the AI
 
       setUrlInput(''); // Clear URL input after successful fetch and send
@@ -422,13 +416,29 @@ const handleSendUrl = async () => {
       console.error(`Error fetching URL content: ${error}`);
       // Handle errors, e.g., display an error message to the user
       const botErrorResponse: Message = {
-        id: processingMessageId, // Update the processing message
-        text: `Error fetching content from ${urlToFetch}. Details: ${error.message}`,
+        id: messages.length + 2, // Assuming this is the next message ID
+        text: `Error fetching content from ${urlInput}. Details: ${error.message}`,
         sender: 'bot',
 
       };
       setMessages(prevMessages => [...prevMessages, botErrorResponse]);
     }
+  }
+};
+
+const fetchUrlContent = async (url: string): Promise<string> => {
+  try {
+    const response = await fetch('/api/fetch-url-content', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url }),
+    });
+    const data = await response.json();
+    return data.content || `Could not fetch content from ${url}.`;
+  } catch (error: any) {
+    return `Error fetching content from ${url}. Details: ${error.message}`;
   }
 };
 
