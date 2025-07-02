@@ -246,12 +246,12 @@ function ChatComponent() {
         // Add a message to the chat when the AI is ready
         setMessages(prevMessages => {
           // Avoid adding the "ready" message multiple times
-          if (!prevMessages.some(msg => msg.text.includes("Ask—Anything."))) {
+          if (!prevMessages.some(msg => msg.text.includes("Your mind’s a powerful tool—what’s it working on?"))) {
             return [
               ...prevMessages,
               {
                 id: prevMessages.length + 1,
-                text: "Ask—Anything.",
+                text: "Your mind’s a powerful tool—what’s it working on?",
                 sender: 'bot',
               },
             ];
@@ -322,7 +322,7 @@ function ChatComponent() {
       // Add a temporary bot message to show streaming is in progress
       const streamingBotMessage: Message = {
         id: messages.length + 2,
-        text: '', // Start with empty text
+        text: 'Brainstorming...', // Start with empty text
         sender: 'bot',
       };
       setMessages(prevMessages => [...prevMessages, streamingBotMessage]);
