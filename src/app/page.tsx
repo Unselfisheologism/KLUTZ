@@ -423,23 +423,6 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-8">
-              {/* === PRODUCT HUNT BADGE === */}
-              <div className="mt-4 flex justify-center">
-                <a
-                  href="https://www.producthunt.com/products/klutz?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-klutz"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Featured on Product Hunt"
-                >
-                  <img
-                    src=" https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=977863&theme=light&t=1749888258779"
-                    alt="KLUTZ - Suite&#0032;of&#0032;AI&#0032;Powered&#0032;Image&#0044;&#0032;Date&#0032;&#0038;&#0032;Text&#0032;Tools | Product Hunt"
-                    className="w-[150px] h-[32px] md:w-[250px] md:h-[54px]"
-                    width={250}
-                    height={54}
-                  />
-                </a>
-              </div> 
               <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
                 AI—Overpowered, but Underrated
               </h1>
@@ -476,6 +459,25 @@ export default function HomePage() {
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               ACID TIPS (Audio, Chat, Infographics, Date-Time, Text, Image, Problem-Solving, Spreadsheets)😆
             </p>
+            {/* === PRODUCT HUNT BADGE === */}
+            <div className="mt-4 flex justify-center">
+              <a
+                href="https://www.producthunt.com/products/klutz?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-klutz"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Featured on Product Hunt"
+              >
+                <img
+                  src=" https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=977863&theme=light&t=1749888258779"
+                  alt="KLUTZ - Suite&#0032;of&#0032;AI&#0032;Powered&#0032;Image&#0044;&#0032;Date&#0032;&#0038;&#0032;Text&#0032;Tools | Product Hunt"
+                  className="w-[150px] h-[32px] md:w-[250px] md:h-[54px]"
+                  width={250}
+                  height={54}
+                />
+              </a>
+            </div>
+
+
           </div>
           
           <div className="mb-8">
