@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ScanLine } from 'lucide-react';
+import { ScanLine, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoginButton from '@/components/auth/login-button';
 import { ThemeToggle } from "@/components/theme-toggle";
