@@ -20,6 +20,12 @@ export default function AppHeader() {
         </Link>
         <div className="flex items-center gap-4">
           <ThemeToggle />
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="https://puter.com">
+              <User className="h-5 w-5" />
+              <span className="sr-only">Account</span>
+            </Link>
+          </Button>
           <LoginButton />
         </div>
       </div>
