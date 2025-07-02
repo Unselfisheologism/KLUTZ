@@ -423,8 +423,8 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-8">
-              <div className="badge-wrapper-270x54">
-                {/* === PRODUCT HUNT BADGE REPLACEMENT START === */}
+              {/* === PRODUCT HUNT BADGE === */}
+              <div className="mt-4 flex justify-center">
                 <a
                   href="https://www.producthunt.com/products/klutz?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-klutz"
                   target="_blank"
@@ -432,15 +432,14 @@ export default function HomePage() {
                   title="Featured on Product Hunt"
                 >
                   <img
-                    src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=977863&theme=light&t=1749888258779"
+                    src=" https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=977863&theme=light&t=1749888258779"
                     alt="KLUTZ - Suite&#0032;of&#0032;AI&#0032;Powered&#0032;Image&#0044;&#0032;Date&#0032;&#0038;&#0032;Text&#0032;Tools | Product Hunt"
-                    style={{ width: '250px', height: '54px' }}
+                    className="w-[150px] h-[32px] md:w-[250px] md:h-[54px]"
                     width={250}
                     height={54}
                   />
                 </a>
-                {/* === PRODUCT HUNT BADGE REPLACEMENT END === */}
-              </div>  
+              </div> 
               <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
                 AI—Overpowered, but Underrated
               </h1>
