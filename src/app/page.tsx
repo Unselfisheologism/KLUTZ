@@ -9,9 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area'; 
 import { Separator } from '@/components/ui/separator';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand } from 'lucide-react';
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
 declare global {
@@ -178,6 +178,8 @@ function ChatComponent() {
   const [isAiChatReady, setIsAiChatReady] = useState(false);
   const { toast } = useToast();
   const [selectedModel, setSelectedModel] = useState<string>('gpt-4o-mini'); // State for selected model
+  const [showUrlInput, setShowUrlInput] = useState(false); // State to control visibility of URL input
+  const [urlInput, setUrlInput] = useState('');
 
   const availableModels: string[] = [ // Updated based on puter.com/docs
     'gpt-4o-mini',
@@ -287,7 +289,7 @@ function ChatComponent() {
     };
   }, [messages]);
 
-  const handleSendMessage = async () => {
+ const handleSendMessage = async (messageText: string, context?: string) => {
     if (inputMessage.trim() === '') return;
 
     const newUserMessage: Message = {
@@ -330,7 +332,11 @@ function ChatComponent() {
       let accumulatedText = '';
       const messageIdToUpdate = messages.length + 2; // The ID of the streaming bot message
 
-      try {
+     try {
+       let finalMessage = messageText;
+       if (context) {
+         finalMessage = `Context from URL: ${context}\n\nUser Query: ${messageText}`;
+       }
         const streamResponse = await window.puter.ai.chat(inputMessage, { model: selectedModel, stream: true });
 
         for await (const part of streamResponse) {
@@ -356,10 +362,64 @@ function ChatComponent() {
       } catch (error) {
         console.error(`Error during AI chat request for model "${selectedModel}":`, error);
         // If an error occurs, update the last message to an error message
-        const botErrorResponse: Message = { id: messageIdToUpdate, text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later.`, sender: 'bot' };
+      const botErrorResponse: Message = { id: messageIdToUpdate, text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later. Error details: ${error.message}`, sender: 'bot' };
         setMessages(prevMessages => [...prevMessages, botErrorResponse]);
         return; // Stop processing if the API call failed
       }
+  }
+};
+
+const handleSendUrl = async () => {
+  if (urlInput.trim() === '') return;
+  const userUrlMessage: Message = {
+    id: messages.length + 1,
+    text: `Visiting URL: ${urlInput}`,
+    sender: 'user',
+  };
+  setMessages([...messages, userUrlMessage]);
+  setUrlInput('');
+  setShowUrlInput(false); // Hide URL input after sending
+  if (!isAiChatReady) {
+    console.error('AI chat is not ready.');
+    return;
+  }
+  if (window.puter) {
+    let isSignedIn = await window.puter.auth.isSignedIn();
+    if (!isSignedIn) {
+      await window.puter.auth.signIn();
+      isSignedIn = await window.puter.auth.isSignedIn();
+      if (!isSignedIn) {
+        const botResponse: Message = {
+          id: messages.length + 2,
+          text: 'Authentication failed or was cancelled. Cannot process command.',
+          sender: 'bot',
+        };
+        setMessages(prevMessages => [...prevMessages, botResponse]);
+        return;
+      }
+    }
+
+      // Add a temporary bot message to show processing
+      const processingMessage: Message = {
+        id: messages.length + 2,
+        text: `Fetching content from ${urlInput}...`,
+        sender: 'bot',
+      };
+    try {
+      const websiteContent = await window.puter.fs.read_file(urlInput);
+      // Provide the fetched content as context to the AI
+      const aiPrompt = `Here is the content from the URL "${urlInput}":\n\n${websiteContent}\n\nPlease analyze or summarize this content.`;
+      await handleSendMessage(aiPrompt); // Send this as a message to the AI
+    } catch (error) {
+      console.error(`Error fetching URL content: ${error}`);
+      // Handle errors, e.g., display an error message to the user
+      const botErrorResponse: Message = {
+        id: messages.length + 2, // This should target the processing message
+        text: `Error fetching content from ${urlInput}. Details: ${error.message}`,
+        sender: 'bot',
+      };
+      setMessages(prevMessages => [...prevMessages, botErrorResponse]);
+    }
   }
 };
 
@@ -376,22 +436,31 @@ function ChatComponent() {
           ))}
         </ScrollArea>
       </CardContent>
-      <div className="p-4 border-t">
+      <div className="p-4 border-t flex flex-col gap-2">
         <div className="flex gap-2">
           <Input
             placeholder="Type your command..."
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                if (isAiChatReady) {
-                  handleSendMessage();
+              if (e.key === 'Enter' && inputMessage.trim() !== '') {
+               if (isAiChatReady && !showUrlInput) { // Only send chat message if URL input is not visible
+                  handleSendMessage(inputMessage);
                 }
               }
             }}
             className="flex-grow"
             disabled={!isAiChatReady}
-          />
+         />
+ {/* URL Visit Button */}
+ <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowUrlInput(!showUrlInput)}
+            disabled={!isAiChatReady}
+           >
+ <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
+ </Button>         
  <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
  <SelectTrigger className="w-[180px]" disabled={!isAiChatReady}>
  <SelectValue placeholder="Select Model" />
@@ -403,8 +472,35 @@ function ChatComponent() {
  </SelectContent>
  </Select>
 
-          <Button onClick={handleSendMessage} disabled={!isAiChatReady || inputMessage.trim() === ''}>Send</Button>
+          <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput}>Send</Button>
         </div>
+        {/* Conditional URL Input */}
+        {showUrlInput && (
+          <div className="flex gap-2">
+            <Input
+              placeholder="Paste URL"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && urlInput.trim() !== '') {
+                  if (isAiChatReady) {
+                    handleSendUrl();
+                  }
+                }
+              }}
+              className="flex-grow"
+              disabled={!isAiChatReady}
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleSendUrl}
+              disabled={!isAiChatReady || urlInput.trim() === ''}
+            >
+              <CheckIcon className="h-5 w-5" /> {/* Using CheckIcon for confirmation */}
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );
