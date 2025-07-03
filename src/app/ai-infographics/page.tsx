@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Send, Download, Info, Upload, Brain, Image, BarChart } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+
 // Dynamically import the client-only chart component
 const ClientInfographicRenderer = dynamic(
   () => import("./ClientInfographicRenderer"),
@@ -394,23 +395,36 @@ If the user is asking for information without requesting a visualization, just p
   const handleDownloadInfographic = async () => {
     if (!infographicRef.current) return;
     try {
-      // Explicitly set background to transparent for capture
-      const originalBackground = infographicRef.current.style.backgroundColor;
- infographicRef.current.style.backgroundColor = 'transparent';
+      // Find the element that specifically contains the chart visualization
+      // Assuming the chart is rendered within a div with a specific class or data attribute
+      // In ClientInfographicRenderer.tsx, we could add a data-testid="chart-container"
+      const chartContainer = infographicRef.current.querySelector('[data-testid="chart-container"]');
 
-      const dataUrl = await toPng(infographicRef.current, { cacheBust: true }); // backgroundColor: null is the default for transparent
+      const elementToCapture = chartContainer || infographicRef.current; // Fallback to the main ref if specific container not found
+
+      if (!elementToCapture) {
+ toast({
+ variant: "destructive",
+ title: "Download Failed",
+ description: "Could not find the element to capture the infographic.",
+ });
+ return;
+      }
+
+      // Use backgroundColor: null for transparent background
+      const dataUrl = await toPng(elementToCapture as HTMLElement, {
+ cacheBust: true,
+ backgroundColor: null,
+      });
 
       const link = document.createElement('a');
       link.download = `infographic_${new Date().toISOString().slice(0,10)}.png`;
       link.href = dataUrl;
-      link.click();
-      toast({
-        title: "Download Complete",
-        description: "Infographic image has been downloaded successfully.",
-      });
-
-      // Revert background after capture
- infographicRef.current.style.backgroundColor = originalBackground;
+ link.click();
+ toast({
+ title: "Download Complete",
+ description: "Infographic image has been downloaded successfully.",
+ });
     } catch (error) {
       console.error("Error downloading infographic as image:", error);
       toast({
