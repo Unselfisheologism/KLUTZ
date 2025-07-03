@@ -499,25 +499,25 @@ const clearUrlContext = () => {
             className="flex-grow"
             disabled={!isAiChatReady}
          />
- {/* URL Visit Button */}
- <Button
+         {/* URL Visit Button */}
+          <Button
             variant="outline"
             size="icon"
             onClick={() => setShowUrlInput(!showUrlInput)}
             disabled={!isAiChatReady || showUrlInput} // Disable if already showing URL input
-           >
- <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
- </Button>         
- <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
- <SelectTrigger className="w-[180px]" disabled={!isAiChatReady}>
- <SelectValue placeholder="Select Model" />
- </SelectTrigger>
- <SelectContent>
- {availableModels.map(model => (
- <SelectItem key={model} value={model}>{model}</SelectItem>
- ))}
- </SelectContent>
- </Select>
+          >
+          <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
+          </Button>         
+          <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
+            <SelectTrigger className="w-[180px]" disabled={!isAiChatReady}>
+              <SelectValue placeholder="Select Model" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableModels.map(model => (
+                <SelectItem key={model} value={model}>{model}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput}>
             Send
