@@ -256,7 +256,7 @@ export default function ClientInfographicRenderer({
         </div>
       </div>
       <div className="flex-1 border rounded-md p-4 flex items-center justify-center bg-card">
-        {/* PIE CHART: Only this block is changed to your "perfect" logic */}
+ <div className="chart-container" style={{ backgroundColor: 'transparent' }}>
         {infographicData.type === 'pie' && Array.isArray(pieData) && (
           <RCPieChart width={400} height={400}>
             <Pie
@@ -367,6 +367,7 @@ export default function ClientInfographicRenderer({
             </div>
           </div>
         )}
+ </div>
       </div>
       <div className="mt-4 bg-muted/20 p-4 rounded-md">
         <h4 className="font-medium mb-2">Data Preview</h4>
