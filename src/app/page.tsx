@@ -180,6 +180,7 @@ function ChatComponent() {
   const [selectedModel, setSelectedModel] = useState<string>('gpt-4o-mini'); // State for selected model
   const [showUrlInput, setShowUrlInput] = useState(false); // State to control visibility of URL input
   const [urlInput, setUrlInput] = useState('');
+  const [fetchedUrlContent, setFetchedUrlContent] = useState<string | null>(null); // State to store fetched URL content
 
   const availableModels: string[] = [ // Updated based on puter.com/docs
     'gpt-4o-mini',
@@ -290,11 +291,12 @@ function ChatComponent() {
   }, [messages]);
 
  const handleSendMessage = async (messageText: string, context?: string, isUrlContext = false) => {
- if (messageText.trim() === '' && !isUrlContext) return;
+    if (messageText.trim() === '' && !isUrlContext && !fetchedUrlContent) return;
+
     const newUserMessage: Message = {
       id: messages.length + 1,
-      text: isUrlContext ? `Analyzing content for: ${context}` : messageText,
-      sender: 'user',
+ text: messageText,
+ sender: 'user',
     };
 
     setMessages([...messages, newUserMessage]);
@@ -332,7 +334,13 @@ function ChatComponent() {
       const messageIdToUpdate = messages.length + 2; // The ID of the streaming bot message
 
       let finalMessage = messageText;
-      if (context) {
+      // Include fetched URL content as context if available
+      let contextForAI = fetchedUrlContent || '';
+      if (context) { // This case is likely for initial analysis after fetching, can be refined
+        contextForAI = context;
+      }
+
+      if (contextForAI) {
         finalMessage = `Context from URL: ${context}\n\nUser Query: ${messageText}`;
       }
      try {
@@ -368,6 +376,7 @@ function ChatComponent() {
   }
 };
 
+// Function to handle sending the URL for fetching
 const handleSendUrl = async () => {
   if (urlInput.trim() === '') return;
 
@@ -376,7 +385,8 @@ const handleSendUrl = async () => {
     text: `Visiting URL: ${urlInput}`,
     sender: 'user',
   };
-  setMessages([...messages, userUrlMessage]);
+  // Add the URL message to the chat. We'll update its appearance later.
+  setMessages(prevMessages => [...prevMessages, userUrlMessage]);
   setShowUrlInput(false); // Hide URL input after sending
   if (!isAiChatReady) {
  setUrlInput('');
@@ -400,12 +410,14 @@ const handleSendUrl = async () => {
     }
 
     // Add a temporary bot message to show processing
-    const processingMessage: Message = {
-        id: messages.length + 2,
-        text: `Fetching content from ${urlInput}...`,
-        sender: 'bot',
-      };
+    const processingMessageId = messages.length + 2;
+     const processingMessage: Message = {
+ id: processingMessageId,
+ text: `Fetching content from ${urlInput}...`,
+ sender: 'bot',
+ };
     setMessages(prevMessages => [...prevMessages, processingMessage]);
+
     try {
       const aiPrompt = `Here is the content from the URL "${urlInput}":\n\n${await fetchUrlContent(urlInput)}\n\nPlease analyze or summarize this content.`;
       await handleSendMessage(aiPrompt); // Send this as a message to the AI
@@ -415,16 +427,21 @@ const handleSendUrl = async () => {
     } catch (error) {
       console.error(`Error fetching URL content: ${error}`);
       // Handle errors, e.g., display an error message to the user
+      // Update the processing message to an error message
       const botErrorResponse: Message = {
-        id: messages.length + 2, // Assuming this is the next message ID
+        id: processingMessageId,
         text: `Error fetching content from ${urlInput}. Details: ${error.message}`,
         sender: 'bot',
-
       };
-      setMessages(prevMessages => [...prevMessages, botErrorResponse]);
+      setMessages(prevMessages => prevMessages.map(msg =>
+        msg.id === processingMessageId ? botErrorResponse : msg
+      ));
     }
   }
 };
+
+// Function to fetch URL content using the API route
+// (This remains the same)
 
 const fetchUrlContent = async (url: string): Promise<string> => {
   try {
@@ -442,12 +459,23 @@ const fetchUrlContent = async (url: string): Promise<string> => {
   }
 };
 
+// Function to clear fetched URL content
+const clearUrlContext = () => {
+ setFetchedUrlContent(null);
+};
+
   return (
     <Card className="h-full flex flex-col">
       <CardContent className="flex-grow overflow-hidden p-4">
         <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
           {messages.map(message => (
-            <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+            <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'} ${message.text.startsWith('Visiting URL:') ? 'flex justify-center' : ''}`}>
+              {message.text.startsWith('Visiting URL:') ? (
+                // Display URL in a green box for user messages
+                <span className="inline-block p-2 rounded-lg bg-green-500 text-white">
+                  {message.text}
+                </span>
+              ) : (
               <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
                 {message.text}
               </span>
@@ -463,7 +491,7 @@ const fetchUrlContent = async (url: string): Promise<string> => {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && inputMessage.trim() !== '') {
-               if (isAiChatReady && !showUrlInput) {
+ if (isAiChatReady && !showUrlInput) {
                   handleSendMessage(inputMessage);
                 }
               }
@@ -476,7 +504,7 @@ const fetchUrlContent = async (url: string): Promise<string> => {
             variant="outline"
             size="icon"
             onClick={() => setShowUrlInput(!showUrlInput)}
-            disabled={!isAiChatReady}
+            disabled={!isAiChatReady || showUrlInput} // Disable if already showing URL input
            >
  <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
  </Button>         
@@ -491,7 +519,11 @@ const fetchUrlContent = async (url: string): Promise<string> => {
  </SelectContent>
  </Select>
 
-          <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput}>Send</Button>
+          <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput}>
+            Send
+          </Button>
+           {/* Optional: Add a button to clear URL context */}
+           {fetchedUrlContent && <Button variant="destructive" onClick={clearUrlContext}>Clear URL Context</Button>}
         </div>
         {/* Conditional URL Input */}
         {showUrlInput && (
