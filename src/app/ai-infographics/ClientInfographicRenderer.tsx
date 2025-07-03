@@ -113,10 +113,18 @@ export default function ClientInfographicRenderer({
     type: string;
     title: string;
     description?: string;
-    data: any;
-    config?: any;
+ data: any;
+ config?: {
+      [key: string]: any; // Allow any other config properties
+ colors?: string[];
+ outlineColor?: string;
+ textConfig?: {
+ color?: string;
+ fontSize?: number;
+ fontWeight?: string;
+      };
+    };
     svgContent?: string;
-  } | null;
 }) {
   const [treeDimensions, setTreeDimensions] = useState({ width: 500, height: 400 });
   const treeContainerRef = useRef<HTMLDivElement>(null);
@@ -199,6 +207,16 @@ export default function ClientInfographicRenderer({
   const isTree = type === 'tree' && treeData;
 
  // Determine colors and outline based on config
+ const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
+ const radius = outerRadius * 1.1; // Position text slightly outside the pie
+ const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+ const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+ return (
+      <text x={x} y={y} fill={config?.textConfig?.color || "#000"} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" style={{ fontSize: config?.textConfig?.fontSize || 12, fontWeight: config?.textConfig?.fontWeight || 'normal' }}>
+        {`${name}: ${(percent * 100).toFixed(1)}%`}
+      </text>
+    );
+  };
  const colors = (config?.colors && Array.isArray(config.colors) && config.colors.length > 0) ? config.colors : COLORS;
   if (
     (['bar', 'line', 'area', 'scatter'].includes(type) && !hasValidXY) ||
@@ -246,7 +264,7 @@ export default function ClientInfographicRenderer({
               nameKey="name"
               cx="50%" cy="50%"
               outerRadius={140}
-              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+ label={renderPieLabel} // Use custom label renderer
               stroke={config?.outlineColor || 'none'} // Apply outline to the entire Pie
               strokeWidth={config?.outlineColor ? 1 : 0}
             >

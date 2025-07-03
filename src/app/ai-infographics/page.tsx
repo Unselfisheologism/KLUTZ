@@ -394,7 +394,7 @@ If the user is asking for information without requesting a visualization, just p
   const handleDownloadInfographic = async () => {
     if (!infographicRef.current) return;
     try {
-      const dataUrl = await toPng(infographicRef.current, { cacheBust: true });
+      const dataUrl = await toPng(infographicRef.current, { cacheBust: true, backgroundColor: null }); // Added transparent background
       const link = document.createElement('a');
       link.download = `infographic_${new Date().toISOString().slice(0,10)}.png`;
       link.href = dataUrl;
