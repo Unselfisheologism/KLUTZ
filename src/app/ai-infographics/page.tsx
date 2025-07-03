@@ -394,7 +394,12 @@ If the user is asking for information without requesting a visualization, just p
   const handleDownloadInfographic = async () => {
     if (!infographicRef.current) return;
     try {
-      const dataUrl = await toPng(infographicRef.current, { cacheBust: true, backgroundColor: null }); // Added transparent background
+      // Explicitly set background to transparent for capture
+      const originalBackground = infographicRef.current.style.backgroundColor;
+ infographicRef.current.style.backgroundColor = 'transparent';
+
+      const dataUrl = await toPng(infographicRef.current, { cacheBust: true }); // backgroundColor: null is the default for transparent
+
       const link = document.createElement('a');
       link.download = `infographic_${new Date().toISOString().slice(0,10)}.png`;
       link.href = dataUrl;
@@ -403,6 +408,9 @@ If the user is asking for information without requesting a visualization, just p
         title: "Download Complete",
         description: "Infographic image has been downloaded successfully.",
       });
+
+      // Revert background after capture
+ infographicRef.current.style.backgroundColor = originalBackground;
     } catch (error) {
       console.error("Error downloading infographic as image:", error);
       toast({
