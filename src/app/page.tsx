@@ -223,17 +223,14 @@ function ChatComponent() {
     'grok-beta',
   ];
 
-
-
-
   useEffect(() => {
- // Scroll to the bottom of the chat when new messages are added
- if (scrollAreaRef.current) {
- scrollAreaRef.current.scrollTo({
- top: scrollAreaRef.current.scrollHeight,
- behavior: 'smooth',
- });
- }
+    // Scroll to the bottom of the chat when new messages are added
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -290,13 +287,13 @@ function ChatComponent() {
     };
   }, [messages]);
 
- const handleSendMessage = async (messageText: string, context?: string, isUrlContext = false) => {
-    if (messageText.trim() === '' && !isUrlContext && !fetchedUrlContent) return;
+  const handleSendMessage = async (messageText: string) => {
+    if (messageText.trim() === '' && !fetchedUrlContent) return;
 
     const newUserMessage: Message = {
       id: messages.length + 1,
- text: messageText,
- sender: 'user',
+      text: messageText,
+      sender: 'user',
     };
 
     setMessages([...messages, newUserMessage]);
@@ -305,22 +302,23 @@ function ChatComponent() {
     if (!isAiChatReady) {
       console.error('AI chat is not ready.');
       return; // Do not attempt to send if not ready
-   }
-   if (window.puter) {
-     let isSignedIn = await window.puter.auth.isSignedIn();
-     if (!isSignedIn) {
-       await window.puter.auth.signIn();
-       isSignedIn = await window.puter.auth.isSignedIn();
-       if (!isSignedIn) {
-         const botResponse: Message = {
-           id: messages.length + 2,
-           text: 'Authentication failed or was cancelled. Cannot process command.',
-           sender: 'bot',
-         };
-         setMessages(prevMessages => [...prevMessages, botResponse]);
-         return;
-       }
-     }
+    }
+
+    if (window.puter) {
+      let isSignedIn = await window.puter.auth.isSignedIn();
+      if (!isSignedIn) {
+        await window.puter.auth.signIn();
+        isSignedIn = await window.puter.auth.isSignedIn();
+        if (!isSignedIn) {
+          const botResponse: Message = {
+            id: messages.length + 2,
+            text: 'Authentication failed or was cancelled. Cannot process command.',
+            sender: 'bot',
+          };
+          setMessages(prevMessages => [...prevMessages, botResponse]);
+          return;
+        }
+      }
 
       // Add a temporary bot message to show streaming is in progress
       const streamingBotMessage: Message = {
@@ -335,15 +333,11 @@ function ChatComponent() {
 
       let finalMessage = messageText;
       // Include fetched URL content as context if available
-      let contextForAI = fetchedUrlContent || '';
-      if (context) { // This case is likely for initial analysis after fetching, can be refined
-        contextForAI = context;
+      if (fetchedUrlContent) {
+        finalMessage = `Context from URL: ${fetchedUrlContent}\n\nUser Query: ${messageText}`;
       }
 
-      if (contextForAI) {
-        finalMessage = `Context from URL: ${context}\n\nUser Query: ${messageText}`;
-      }
-     try {
+      try {
         const streamResponse = await window.puter.ai.chat(finalMessage, { model: selectedModel, stream: true });
 
         for await (const part of streamResponse) {
@@ -369,100 +363,111 @@ function ChatComponent() {
       } catch (error) {
         console.error(`Error during AI chat request for model "${selectedModel}":`, error);
         // If an error occurs, update the last message to an error message
-      const botErrorResponse: Message = { id: messageIdToUpdate, text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later. Error details: ${error.message}`, sender: 'bot' };
+        const botErrorResponse: Message = { id: messageIdToUpdate, text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later. Error details: ${error.message}`, sender: 'bot' };
         setMessages(prevMessages => [...prevMessages, botErrorResponse]);
         return; // Stop processing if the API call failed
       }
-  }
-};
-
-// Function to handle sending the URL for fetching
-const handleSendUrl = async () => {
-  if (urlInput.trim() === '') return;
-
-  const userUrlMessage: Message = {
-    id: messages.length + 1,
-    text: `Visiting URL: ${urlInput}`,
-    sender: 'user',
+    }
   };
-  // Add the URL message to the chat. We'll update its appearance later.
-  setMessages(prevMessages => [...prevMessages, userUrlMessage]);
-  setShowUrlInput(false); // Hide URL input after sending
-  if (!isAiChatReady) {
- setUrlInput('');
-    console.error('AI chat is not ready.');
-    return;
-  }
-  if (window.puter) {
-    let isSignedIn = await window.puter.auth.isSignedIn();
-    if (!isSignedIn) {
-      await window.puter.auth.signIn();
-      isSignedIn = await window.puter.auth.isSignedIn();
-      if (!isSignedIn) {
-        const botResponse: Message = {
-          id: messages.length + 2,
-          text: 'Authentication failed or was cancelled. Cannot process command.',
-          sender: 'bot',
-        };
-        setMessages(prevMessages => [...prevMessages, botResponse]);
-        return;
-      }
+
+  // Function to handle sending the URL for fetching
+  const handleSendUrl = async () => {
+    if (urlInput.trim() === '') return;
+
+    const userUrlMessage: Message = {
+      id: messages.length + 1,
+      text: `Visiting URL: ${urlInput}`,
+      sender: 'user',
+    };
+    // Add the URL message to the chat. We'll update its appearance later.
+    setMessages(prevMessages => [...prevMessages, userUrlMessage]);
+    setShowUrlInput(false); // Hide URL input after sending
+
+    if (!isAiChatReady) {
+      setUrlInput('');
+      console.error('AI chat is not ready.');
+      return;
     }
 
-    // Add a temporary bot message to show processing
-    const processingMessageId = messages.length + 2;
-     const processingMessage: Message = {
- id: processingMessageId,
- text: `Fetching content from ${urlInput}...`,
- sender: 'bot',
- };
-    setMessages(prevMessages => [...prevMessages, processingMessage]);
+    if (window.puter) {
+      let isSignedIn = await window.puter.auth.isSignedIn();
+      if (!isSignedIn) {
+        await window.puter.auth.signIn();
+        isSignedIn = await window.puter.auth.isSignedIn();
+        if (!isSignedIn) {
+          const botResponse: Message = {
+            id: messages.length + 2,
+            text: 'Authentication failed or was cancelled. Cannot process command.',
+            sender: 'bot',
+          };
+          setMessages(prevMessages => [...prevMessages, botResponse]);
+          return;
+        }
+      }
 
-    try {
-      const aiPrompt = `Here is the content from the URL "${urlInput}":\n\n${await fetchUrlContent(urlInput)}\n\nPlease analyze or summarize this content.`;
-      await handleSendMessage(aiPrompt); // Send this as a message to the AI
-
-      setUrlInput(''); // Clear URL input after successful fetch and send
-
-    } catch (error) {
-      console.error(`Error fetching URL content: ${error}`);
-      // Handle errors, e.g., display an error message to the user
-      // Update the processing message to an error message
-      const botErrorResponse: Message = {
+      // Add a temporary bot message to show processing
+      const processingMessageId = messages.length + 2;
+      const processingMessage: Message = {
         id: processingMessageId,
-        text: `Error fetching content from ${urlInput}. Details: ${error.message}`,
+        text: `Fetching content from ${urlInput}...`,
         sender: 'bot',
       };
-      setMessages(prevMessages => prevMessages.map(msg =>
-        msg.id === processingMessageId ? botErrorResponse : msg
-      ));
+      setMessages(prevMessages => [...prevMessages, processingMessage]);
+
+      try {
+        const fetchedContent = await fetchUrlContent(urlInput);
+        setFetchedUrlContent(fetchedContent); // Store fetched content
+        setUrlInput(''); // Clear URL input after successful fetch
+
+        // Update the processing message to indicate success (or remove it)
+        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== processingMessageId));
+
+
+      } catch (error) {
+        console.error(`Error fetching URL content: ${error}`);
+        // Handle errors, e.g., display an error message to the user
+        // Update the processing message to an error message
+        const botErrorResponse: Message = {
+          id: processingMessageId,
+          text: `Error fetching content from ${urlInput}. Details: ${error.message}`,
+          sender: 'bot',
+        };
+        setMessages(prevMessages => prevMessages.map(msg =>
+          msg.id === processingMessageId ? botErrorResponse : msg
+        ));
+      }
     }
-  }
-};
+  };
 
-// Function to fetch URL content using the API route
-// (This remains the same)
+  // Function to fetch URL content using the API route
+  const fetchUrlContent = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch('/api/fetch-url-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      });
+      const data = await response.json();
+       if (response.ok) {
+            return data.content || `Could not fetch content from ${url}.`;
+       } else {
+            // Handle API errors (e.g., website not found, server error)
+           throw new Error(data.error || `API error fetching content from ${url}`);
+       }
 
-const fetchUrlContent = async (url: string): Promise<string> => {
-  try {
-    const response = await fetch('/api/fetch-url-content', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url }),
-    });
-    const data = await response.json();
-    return data.content || `Could not fetch content from ${url}.`;
-  } catch (error: any) {
-    return `Error fetching content from ${url}. Details: ${error.message}`;
-  }
-};
+    } catch (error: any) {
+      // Handle network errors or other exceptions
+      throw new Error(`Error fetching content from ${url}. Details: ${error.message}`);
+    }
+  };
 
-// Function to clear fetched URL content
-const clearUrlContext = () => {
- setFetchedUrlContent(null);
-};
+
+  // Function to clear fetched URL content
+  const clearUrlContext = () => {
+    setFetchedUrlContent(null);
+  };
 
   return (
     <Card className="h-full flex flex-col">
@@ -476,9 +481,10 @@ const clearUrlContext = () => {
                   {message.text}
                 </span>
               ) : (
-              <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                {message.text}
-              </span>
+                <span className={`inline-block p-2 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                  {message.text}
+                </span>
+              )}
             </div>
           ))}
         </ScrollArea>
@@ -491,23 +497,23 @@ const clearUrlContext = () => {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && inputMessage.trim() !== '') {
-               if (isAiChatReady && !showUrlInput) {
+                if (isAiChatReady && !showUrlInput) {
                   handleSendMessage(inputMessage);
                 }
               }
             }}
             className="flex-grow"
             disabled={!isAiChatReady}
-         />
-         {/* URL Visit Button */}
+          />
+          {/* URL Visit Button */}
           <Button
             variant="outline"
             size="icon"
             onClick={() => setShowUrlInput(!showUrlInput)}
             disabled={!isAiChatReady || showUrlInput} // Disable if already showing URL input
           >
-          <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
-          </Button>         
+            <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
+          </Button>
           <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
             <SelectTrigger className="w-[180px]" disabled={!isAiChatReady}>
               <SelectValue placeholder="Select Model" />
@@ -522,8 +528,8 @@ const clearUrlContext = () => {
           <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput}>
             Send
           </Button>
-           {/* Optional: Add a button to clear URL context */}
-           {fetchedUrlContent && <Button variant="destructive" onClick={clearUrlContext}>Clear URL Context</Button>}
+          {/* Optional: Add a button to clear URL context */}
+          {fetchedUrlContent && <Button variant="destructive" onClick={clearUrlContext}>Clear URL Context</Button>}
         </div>
         {/* Conditional URL Input */}
         {showUrlInput && (
@@ -556,6 +562,8 @@ const clearUrlContext = () => {
     </Card>
   );
 }
+
+
 
 
 export default function HomePage() {
