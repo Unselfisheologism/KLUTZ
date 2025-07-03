@@ -126,6 +126,7 @@ export default function ClientInfographicRenderer({
     };
     svgContent?: string;
   } | null;
+}) {
   const [treeDimensions, setTreeDimensions] = useState({ width: 500, height: 400 });
   const treeContainerRef = useRef<HTMLDivElement>(null);
 
