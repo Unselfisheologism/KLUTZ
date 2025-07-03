@@ -491,7 +491,7 @@ const clearUrlContext = () => {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && inputMessage.trim() !== '') {
- if (isAiChatReady && !showUrlInput) {
+               if (isAiChatReady && !showUrlInput) {
                   handleSendMessage(inputMessage);
                 }
               }
