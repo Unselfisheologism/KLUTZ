@@ -376,7 +376,7 @@ function ChatComponent() {
 
     const userUrlMessage: Message = {
       id: messages.length + 1,
-      text: `Visiting URL: ${urlInput}`,
+      text: `Visited URL: ${urlInput}`,
       sender: 'user',
     };
     // Add the URL message to the chat. We'll update its appearance later.
@@ -474,8 +474,8 @@ function ChatComponent() {
       <CardContent className="flex-grow overflow-hidden p-4">
         <ScrollArea ref={scrollAreaRef} className="h-full pr-4">
           {messages.map(message => (
-            <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'} ${message.text.startsWith('Visiting URL:') ? 'flex justify-center' : ''}`}>
-              {message.text.startsWith('Visiting URL:') ? (
+            <div key={message.id} className={`mb-2 ${message.sender === 'user' ? 'text-right' : 'text-left'} ${message.text.startsWith('Visited URL:') ? 'flex justify-center' : ''}`}>
+              {message.text.startsWith('Visited URL:') ? (
                 // Display URL in a green box for user messages
                 <span className="inline-block p-2 rounded-lg bg-green-500 text-white">
                   {message.text}
