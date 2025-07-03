@@ -172,7 +172,10 @@ export default function ClientInfographicRenderer({
       const converted = to2DNumberArray(data);
       if (converted && isValid2DNumberArray(converted)) {
         heatmapData = converted;
-        isHeatmap = true;
+ isHeatmap = true;
+      } else {
+ heatmapData = null; // Ensure heatmapData is null if not valid
+ isHeatmap = false;
       }
     }
   }
@@ -195,7 +198,8 @@ export default function ClientInfographicRenderer({
   const isScatter = type === 'scatter' && hasValidXY && typeof data[0][config.xKey] === 'number' && typeof data[0][config.yKey] === 'number';
   const isTree = type === 'tree' && treeData;
 
-  // Error handling
+ // Determine colors and outline based on config
+ const colors = (config?.colors && Array.isArray(config.colors) && config.colors.length > 0) ? config.colors : COLORS;
   if (
     (['bar', 'line', 'area', 'scatter'].includes(type) && !hasValidXY) ||
     (type === 'heatmap' && !isHeatmap)
@@ -243,9 +247,11 @@ export default function ClientInfographicRenderer({
               cx="50%" cy="50%"
               outerRadius={140}
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+              stroke={config?.outlineColor || 'none'} // Apply outline to the entire Pie
+              strokeWidth={config?.outlineColor ? 1 : 0}
             >
               {pieData.map((entry, index) => (
-                <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                <Cell key={index} fill={colors[index % colors.length]} stroke={config?.outlineColor || 'none'} strokeWidth={config?.outlineColor ? 1 : 0} />
               ))}
             </Pie>
             <RCTooltip />
@@ -259,7 +265,7 @@ export default function ClientInfographicRenderer({
             <YAxis />
             <RCTooltip />
             <RCLegend />
-            <Bar dataKey={config.yKey} fill={COLORS[0]} />
+            <Bar dataKey={config.yKey} fill={colors[0]} stroke={config?.outlineColor || 'none'} strokeWidth={config?.outlineColor ? 1 : 0} />
           </RCBarChart>
         )}
         {isLine && (
@@ -269,7 +275,7 @@ export default function ClientInfographicRenderer({
             <YAxis />
             <RCTooltip />
             <RCLegend />
-            <Line type="monotone" dataKey={config.yKey} stroke={COLORS[0]} />
+            <Line type="monotone" dataKey={config.yKey} stroke={colors[0]} strokeWidth={config?.outlineColor ? 1 : 0} />
           </RCLineChart>
         )}
         {isArea && (
@@ -279,7 +285,7 @@ export default function ClientInfographicRenderer({
             <YAxis />
             <RCTooltip />
             <RCLegend />
-            <Area type="monotone" dataKey={config.yKey} stroke={COLORS[0]} fill={COLORS[1]} />
+            <Area type="monotone" dataKey={config.yKey} stroke={colors[0]} fill={colors[1] || colors[0]} strokeWidth={config?.outlineColor ? 1 : 0} />
           </RCAreaChart>
         )}
         {isScatter && (
@@ -289,7 +295,7 @@ export default function ClientInfographicRenderer({
             <YAxis dataKey={config.yKey} name={config.yKey} />
             <ZAxis dataKey={config.zKey || undefined} range={[60, 400]} />
             <RCTooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter name="Scatter Data" data={data} fill={COLORS[2]} />
+            <Scatter name="Scatter Data" data={data} fill={colors[0]} stroke={config?.outlineColor || 'none'} strokeWidth={config?.outlineColor ? 1 : 0} />
           </RCScatterChart>
         )}
         {isHeatmap && (
