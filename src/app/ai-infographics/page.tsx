@@ -398,7 +398,9 @@ If the user is asking for information without requesting a visualization, just p
       // Find the element that specifically contains the chart visualization
       // Assuming the chart is rendered within a div with a specific class or data attribute
       // In ClientInfographicRenderer.tsx, we could add a data-testid="chart-container"
-      const chartContainer = infographicRef.current.querySelector('[data-testid="chart-container"]');
+      // Looking at the structure, the chart is likely within the div with class 'flex-1 border rounded-md p-4 flex items-center justify-center bg-card'
+      // Let's target the div within infographicRef.current that has the class 'chart-container' which was added in the previous step
+      const chartContainer = infographicRef.current.querySelector('.chart-container');
 
       const elementToCapture = chartContainer || infographicRef.current; // Fallback to the main ref if specific container not found
 
