@@ -7,11 +7,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 export default function AppHeader() {
   return (
     <header className="bg-card border-b border-border sticky top-0 z-50">
-      <div className="container mx-auto px-14 sm:px-16 lg:px-18 h-16 flex items-center justify-between">
+      <div className="container mx-auto px-14 sm:px-16 lg:px-18 h-16 flex items-center">
         <Link href="/" className="flex items-center gap-2">
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/testimonials" className="text-sm font-medium hover:underline">Testimonials</Link>
-        </nav>
           <img
             src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png"
             alt="Klutz Logo"
@@ -21,6 +18,9 @@ export default function AppHeader() {
             Klutz
           </h1>
         </Link>
+        <nav className="hidden md:flex items-center gap-6 mx-auto">
+          <Link href="/testimonials" className="text-sm font-medium hover:underline">Testimonials</Link>
+        </nav>
         <div className="flex items-center gap-4">
           <ThemeToggle />
           <Button variant="ghost" size="icon" asChild>
