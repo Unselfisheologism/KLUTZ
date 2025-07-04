@@ -667,7 +667,7 @@ export default function HomePage() {
                 </div>
                 {/* Row 3: 4 buttons */}
                 <div className="flex flex-wrap justify-center gap-4 max-w-4xl">
-                  {features.slice(14, 18).map((feature) => (
+                  {features.slice(14, features.length).map((feature) => (
                     <Link key={feature.title} href={feature.href} passHref>
                       <Button variant="outline" className="flex items-center gap-2 p-4 h-auto rounded-lg shadow-sm hover:bg-muted transition-colors">
                         <feature.icon className="h-5 w-5 text-primary" />
