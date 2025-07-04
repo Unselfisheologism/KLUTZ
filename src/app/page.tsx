@@ -639,9 +639,9 @@ export default function HomePage() {
             </div>
             {/* Tools Section */}
             <section className="mt-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-8">
-                Explore Our AI Tools
-              </h2>
+              <nav className="text-3xl md:text-4xl font-bold text-center text-primary mb-8 hidden md:flex items-center gap-6 mx-auto">
+                <Link href="/testimonials" className="text-sm font-medium hover:underline">Testimonials</Link>
+              </nav>
               <div className="flex flex-col items-center space-y-4">
                 {/* Row 1: 8 buttons */}
                 <div className="flex flex-wrap justify-center gap-4 max-w-4xl">
