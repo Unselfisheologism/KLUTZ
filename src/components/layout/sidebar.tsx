@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react'; // Import useEffect
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, PanelLeft } from 'lucide-react';
+import { PanelLeft } from 'lucide-react'; // Assuming PanelLeft is the icon you want for the trigger
 
 interface Feature {
   icon: React.ElementType;
@@ -20,20 +19,23 @@ interface SidebarProps {
   features: Feature[];
 }
 
-// Determine if we are on a mobile device
-const isMobileDevice = () => typeof window !== 'undefined' && window.innerWidth < 768; // Assuming 768px is your mobile breakpoint
-
 const Sidebar: React.FC<SidebarProps> = ({ features }) => {
-  const [isOpen, setIsOpen] = useState(true); // Open by default for all devices
-  const [isSheetOpen, setIsSheetOpen] = useState(true); // State for controlling the mobile sheet
-
+  const [isSheetOpen, setIsSheetOpen] = useState(true); // Open by default
 
 
   return (
-    <>
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col border-r h-full overflow-y-auto">
-        <ScrollArea className="flex-grow">
+    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed top-4 left-4 z-50">
+          <PanelLeft className="h-6 w-6" />
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-80 p-0 flex flex-col"> {/* This line would have been changed */}
+        <ScrollArea className="flex-grow mt-12 md:mt-0"> {/* Added margin-top for mobile */}
           <nav className="flex flex-col p-4 space-y-2">
             {features.map((feature) => (
               <Button
@@ -41,6 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ features }) => {
                 variant="ghost"
                 className="w-full justify-start"
                 asChild
+                onClick={() => setIsSheetOpen(false)} // Close sheet on link click
               >
                 <Link href={feature.href} passHref>
                   <feature.icon className="h-5 w-5 mr-2" />
@@ -50,39 +53,8 @@ const Sidebar: React.FC<SidebarProps> = ({ features }) => {
             ))}
           </nav>
         </ScrollArea>
-      </div>
-
-      {/* Mobile Sidebar (using Sheet) */}
-      <div className="md:hidden">
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild onClick={() => setIsSheetOpen(true)}>
-            <Button variant="outline" size="icon" className="absolute top-4 left-4 z-50">
-              <PanelLeft className="h-6 w-6" />
-              <span className="sr-only">Toggle Sidebar</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <ScrollArea className="h-full">
-              <nav className="flex flex-col p-4 space-y-2 mt-12"> {/* Added margin-top to avoid overlapping the close button on Sheet */}
-                {features.map((feature) => (
-                  <Button
-                    key={feature.title}
-                    variant="ghost"
-                    className="w-full justify-start"
-                    asChild
-                  >
-                    <Link href={feature.href} passHref>
-                      <feature.icon className="h-5 w-5 mr-2" />
-                      {feature.title}
-                    </Link>
-                  </Button>
-                ))}
-              </nav>
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 };
 
