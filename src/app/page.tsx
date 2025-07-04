@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
+import Sidebar from "@/components/layout/sidebar"; // Import the Sidebar component
 
 declare global {
   interface Window {
@@ -490,7 +491,7 @@ function ChatComponent() {
         </ScrollArea>
       </CardContent>
       <div className="p-4 border-t flex flex-col gap-2">
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Input
             placeholder="Type your command..."
             value={inputMessage}
@@ -574,54 +575,56 @@ export default function HomePage() {
         <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
       </Head>
     <div className="min-h-screen flex flex-col">
-      <div className="flex-grow">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-8">
-              <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
-                AI—Overpowered, but Underrated
-              </h1>
-              <div className="flex flex-col items-center">
-                <span className="text-sm font-medium mb-1">Made in</span>
+      <div className="flex flex-grow"> {/* Use flex to arrange sidebar and main content */}
+        <Sidebar features={features} /> {/* Include the Sidebar component */}
+        <main className="flex-grow flex flex-col"> {/* Main content area */}
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow">
+            <div className="text-center mb-12">
+              <div className="flex items-center justify-center gap-8">
+                <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
+                  AI—Overpowered, but Underrated
+                </h1>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-medium mb-1">Made in</span>
+                  <a
+                    href="https://bolt.new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Made in Bolt.new (opens in a new window)"
+                    className="badge-wrapper-120x40"
+                  >
+                    {/* Light mode badge */}
+                    <Image
+                      src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185392/images-removebg-preview_j17by7.png"
+                      alt="Made in Bolt.new (light mode)"
+                      width={120}
+                      height={40}
+                      unoptimized
+                      className="block dark:hidden"
+                    />
+                    {/* Dark mode badge */}
+                    <Image
+                      src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185170/images_karyms.png"
+                      alt="Made in Bolt.new (dark mode)"
+                      width={120}
+                      height={40}
+                      unoptimized
+                      className="hidden dark:block"
+                    />
+                  </a>
+                </div>
+              </div>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+                ACID TIPS (Audio, Chat, Infographics, Date-Time, Text, Image, Problem-Solving, Spreadsheets)😆
+              </p>
+              {/* === PRODUCT HUNT BADGE === */}
+              <div className="mt-4 flex justify-center">
                 <a
-                  href="https://bolt.new"
+                  href="https://www.producthunt.com/products/klutz?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-klutz"
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="Made in Bolt.new (opens in a new window)"
-                  className="badge-wrapper-120x40"
+                  title="Featured on Product Hunt"
                 >
-                  {/* Light mode badge */}
-                  <Image
-                    src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185392/images-removebg-preview_j17by7.png"
-                    alt="Made in Bolt.new (light mode)"
-                    width={120}
-                    height={40}
-                    unoptimized
-                    className="block dark:hidden"
-                  /> 
-                  {/* Dark mode badge */}
-                  <Image
-                    src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185170/images_karyms.png"
-                    alt="Made in Bolt.new (dark mode)"
-                    width={120}
-                    height={40}
-                    unoptimized
-                    className="hidden dark:block"
-                  />
-                </a>
-              </div>
-            </div>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              ACID TIPS (Audio, Chat, Infographics, Date-Time, Text, Image, Problem-Solving, Spreadsheets)😆
-            </p>
-            {/* === PRODUCT HUNT BADGE === */}
-            <div className="mt-4 flex justify-center">
-              <a
-                href="https://www.producthunt.com/products/klutz?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-klutz"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Featured on Product Hunt"
-              >
                 <img
                   src=" https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=977863&theme=light&t=1749888258779"
                   alt="KLUTZ - Suite&#0032;of&#0032;AI&#0032;Powered&#0032;Image&#0044;&#0032;Date&#0032;&#0038;&#0032;Text&#0032;Tools | Product Hunt"
@@ -631,45 +634,13 @@ export default function HomePage() {
                 />
               </a>
             </div>
+            </div>
 
-
+            <div className="mb-8">
+              <ChatComponent />
+            </div>
           </div>
-          
-          <div className="mb-8">
-            <ChatComponent />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature) => (
-                <Card key={feature.title} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex items-center mb-3 card">
-                      <feature.icon className="h-10 w-10 text-accent mr-4" />
-                      <CardTitle className="font-headline text-2xl">{feature.title}</CardTitle>
-                    </div>
-                    <CardDescription className="text-base min-h-[60px]">{feature.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow" />
-                  <CardFooter>
-                    {feature.isImplemented ? (
-                      <Link href={feature.href}>
-                        <button className="cssbuttons-io-button">
-                          Open Tool
-                          <div className="icon">
-                            <svg height="24" width="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"></path><path d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z" fill="currentColor"></path></svg>
-                          </div>
-                        </button>
-                      </Link>
-                    ) : (
-                      <Button variant="outline" className="w-full" disabled>
-                        Coming Soon
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-          </div>
-        </div>
+        </main>
       </div>
 
       {/* Footer */}
