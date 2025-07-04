@@ -639,6 +639,47 @@ export default function HomePage() {
             <div className="mb-8">
               <ChatComponent />
             </div>
+            {/* Tools Section */}
+            <section className="mt-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-8">
+                Explore Our AI Tools
+              </h2>
+              <div className="flex flex-col items-center space-y-4">
+                {/* Row 1: 8 buttons */}
+                <div className="flex flex-wrap justify-center gap-4 max-w-4xl">
+                  {features.slice(0, 8).map((feature) => (
+                    <Link key={feature.title} href={feature.href} passHref>
+                      <Button variant="outline" className="flex items-center gap-2 p-4 h-auto rounded-lg shadow-sm hover:bg-muted transition-colors">
+                        <feature.icon className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium">{feature.title}</span>
+                      </Button>
+                    </Link>
+                  ))}
+                </div>
+                {/* Row 2: 6 buttons */}
+                <div className="flex flex-wrap justify-center gap-4 max-w-4xl">
+                  {features.slice(8, 14).map((feature) => (
+                    <Link key={feature.title} href={feature.href} passHref>
+                      <Button variant="outline" className="flex items-center gap-2 p-4 h-auto rounded-lg shadow-sm hover:bg-muted transition-colors">
+                        <feature.icon className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium">{feature.title}</span>
+                      </Button>
+                    </Link>
+                  ))}
+                </div>
+                {/* Row 3: 4 buttons */}
+                <div className="flex flex-wrap justify-center gap-4 max-w-4xl">
+                  {features.slice(14, 18).map((feature) => (
+                    <Link key={feature.title} href={feature.href} passHref>
+                      <Button variant="outline" className="flex items-center gap-2 p-4 h-auto rounded-lg shadow-sm hover:bg-muted transition-colors">
+                        <feature.icon className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium">{feature.title}</span>
+                      </Button>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </section>
           </div>
         </main>
       </div>
