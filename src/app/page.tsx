@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
-import Sidebar from "@/components/layout/sidebar"; // Import the Sidebar component
 
 declare global {
   interface Window {
@@ -576,7 +575,6 @@ export default function HomePage() {
       </Head>
     <div className="min-h-screen flex flex-col">
       <div className="flex flex-grow"> {/* Use flex to arrange sidebar and main content */}
-        <Sidebar features={features} /> {/* Include the Sidebar component */}
         <main className="flex-grow flex flex-col"> {/* Main content area */}
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow">
             <div className="text-center mb-12">
