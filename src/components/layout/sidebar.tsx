@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, PanelLeft } from 'lucide-react';
 
 interface Feature {
   icon: React.ElementType;
@@ -24,17 +24,10 @@ interface SidebarProps {
 const isMobileDevice = () => typeof window !== 'undefined' && window.innerWidth < 768; // Assuming 768px is your mobile breakpoint
 
 const Sidebar: React.FC<SidebarProps> = ({ features }) => {
-  const [isOpen, setIsOpen] = useState(!isMobileDevice()); // Open by default on desktop, closed on mobile
+  const [isOpen, setIsOpen] = useState(true); // Open by default for all devices
+  const [isSheetOpen, setIsSheetOpen] = useState(true); // State for controlling the mobile sheet
 
-  // Effect to update sidebar state based on window size changes
-  useEffect(() => {
-    const handleResize = () => {
-      setIsOpen(!isMobileDevice());
-    };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <>
@@ -61,10 +54,10 @@ const Sidebar: React.FC<SidebarProps> = ({ features }) => {
 
       {/* Mobile Sidebar (using Sheet) */}
       <div className="md:hidden">
-        <Sheet>
-          <SheetTrigger asChild onClick={() => setIsOpen(true)}>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild onClick={() => setIsSheetOpen(true)}>
             <Button variant="outline" size="icon" className="absolute top-4 left-4 z-50">
-              <Menu className="h-6 w-6" />
+              <PanelLeft className="h-6 w-6" />
               <span className="sr-only">Toggle Sidebar</span>
             </Button>
           </SheetTrigger>
