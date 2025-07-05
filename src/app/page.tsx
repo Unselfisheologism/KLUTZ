@@ -704,19 +704,12 @@ export default function HomePage() {
           {/* Header (using the existing AppHeader) */}
           {/* Note: AppHeader is rendered in layout.tsx, so it will appear above this content */}
 
-          {/* Mobile Main Content */}
+          {/* Mobile Main Content - Centered */}
           <main className="flex-grow flex flex-col p-4">
             {/* Greeting Area */}
             <div className="flex flex-col items-center justify-center text-center my-8">
-              <Image
-                src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png"
-                alt="Klutz Logo"
-                className="h-16 w-16 rounded-lg mb-4"
-                width={64}
-                height={64}
-              />
               <h1 className="text-2xl font-semibold text-foreground">
-                Good evening Dr. James
+                Good Day, {window.puter?.auth?.getUser()?.name}
               </h1>
             </div>
 
@@ -733,7 +726,21 @@ export default function HomePage() {
             {/* Scrollable Tools Section (Vertical) */}
             <section className="mt-4">
               <h2 className="text-xl font-bold mb-4">Tools</h2>
-               <ScrollArea className="h-[200px] w-full rounded-md border p-4"> {/* Adjust height as needed */}
+               <ScrollArea
+                className="h-[200px] w-full rounded-md p-4 relative" // Added relative for positioning gradients
+                style={{
+                  // Added gradient mask styles
+                  maskImage: 'linear-gradient(to bottom, transparent, black 20px, black calc(100% - 20px), transparent)',
+                  WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 20px, black calc(100% - 20px), transparent)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)', // More subtle border
+                }}
+              > {/* Adjust height as needed */}
+                 {/* Optional: Add pseudo-elements for gradients if mask-image is not fully supported */}
+                 <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent pointer-events-none"></div>
+
+                {/* Content Wrapper with Padding for Gradient */}
+                <div className="pb-8 pt-2"> {/* Added padding to ensure content is not hidden by gradients */}
                 <div className="flex flex-col space-y-2"> {/* Stack buttons vertically */}
                   {features.map((feature) => (
                     <Link key={feature.title} href={feature.href} passHref>
@@ -743,6 +750,7 @@ export default function HomePage() {
                       </Button>
                     </Link>
                   ))}
+                </div>
                 </div>
               </ScrollArea>
             </section>
