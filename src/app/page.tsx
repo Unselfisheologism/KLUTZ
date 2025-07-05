@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon } from 'lucide-react';
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
-
+import { useIsMobile } from "@/hooks/use-mobile";
 declare global {
   interface Window {
     puter: any; // Replace 'any' with a more specific type if available
@@ -602,6 +602,7 @@ export default function HomePage() {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const isMobile = useIsMobile();
 
   // Function to fetch chat sessions from KV store
   const fetchChatSessions = async () => {
@@ -691,6 +692,84 @@ export default function HomePage() {
        }
     }
   }, [messages, currentChatId, chatSessions]); // Added chatSessions to dependencies
+
+  if (isMobile) {
+    return (
+      <>
+        <Head>
+          <link rel="canonical" href="https://klutz.netlify.app/" />
+          <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
+        </Head>
+        <div className="min-h-screen flex flex-col">
+          {/* Header (using the existing AppHeader) */}
+          {/* Note: AppHeader is rendered in layout.tsx, so it will appear above this content */}
+
+          {/* Mobile Main Content */}
+          <main className="flex-grow flex flex-col p-4">
+            {/* Greeting Area */}
+            <div className="flex flex-col items-center justify-center text-center my-8">
+              <Image
+                src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png"
+                alt="Klutz Logo"
+                className="h-16 w-16 rounded-lg mb-4"
+                width={64}
+                height={64}
+              />
+              <h1 className="text-2xl font-semibold text-foreground">
+                Good evening Dr. James
+              </h1>
+            </div>
+
+            {/* Chat Component */}
+            <div className="mb-8 flex-grow"> {/* flex-grow to make chat take available space */}
+               <ChatComponent
+                messages={messages}
+                setMessages={setMessages}
+                currentChatId={currentChatId}
+                setCurrentChatId={setCurrentChatId}
+              />
+            </div>
+
+            {/* Scrollable Tools Section (Vertical) */}
+            <section className="mt-4">
+              <h2 className="text-xl font-bold mb-4">Tools</h2>
+               <ScrollArea className="h-[200px] w-full rounded-md border p-4"> {/* Adjust height as needed */}
+                <div className="flex flex-col space-y-2"> {/* Stack buttons vertically */}
+                  {features.map((feature) => (
+                    <Link key={feature.title} href={feature.href} passHref>
+                      <Button variant="outline" className="flex items-center gap-2 p-4 h-auto rounded-lg shadow-sm hover:bg-muted transition-colors w-full justify-start">
+                        <feature.icon className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium">{feature.title}</span>
+                      </Button>
+                    </Link>
+                  ))}
+                </div>
+              </ScrollArea>
+            </section>
+          </main>
+
+          {/* Footer */}
+          {/* Note: Footer is rendered below this main content */}
+           <footer className="bg-muted/30 border-t mt-8"> {/* Adjusted margin top */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8"> {/* Adjusted padding */}
+              {/* Footer content goes here (can be simplified for mobile if desired) */}
+              {/* For now, keeping the existing footer structure but it will be below the scrollable tools */}
+              <div className="flex flex-col items-center space-y-4 text-center">
+                  {/* Social Icons (simplified or kept as is) */}
+                   <div className="flex justify-center gap-4"> {/* Reduced gap */}
+                    <a href="https://github.com/Unselfisheologism/KLUTZ" target="_blank" rel="noopener noreferrer" title="GitHub (opens in a new window)"><Github className="text-gray-600 hover:text-gray-900 transition" size={24} aria-label="GitHub" /></a> {/* Reduced size */}
+                    <a href="https://x.com/Jeff9James" target="_blank" rel="noopener noreferrer" title="X (opens in a new window)"><FaXTwitter className="text-gray-600 hover:text-black transition" size={24} aria-label="X" /></a> {/* Reduced size */}
+                    <a href="https://medium.com/@jeffrinjames99" target="_blank" rel="noopener noreferrer" title="Medium (opens in a new window)"><FaMedium className="text-gray-600 hover:text-green-700 transition" size={24} aria-label="Medium" /></a> {/* Reduced size */}
+                    <a href="https://discordapp.com/users/1293939031620456492" target="_blank" rel="noopener noreferrer" title="Discord (opens in a new window)"><FaDiscord className="text-gray-600 hover:text-indigo-600 transition" size={24} aria-label="Discord" /></a> {/* Reduced size */}
+                  </div>
+                <div className="text-sm text-muted-foreground">© 2025 KLUTZ. All rights reserved.</div>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
