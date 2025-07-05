@@ -18,7 +18,7 @@ export default function AppHeader() {
             Klutz
           </h1>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-row-reverse sm:flex-row ml-auto">
           <ThemeToggle />
           <Button variant="ghost" size="icon" asChild>
             <Link href="https://puter.com">
