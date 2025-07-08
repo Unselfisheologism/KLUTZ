@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import Image from 'next/image';
+import { preprocessImage } from '@/lib/image-utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,6 +34,16 @@ interface Feature {
   href: string;
   isImplemented: boolean;
 }
+
+const cleanJsonString = (rawString: string): string => {
+  let cleanedString = rawString.trim();
+  if (cleanedString.startsWith("```json") && cleanedString.endsWith("```")) {
+    cleanedString = cleanedString.substring(7, cleanedString.length - 3).trim();
+  } else if (cleanedString.startsWith("```") && cleanedString.endsWith("```")) {
+    cleanedString = cleanedString.substring(3, cleanedString.length - 3).trim();
+  }
+  return cleanedString;
+};
 
 const features: Feature[] = [
   {
@@ -179,6 +190,8 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
   const [showUrlInput, setShowUrlInput] = useState(false); // State to control visibility of URL input
   const [urlInput, setUrlInput] = useState('');
   const [fetchedUrlContent, setFetchedUrlContent] = useState<string | null>(null); // State to store fetched URL content
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
 
   const availableModels: string[] = [ // Updated based on puter.com/docs
     'gpt-4o-mini',
@@ -287,9 +300,27 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
     };
   }, [messages, currentChatId]); // Added currentChatId to dependencies
 
+  const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      try {
+        const previewDataUrl = URL.createObjectURL(file);
+        setImageDataUrl(previewDataUrl);
+      } catch (error) {
+        toast({ variant: "destructive", title: "Preview Error", description: "Could not generate image preview." });
+        setImageDataUrl(null);
+      }
+    } else {
+      setImageFile(null);
+      setImageDataUrl(null);
+    }
+  };
+ 
+  const preprocessedDataUrl = await preprocessImage(imageFile, 1024);
 
   const handleSendMessage = async (messageText: string) => {
-    if (messageText.trim() === '' && !fetchedUrlContent) return;
+    if (messageText.trim() === '' && !fetchedUrlContent && !imageFile) return;
 
     const newUserMessage: Message = {
       id: messages.length + 1,
@@ -300,6 +331,9 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
     const updatedMessages = [...messages, newUserMessage];
     setMessages(updatedMessages);
     setInputMessage('');
+    // Clear the image states after sending
+    setImageFile(null);
+    setImageDataUrl(null);
 
     let chatSessionId = currentChatId;
 
@@ -362,7 +396,16 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
       }
 
       try {
-        const streamResponse = await window.puter.ai.chat(finalMessage, { model: selectedModel, stream: true });
+        // Preprocess the image just before sending to the AI
+        let imageToSend = null;
+        if (imageFile) {
+             imageToSend = await preprocessImage(imageFile, 1024); // Get the data URL
+        }
+
+
+        // Pass the image data as the second argument if available
+        const streamResponse = await window.puter.ai.chat(finalMessage, imageToSend ? imageToSend : null, { model: selectedModel, stream: true });
+
 
         for await (const part of streamResponse) {
           let partText = '';
@@ -371,12 +414,10 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
           } else if (part?.text) {
             partText = part.text;
           } else {
-            // Log the structure of 'part' if text is not found in the usual places
             console.warn('Unexpected streamed part structure:', part);
           }
           if (partText) {
             accumulatedText += partText;
-            // Update the last message in the chat with the streamed text
             setMessages(prevMessages =>
               prevMessages.map(msg =>
                 msg.id === messageIdToUpdate ? { ...msg, text: accumulatedText } : msg
@@ -390,7 +431,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
              try {
                const titlePrompt = `Generate a concise title (4-6 words) for a chat session based on this user message: "${messageText}"`;
                const titleResponse = await window.puter.ai.chat(titlePrompt, { model: 'gpt-4o-mini' }); // Using a fast model for title generation
-               generatedTitle = titleResponse?.message?.content || titleResponse?.text || 'New Chat';
+               const generatedTitle = titleResponse?.message?.content || titleResponse?.text || 'New Chat';
 
                // Fetch the latest messages including the AI's first response
                const latestMessages = messages.map(msg =>
@@ -419,13 +460,11 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
              }
          }
 
-
       } catch (error) {
         console.error(`Error during AI chat request for model "${selectedModel}":`, error);
-        // If an error occurs, update the last message to an error message
         const botErrorResponse: Message = { id: messageIdToUpdate, text: `Error interacting with the AI model "${selectedModel}". Please try another model or try again later. Error details: ${error.message}`, sender: 'bot' };
         setMessages(prevMessages => [...prevMessages, botErrorResponse]);
-        return; // Stop processing if the API call failed
+        return;
       }
     }
   };
@@ -553,7 +592,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
         </ScrollArea>
       </CardContent>
       <div className="p-4 border-t flex flex-col gap-2">
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex items-center gap-2">
           <Input
             placeholder="Type your command..."
             value={inputMessage}
@@ -568,37 +607,83 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
             className="flex-grow"
             disabled={!isAiChatReady}
           />
-          {/* URL Visit Button */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setShowUrlInput(!showUrlInput)}
-            disabled={!isAiChatReady || showUrlInput} // Disable if already showing URL input
-          >
-            <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
-          </Button>
-          <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
-            <SelectTrigger className="w-[180px]" disabled={!isAiChatReady}>
-              <SelectValue placeholder="Select Model" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableModels.map(model => (
-                <SelectItem key={model} value={model}>{model}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* File input for image upload */}
+          <label htmlFor="image-upload" className="cursor-pointer">
+            <Button variant="outline" size="icon" asChild>
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*" // Accept only image files
+                onChange={handleImageFileChange}
+                className="hidden" // Hide the default file input
+                disabled={!isAiChatReady || showUrlInput}
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> {/* Icon for image upload */}
+            </Button>
+          </label>
 
-          <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput}>
-            Send
+          {/* Display image preview if available */}
+          {imageDataUrl && (
+              <div className="relative">
+                <Image
+                  src={imageDataUrl}
+                  alt="Image preview"
+                  width={100} // Adjust size as needed
+                  height={100} // Adjust size as needed
+                  objectFit="cover"
+                  className="rounded"
+                />
+                {/* Optional: Add a button to remove the selected image */}
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-0 right-0 h-5 w-5 p-0 rounded-full"
+                  onClick={() => {
+                      setImageFile(null);
+                      setImageDataUrl(null);
+                  }}
+                  aria-label="Remove image"
+                >
+                  <XIcon className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
+            {/* URL Visit Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowUrlInput(!showUrlInput)}
+              disabled={!isAiChatReady || showUrlInput} // Disable if already showing URL input
+            >
+              <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
+            </Button>
+            <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
+              <SelectTrigger className="w-[180px]" disabled={!isAiChatReady}>
+                <SelectValue placeholder="Select Model" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableModels.map(model => (
+                  <SelectItem key={model} value={model}>{model}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput} size="icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M15 7l4 4"/></svg>
           </Button>
           {/* Optional: Add a button to clear URL context */}
-          {fetchedUrlContent && <Button variant="destructive" onClick={clearUrlContext}>Clear URL Context</Button>}
+          {fetchedUrlContent && 
+            <Button variant="destructive" onClick={clearUrlContext}>
+              <XIcon className="h-5 w-5">Remove URL</XIcon>
+            </Button>
+          }
         </div>
         {/* Conditional URL Input */}
         {showUrlInput && (
           <div className="flex gap-2">
             <Input
-              placeholder="Paste URL"
+              placeholder="https://example.com"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               onKeyPress={(e) => {
@@ -658,6 +743,23 @@ export default function HomePage() {
       setChatSessions(formattedSessions);
     } catch (error) {
       console.error('Error fetching chat sessions:', error);
+    }
+  };
+
+  const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      try {
+        const previewDataUrl = URL.createObjectURL(file);
+        setImageDataUrl(previewDataUrl);
+      } catch (error) {
+        toast({ variant: "destructive", title: "Preview Error", description: "Could not generate image preview." });
+        setImageDataUrl(null);
+      }
+    } else {
+      setImageFile(null);
+      setImageDataUrl(null);
     }
   };
 
@@ -896,7 +998,7 @@ export default function HomePage() {
               <div className="text-center mb-12">
                 <div className="flex items-center justify-center gap-8">
                   <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
-                    AI—Overpowered, but Underrated
+                    Who Said AI Is Gonna Take Over?
                   </h1>
                   <div className="flex flex-col items-center">
                     <span className="text-sm font-medium mb-1">Made in</span>
@@ -929,7 +1031,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                  ACID TIPS (Audio, Chat, Infographics, Date-Time, Text, Image, Problem-Solving, Spreadsheets)😆
+                  Make AI Your Slave (Audio, Chat, Infographics, Date-Time, Text, Image, Problem-Solving, Spreadsheets Tools)
                 </p>
                 {/* === PRODUCT HUNT BADGE === */}
                 <div className="mt-4 flex justify-center">
