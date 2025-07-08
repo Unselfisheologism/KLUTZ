@@ -621,7 +621,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
           </label>
 
           {/* Display image preview if available */}
-          {imageDataUrl && (
+          {/* {imageDataUrl && (
               <div className="relative">
                 <Image
                   src={imageDataUrl}
@@ -631,7 +631,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
                   objectFit="cover"
                   className="rounded"
                 />
-                {/* Optional: Add a button to remove the selected image */}
+                
                 <Button
                   variant="destructive"
                   size="icon"
@@ -645,7 +645,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
                   <XIcon className="h-3 w-3" />
                 </Button>
               </div>
-            )}
+            )} */}
 
             {/* URL Visit Button */}
             <Button
