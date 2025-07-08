@@ -594,7 +594,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
           <Input
             placeholder="Processing..."
             value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
+ onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && inputMessage.trim() !== '') {
                 if (isAiChatReady && !showUrlInput) {
@@ -602,7 +602,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
                 }
               }
             }}
-            className="flex-grow"
+ className="flex-grow border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-0 shadow-none"
             disabled={!isAiChatReady}
           />
           {/* File input for image upload */}
@@ -650,17 +650,13 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
               </div>
             )}
 
-            {/* URL Visit Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowUrlInput(!showUrlInput)}
-              disabled={!isAiChatReady || showUrlInput} // Disable if already showing URL input
-            >
-              <GlobeIcon className="h-5 w-5" /> {/* Using GlobeIcon for URL visit */}
-            </Button>
+            {/* URL Visit Icon - Removed Button wrapper */}
+ <GlobeIcon
+ className={`h-5 w-5 cursor-pointer ${!isAiChatReady || showUrlInput ? 'text-gray-500' : 'text-current'}`} // Added disabled styling
+ onClick={() => setShowUrlInput(!showUrlInput)}
+ />
             <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
-              <SelectTrigger className="w-[180px]" disabled={!isAiChatReady}>
+              <SelectTrigger className="w-[180px] border-none focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent px-0" disabled={!isAiChatReady}>
                 <SelectValue placeholder="Select Model" />
               </SelectTrigger>
               <SelectContent>
@@ -669,7 +665,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
                 ))}
               </SelectContent>
             </Select>
-
+            {/* Send Icon - Removed Button wrapper */}
             <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput} size="icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M15 7l4 4"/></svg>
           </Button>
