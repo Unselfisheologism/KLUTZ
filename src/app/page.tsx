@@ -316,8 +316,6 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
       setImageDataUrl(null);
     }
   };
- 
-  const preprocessedDataUrl = await preprocessImage(imageFile, 1024);
 
   const handleSendMessage = async (messageText: string) => {
     if (messageText.trim() === '' && !fetchedUrlContent && !imageFile) return;
