@@ -606,21 +606,17 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
             disabled={!isAiChatReady}
           />
           {/* File input for image upload */}
+          {/* Removed Button wrapper */}
           <label htmlFor="image-upload" className="cursor-pointer">
-            <Button variant="outline" size="icon" asChild>
-              {/* Wrap the input and svg in a single element */}
-              <>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*" // Accept only image files
-                  onChange={handleImageFileChange}
-                  className="hidden" // Hide the default file input
-                  disabled={!isAiChatReady || showUrlInput}
-                />
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> {/* Icon for image upload */}
-              </>
-            </Button>
+            {/* Added mr-2 for right margin to create spacing */}
+            <div className="flex items-center justify-center mr-2"> {/* Added a wrapper div for centering and margin */}
+              <input id="image-upload" type="file" accept="image/*" onChange={handleImageFileChange} className="hidden" disabled={!isAiChatReady || showUrlInput} />
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image h-5 w-5"> {/* Modified size classes to h-5 w-5 */}
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                <circle cx="9" cy="9" r="2"/>
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+              </svg> {/* Icon for image upload */}
+            </div>
           </label>
 
           {/* Display image preview if available */}
@@ -651,12 +647,15 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
             )}
 
             {/* URL Visit Icon - Removed Button wrapper */}
- <GlobeIcon
- className={`h-5 w-5 cursor-pointer ${!isAiChatReady || showUrlInput ? 'text-gray-500' : 'text-current'}`} // Added disabled styling
+            {/* Added mr-2 for right margin to create spacing */}
+            <GlobeIcon
+ className={`h-5 w-5 cursor-pointer mr-2 ${!isAiChatReady || showUrlInput ? 'text-gray-500' : 'text-current'}`}
  onClick={() => setShowUrlInput(!showUrlInput)}
  />
-            <Select onValueChange={setSelectedModel} defaultValue={selectedModel}>
-              <SelectTrigger className="w-[180px] border-none focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent px-0" disabled={!isAiChatReady}>
+            {/* Model Select */}
+            {/* Added mr-2 for right margin to create spacing */}
+            <Select onValueChange={setSelectedModel} defaultValue={selectedModel} disabled={!isAiChatReady}>
+              <SelectTrigger className="w-[180px] border-none focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent px-0 mr-2"> {/* Added mr-2 */}
                 <SelectValue placeholder="Select Model" />
               </SelectTrigger>
               <SelectContent>
@@ -666,12 +665,13 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
               </SelectContent>
             </Select>
             {/* Send Icon - Removed Button wrapper */}
-            <Button onClick={() => handleSendMessage(inputMessage)} disabled={!isAiChatReady || inputMessage.trim() === '' || showUrlInput} size="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M15 7l4 4"/></svg>
-          </Button>
-          {/* Optional: Add a button to clear URL context */}
-          {fetchedUrlContent && 
-            <Button variant="destructive" onClick={clearUrlContext}>
+            {/* Added mr-2 for right margin to create spacing */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`lucide lucide-send h-5 w-5 cursor-pointer mr-2 ${!isAiChatReady || inputMessage.trim() === '' || showUrlInput ? 'text-gray-500' : 'text-current'}`} onClick={() => handleSendMessage(inputMessage)}>
+              <path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M15 7l4 4"/>
+            </svg>
+             {/* Optional: Add a button to clear URL context */}
+             {fetchedUrlContent &&
+             <Button variant="destructive" onClick={clearUrlContext}>
               <XIcon className="h-5 w-5">Remove URL</XIcon>
             </Button>
           }
