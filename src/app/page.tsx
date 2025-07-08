@@ -606,7 +606,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
             disabled={!isAiChatReady}
           />
           {/* File input for image upload */}
-          <label htmlFor="image-upload" className="cursor-pointer">
+          {/* <label htmlFor="image-upload" className="cursor-pointer">
             <Button variant="outline" size="icon" asChild>
               <input
                 id="image-upload"
@@ -616,9 +616,9 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
                 className="hidden" // Hide the default file input
                 disabled={!isAiChatReady || showUrlInput}
               />
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> {/* Icon for image upload */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> {/* Icon for image upload
             </Button>
-          </label>
+          </label> */}
 
           {/* Display image preview if available */}
           {/* {imageDataUrl && (
