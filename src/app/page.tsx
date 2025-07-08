@@ -813,40 +813,6 @@ export default function HomePage() {
         <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
       </Head>
       <div className="min-h-screen flex flex-col">
-         {/* App Header - Add toggle button here */}
-         <header className="bg-card border-b border-border sticky top-0 z-50">
-           <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"> {/* Added justify-between */}
-             <div className="flex items-center gap-2">
-               {/* Sidebar Toggle Button for Mobile */}
-               <Button
-                 variant="ghost"
-                 size="icon"
-                 className="md:hidden" // Only show on mobile
-                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-               >
-                 <MenuIcon className="h-6 w-6" />
-                 <span className="sr-only">Toggle Sidebar</span>
-               </Button>
-               <Link href="/" className="flex items-center gap-2">
-                 <Image
-                   src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png"
-                   alt="Klutz Logo"
-                   className="h-8 w-8 rounded-lg"
-                   width={32} // Added width and height for Image component
-                   height={32}
-                 />
-                 <h1 className="text-2xl font-headline font-semibold text-foreground">
-                   Klutz
-                 </h1>
-               </Link>
-             </div>
-             <div className="flex items-center gap-4">
-               {/* Assuming ThemeToggle, LoginButton, etc. are here */}
-             </div>
-           </div>
-         </header>
-
-
         <div className="flex flex-grow"> {/* Use flex to arrange sidebar and main content */}
           {/* Sidebar */}
           <div
