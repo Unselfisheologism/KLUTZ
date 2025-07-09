@@ -919,7 +919,7 @@ export default function HomePage() {
     <>
       <Head>
         <link rel="canonical" href="https://klutz.netlify.app/" />
-        <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
+        <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" /> {/* Replace with your actual code */}
       </Head>
       <div className="min-h-screen flex flex-col">
         {/* Mobile menu icon */}
@@ -935,15 +935,15 @@ export default function HomePage() {
         <div className="flex flex-grow"> {/* Use flex to arrange sidebar and main content */}
           {/* Sidebar */}
           <div
-            // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16)
-            className={`fixed top-0 left-0 w-64 h-[calc(100vh-4rem)] bg-gray-800 text-white overflow-y-auto transition-transform transform md:relative md:translate-x-0 ${
+            // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16) and added padding-top for mobile button
+            className={`fixed top-0 left-0 w-64 h-[calc(100vh-4rem)] bg-gray-800 text-white overflow-y-auto transition-transform transform md:relative md:translate-x-0 pt-16 md:pt-4 ${
               openMobile ? 'translate-x-0' : '-translate-x-full' // Use openMobile state for mobile transform
             } z-40 rounded-bl-xl`} // Added fixed positioning, z-index for mobile, and rounded bottom left corner
           >
             <div className="p-4">
               <h2 className="text-xl font-bold mb-4">Chat History</h2>
-              {/* New Chat Button */}
-              <Button onClick={startNewChat} className="w-full mb-4">New Chat</Button>
+              {/* New Chat Button - Added mb-4 for spacing */}
+              <Button onClick={startNewChat} className="w-full mb-6">New Chat</Button>
               <ul>
                 {chatSessions.map((session) => (
                   <li key={session.id} className="mb-2 flex justify-between items-center">
