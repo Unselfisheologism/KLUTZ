@@ -379,7 +379,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
       // Add a temporary bot message to show streaming is in progress
       const streamingBotMessage: Message = {
         id: updatedMessages.length + 1,
-        text: 'Brainstorming...', // Start with empty text
+        text: 'Recalling What Is Logic...', // Start with empty text
         sender: 'bot',
       };
       setMessages(prevMessages => [...prevMessages, streamingBotMessage]);
@@ -592,7 +592,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
       <div className="p-4 border-t flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Input
-            placeholder="Processing..."
+            placeholder="Don't Think—Ask!"
             value={inputMessage}
  onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => {
