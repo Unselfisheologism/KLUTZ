@@ -717,6 +717,13 @@ export default function HomePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null); // State to track which session is being edited
   const [newSessionTitle, setNewSessionTitle] = useState(''); // State to hold the new title during editing
+  const [openMobile, setOpenMobile] = useState(false); // State to manage mobile sidebar visibility
+
+  // Function to toggle mobile sidebar
+  const toggleMobileSidebar = () => {
+    setOpenMobile(!openMobile);
+  };
+
 
   // Function to fetch chat sessions from KV store
   const fetchChatSessions = async () => {
@@ -861,6 +868,11 @@ export default function HomePage() {
     setNewSessionTitle('');
   };
 
+  // Function to close mobile sidebar
+  const closeMobileSidebar = () => {
+    setOpenMobile(false);
+  };
+
   // Handle saving the new title
   const handleTitleSave = (sessionId: string) => {
     renameChatSession(sessionId, newSessionTitle);
@@ -871,9 +883,6 @@ export default function HomePage() {
     // Fetch chat sessions when the component mounts
     fetchChatSessions();
 
-    // Automatically open sidebar on larger screens, keep closed on mobile initially
-    const isMobile = window.innerWidth < 768; // Define your mobile breakpoint
-    setIsSidebarOpen(!isMobile);
   }, []); // Empty dependency array ensures this runs only once
 
   // Effect to save the current chat session whenever messages change, but only if currentChatId is set
@@ -913,12 +922,22 @@ export default function HomePage() {
         <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
       </Head>
       <div className="min-h-screen flex flex-col">
+        {/* Mobile menu icon */}
+        <div className="md:hidden fixed top-4 left-4 z-50">
+          <Button variant="outline" size="icon" onClick={toggleMobileSidebar} aria-label="Toggle Menu">
+            <MenuIcon className="h-6 w-6" />
+          </Button>
+        </div>
+
+        {/* Scrim for mobile */}
+        {openMobile && <div className="md:hidden fixed inset-0 bg-black opacity-50 z-30" onClick={closeMobileSidebar}></div>}
+
         <div className="flex flex-grow"> {/* Use flex to arrange sidebar and main content */}
           {/* Sidebar */}
           <div
             // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16)
             className={`fixed top-0 left-0 w-64 h-[calc(100vh-4rem)] bg-gray-800 text-white overflow-y-auto transition-transform transform md:relative md:translate-x-0 ${
-              isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+              openMobile ? 'translate-x-0' : '-translate-x-full' // Use openMobile state for mobile transform
             } z-40 rounded-bl-xl`} // Added fixed positioning, z-index for mobile, and rounded bottom left corner
           >
             <div className="p-4">
