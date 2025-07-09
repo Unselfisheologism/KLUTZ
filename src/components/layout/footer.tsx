@@ -34,10 +34,10 @@ export default function Footer() {
 
         {/* Right side text/links */}
         <div className="flex items-center text-sm">
-          Created by <Link href="https://onee.page/jeffrin" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+          Created by{" "}<Link href="https://onee.page/jeffrin" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
             Jeffrin
           </Link>
-          <div className="flex space-x-4 ml-4">
+          <div className="flex space-x-4 ml-4 items-center">
             <Link href="https://www.linkedin.com/in/jeffrin" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
               <FaLinkedin className="h-5 w-5" />
             </Link>
