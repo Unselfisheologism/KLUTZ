@@ -6,7 +6,7 @@ import Footer from '@/components/layout/footer';
 export default function LandingPage() {
   const backgroundImage = 'https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png'; // Replace with your image URL
   const videoBackground = 'YOUR_VIDEO_URL'; // Replace with your video URL
-  const logoImage = 'https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752076900/Untitled_design__3_-removebg-preview_dydzqt.png'; // Replace with your logo URL
+  const logoImage = 'https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752078136/Screenshot_2025-07-09_215114-removebg-preview_wgbree.png'; // Replace with your logo URL
 
   return (
     <div

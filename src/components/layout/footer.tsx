@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import React from 'react';
-import { Shield, Eye, Cookie, HelpCircle, Package, Github } from 'lucide-react';
-import { FaXTwitter, FaLinkedin, FaMedium, FaDiscord, FaGithub } from 'react-icons/fa6';
+import { Shield, Eye, Cookie, HelpCircle, Package, Mail } from 'lucide-react';
+import { FaXTwitter, FaLinkedin, FaDiscord, FaGithub } from 'react-icons/fa6';
 
 export default function Footer() {
   return (
@@ -29,6 +29,10 @@ export default function Footer() {
             <Package className="h-4 w-4 mr-2" />
             <span className="hidden md:inline">Licenses</span>
           </Link>
+          <Mail className="text-muted-foreground hover:text-primary transition-colors flex items-center md:space-x-2" />
+          <a href="mailto:jeffrinjames99@gmail.com" className="h-4 w-4 mr-2">
+            jeffrinjames99@gmail.com
+          </a>
 
         </div>
 
@@ -46,6 +50,9 @@ export default function Footer() {
             </Link>
             <Link href="https://github.com/Unselfisheologism" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
               <FaGithub className="h-5 w-5" />
+            </Link>
+            <Link href="https://discord.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+              <FaDiscord className="h-5 w-5" />
             </Link>
           </div>
         </div>

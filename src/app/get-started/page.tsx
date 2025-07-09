@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { preprocessImage } from '@/lib/image-utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Footer from '@/components/layout/footer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
@@ -1059,120 +1060,7 @@ export default function HomePage() {
         </main>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-muted/30 border-t mt-16">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-12"> {/* Removed container mx-auto, added padding and w-full */}
-          <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8"> {/* Added container mx-auto here to limit content width */}
-            
-            {/* Company Info */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <ScanLine className="h-6 w-6 text-primary" />
-                <span className="font-headline text-xl font-semibold">KLUTZ</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                AI-powered content and image analysis suite providing intelligent insights across multiple domains.
-              </p>
-              <div className="flex items-center space-x-2 text-sm">
-                <Mail className="h-4 w-4 text-accent" />
-                <a href="mailto:jeffrinjames99@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
-                  jeffrinjames99@gmail.com
-                </a>
-              </div>
-            </div>
-
-            {/* Tools */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Popular Tools</h3>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/mediscan" className="text-muted-foreground hover:text-primary transition-colors">MediScan AI</Link></li>
-                <li><Link href="/ai-problem-solver" className="text-muted-foreground hover:text-primary transition-colors">AI Problem Solver</Link></li>
-                <li><Link href="/ai-translator" className="text-muted-foreground hover:text-primary transition-colors">AI Translator</Link></li>
-                <li><Link href="/text-to-image-generator" className="text-muted-foreground hover:text-primary transition-colors">Text-to-Image Generator</Link></li>
-                <li><Link href="/ingredients-checker" className="text-muted-foreground hover:text-primary transition-colors">Ingredients Checker</Link></li>
-              </ul>
-            </div>
-
-            {/* Resources */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Resources</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="/faq" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                    <HelpCircle className="h-4 w-4 mr-2" />
-                    FAQ
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/third-party-licenses" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                    <Package className="h-4 w-4 mr-2" />
-                    Third-Party Licenses
-                  </Link>
-                </li>
-                <li>
-                  <a href="mailto:jeffrinjames99@gmail.com" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Support
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Legal</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                    <Eye className="h-4 w-4 mr-2" />
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/cookies" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                    <Cookie className="h-4 w-4 mr-2" />
-                    Cookies Policy
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <Separator className="my-8" />
-
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-4 lg:space-y-0">
-            <div className="container mx-auto text-center">
-              {/* Social Icons */}
-              <div className="flex justify-center gap-4 mb-6">
-                <a href="https://github.com/Unselfisheologism/KLUTZ" target="_blank" rel="noopener noreferrer" title="GitHub (opens in a new window)">
-                <Github className="text-gray-600 hover:text-gray-900 transition" size={28} aria-label="GitHub" />
-                </a>
-                <a href="https://x.com/Jeff9James" target="_blank" rel="noopener noreferrer" title="X (opens in a new window)">
-                  <FaXTwitter className="text-gray-600 hover:text-black transition" size={28} aria-label="X" />
-                </a>
-                <a href="https://medium.com/@jeffrinjames99" target="_blank" rel="noopener noreferrer" title="Medium (opens in a new window)">
-                  <FaMedium className="text-gray-600 hover:text-green-700 transition" size={28} aria-label="Medium" />
-                </a>
-                <a href="https://discordapp.com/users/1293939031620456492" target="_blank" rel="noopener noreferrer" title="Discord (opens in a new window)">
-                  <FaDiscord className="text-gray-600 hover:text-indigo-600 transition" size={28} aria-label="Discord" />
-                </a>
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              © 2025 KLUTZ. All rights reserved.
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Built with AI-powered tools for the modern web.
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
    </> 
   );
