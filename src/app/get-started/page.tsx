@@ -922,12 +922,7 @@ export default function HomePage() {
         <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" /> {/* Replace with your actual code */}
       </Head>
       <div className="min-h-screen flex flex-col">
-        {/* Mobile menu icon */}
-        <div className="md:hidden fixed top-4 left-4 z-50">
-          <Button variant="outline" size="icon" onClick={toggleMobileSidebar} aria-label="Toggle Menu">
-            <MenuIcon className="h-6 w-6" />
-          </Button>
-        </div>
+        
 
         {/* Scrim for mobile */}
         {openMobile && <div className="md:hidden fixed inset-0 bg-black opacity-50 z-30" onClick={closeMobileSidebar}></div>}
@@ -1014,6 +1009,12 @@ export default function HomePage() {
           <main className="flex-grow flex flex-col"> {/* Main content area */}
             <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow pb-32">
               <div className="text-center mb-12">
+                {/* Mobile menu icon */}
+                <div className="md:hidden fixed top-4 left-4 z-50">
+                  <Button variant="outline" size="icon" onClick={toggleMobileSidebar} aria-label="Toggle Menu">
+                    <MenuIcon className="h-6 w-6" />
+                  </Button>
+                </div>
                 <div className="flex items-center justify-center gap-8">
                   <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
                     Who Said AI Is Gonna Take Over?
