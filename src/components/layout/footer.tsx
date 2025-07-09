@@ -29,9 +29,9 @@ export default function Footer() {
             <Package className="h-4 w-4 mr-2" />
             <span className="hidden md:inline">Licenses</span>
           </Link>
-          <Mail className="text-muted-foreground hover:text-primary transition-colors flex items-center md:space-x-2" />
-          <a href="mailto:jeffrinjames99@gmail.com" className="h-4 w-4 mr-2">
-            jeffrinjames99@gmail.com
+          <a href="mailto:jeffrinjames99@gmail.com" className="text-muted-foreground hover:text-primary transition-colors flex items-center md:space-x-2">
+            <Mail className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">jeffrinjames99@gmail.com</span>
           </a>
 
         </div>

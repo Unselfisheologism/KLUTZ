@@ -916,9 +916,10 @@ export default function HomePage() {
         <div className="flex flex-grow"> {/* Use flex to arrange sidebar and main content */}
           {/* Sidebar */}
           <div
-            className={`fixed inset-y-0 left-0 w-64 bg-gray-800 text-white overflow-y-auto transition-transform transform md:relative md:translate-x-0 ${
+            // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16)
+            className={`fixed top-0 left-0 w-64 h-[calc(100vh-4rem)] bg-gray-800 text-white overflow-y-auto transition-transform transform md:relative md:translate-x-0 ${
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } z-40`} // Added fixed positioning and z-index for mobile
+            } z-40 rounded-bl-xl`} // Added fixed positioning, z-index for mobile, and rounded bottom left corner
           >
             <div className="p-4">
               <h2 className="text-xl font-bold mb-4">Chat History</h2>
