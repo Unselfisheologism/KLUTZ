@@ -992,7 +992,7 @@ export default function HomePage() {
 
           {/* Main Content */}
           <main className="flex-grow flex flex-col"> {/* Main content area */}
-            <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow">
+            <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow pb-32">
               <div className="text-center mb-12">
                 <div className="flex items-center justify-center gap-8">
                   <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">

@@ -6,9 +6,9 @@ import { FaXTwitter, FaLinkedin, FaDiscord, FaGithub } from 'react-icons/fa6';
 export default function Footer() {
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-20 w-full bg-gradient-to-t from-black via-black/70 to-transparent text-white py-4 px-8">
-      <div className="container mx-auto flex justify-between items-center">
+      <div className="container mx-auto flex flex-col md:flex-row justify-between items-center md:items-start text-center md:text-left">
         {/* Left side links */}
-        <div className="flex space-x-4">
+        <div className="flex flex-wrap justify-center md:justify-start space-x-4 mb-2 md:mb-0">
           <Link href="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors flex items-center md:space-x-2">
             <Shield className="h-4 w-4 mr-2" />
             <span className="hidden md:inline">Terms</span>
@@ -37,7 +37,7 @@ export default function Footer() {
         </div>
 
         {/* Right side text/links */}
-        <div className="flex items-center text-sm">
+        <div className="flex flex-col md:flex-row items-center text-sm">
           <Link href="https://onee.page/jeffrin" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
             Created by Jeffrin
           </Link>
