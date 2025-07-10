@@ -42,7 +42,7 @@ export default function Footer() {
             Created by Jeffrin
           </Link>
           <div className="flex flex-wrap justify-center space-x-4 ml-4 items-center">
-            <Link href="https://www.linkedin.com/in/jeffrin" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="https://www.linkedin.com/in/jeffrin-james-387037371/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
               <FaLinkedin className="h-5 w-5" />
             </Link>
             <Link href="https://x.com/jeff9james" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
@@ -51,7 +51,7 @@ export default function Footer() {
             <Link href="https://github.com/Unselfisheologism" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
               <FaGithub className="h-5 w-5" />
             </Link>
-            <Link href="https://discord.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="https://discord.gg/nzzRKx42" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
               <FaDiscord className="h-5 w-5" />
             </Link>
           </div>
