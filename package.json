@@ -38,7 +38,6 @@
     "framer-motion": "^12.23.3",
     "html-to-image": "^1.11.13",
     "lucide-react": "^0.475.0",
-    "motion": "^12.23.3",
     "next": "15.2.3",
     "next-themes": "^0.3.0",
     "node-fetch": "^3.3.2",

@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, XIcon, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon, MenuIcon, Trash2Icon, Edit2Icon } from 'lucide-react'; // Import Edit2Icon
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
-import { SmoothCursor } from "@/components/ui/smooth-cursor";
 
 declare global {
   interface Window {
@@ -1006,7 +1005,6 @@ export default function HomePage() {
 
           {/* Main Content */}
           <main className="flex-grow flex flex-col"> {/* Main content area */}
-            <SmoothCursor />
             <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow pb-32">
               {/* Mobile menu button - Fixed at top-left, below header */}
               <div className="md:hidden fixed top-16 left-4 z-50"> {/* Adjusted positioning, assuming header height is around 64px (top-16) */}
