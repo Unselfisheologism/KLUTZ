@@ -225,7 +225,7 @@ export default function LandingPage() {
           {/* Top Laptop-shaped Card */}
           <Card className="md:col-span-3 flex flex-col justify-between">
             <CardHeader className="whitespace-normal">
-              <CardTitle>CHAT: Any AI Model, Any Webpage</CardTitle>
+              <h2 className="text-2xl font-semibold text-white">CHAT: Any AI Model, Any Webpage</h2>
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-center p-4">
               {/* Placeholder for image/video */}
@@ -239,9 +239,12 @@ export default function LandingPage() {
             </CardContent>
             {features[0].isImplemented ? (
               <Link href="/get-started" passHref>
-                <Button variant="outline">
-                  Try Now <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                {/* Wrap button in a div to center it */}
+                <div className="flex justify-center">
+                  <Button variant="outline" className="w-auto">
+                    Try Now <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
               </Link>
             ) : null}
           </Card>
