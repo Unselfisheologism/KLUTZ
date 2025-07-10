@@ -216,7 +216,29 @@ export default function LandingPage() {
       </div>
 
       {/* You can add other landing page sections here */}
-
+      <div className="flex flex-col items-center">
+        <span className="text-sm font-medium mb-1">Made in</span>
+        <a
+          href="https://bolt.new"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Made in Bolt.new (opens in a new window)"
+          className="badge-wrapper-120x40"
+        >
+          <Image src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185392/images-removebg-preview_j17by7.png" alt="Made in Bolt.new (Light Mode)">
+            width={120}
+            height={40}
+            unoptimized
+            className="block dark:hidden"
+          </Image>
+          <Image src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185170/images_karyms.png" alt="Made in Bolt.new (Dark mode)">
+            width={120}
+            height={40}
+            unoptimized
+            className="hidden dark:block"
+          </Image>
+        </a>
+      </div>
       {/* Footer (Optional, can be similar to your original footer) */}
       <Footer />
      {/* Footer is in layout.tsx */}
@@ -229,7 +251,7 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-center p-4">
               {/* Placeholder for image/video */}
-              <div className="w-full h-64 md:h-96 bg-gray-700 rounded-md flex items-center justify-center text-gray-400 mb-4">
+              <div className="w-full h-64 md:h-96 bg-gray-700 rounded-md flex flex-col justify-center text-gray-400 mb-4">
                 <a href="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png" target="_blank" rel="noopener noreferrer">
                   <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png" alt="AI-Powered Creativity" className="w-full h-full object-cover rounded-md" />
                 </a>
