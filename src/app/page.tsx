@@ -229,7 +229,7 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-center p-4">
               {/* Placeholder for image/video */}
-              <div className="w-full h-64 md:h-96 bg-gray-700 rounded-md flex items-center justify-center text-gray-400">
+              <div className="w-full h-64 md:h-96 bg-gray-700 rounded-md flex items-center justify-center text-gray-400 mb-4">
                 <a href="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png" target="_blank" rel="noopener noreferrer">
                   <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png" alt="AI-Powered Creativity" className="w-full h-full object-cover rounded-md" />
                 </a>
