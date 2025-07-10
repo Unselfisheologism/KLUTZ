@@ -921,7 +921,7 @@ export default function HomePage() {
         <link rel="canonical" href="https://klutz.netlify.app/" />
         <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
       </Head>
-      <div className="min-h-screen flex-flex-col">
+      <div className="min-h-screen flex flex-col">
         {/* Scrim for mobile */}
         {openMobile && <div className="md:hidden fixed inset-0 bg-black opacity-50 z-30" onClick={closeMobileSidebar}></div>}
 
@@ -1006,7 +1006,7 @@ export default function HomePage() {
           {/* Main Content */}
           <main className="flex-grow flex flex-col"> {/* Main content area */}
             <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow pb-32">
-              <div className="text-center mb-12">
+              <div className="text-center mb-12 relative">
                 <div className="flex flex-col md:flex-row items-center md:justify-center gap-4 md:gap-8 relative"> {/* Added relative positioning here */}
                   {/* Mobile menu icon - Positioned absolutely within this container for mobile */}
                   <div className="md:hidden absolute top-0 left-0 mt-2 ml-2"> {/* Adjusted positioning */}
