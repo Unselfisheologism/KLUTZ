@@ -919,25 +919,23 @@ export default function HomePage() {
     <>
       <Head>
         <link rel="canonical" href="https://klutz.netlify.app/" />
-        <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" /> {/* Replace with your actual code */}
+        <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
       </Head>
-      <div className="min-h-screen flex flex-col">
-        
-
+      <div className="min-h-screen flex-flex-col">
         {/* Scrim for mobile */}
         {openMobile && <div className="md:hidden fixed inset-0 bg-black opacity-50 z-30" onClick={closeMobileSidebar}></div>}
 
         <div className="flex flex-grow"> {/* Use flex to arrange sidebar and main content */}
           {/* Sidebar */}
           <div
-            // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16) and added padding-top for mobile button
+            // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16)
             className={`fixed top-0 left-0 w-64 h-[calc(100vh-4rem)] bg-gray-800 text-white overflow-y-auto transition-transform transform md:relative md:translate-x-0 pt-16 md:pt-4 ${
               openMobile ? 'translate-x-0' : '-translate-x-full' // Use openMobile state for mobile transform
             } z-40 rounded-bl-xl`} // Added fixed positioning, z-index for mobile, and rounded bottom left corner
           >
             <div className="p-4">
               <h2 className="text-xl font-bold mb-4">Chat History</h2>
-              {/* New Chat Button - Added mb-4 for spacing */}
+              {/* New Chat Button - Added mb-6 for more spacing */}
               <Button onClick={startNewChat} className="w-full mb-6">New Chat</Button>
               <ul>
                 {chatSessions.map((session) => (
@@ -1009,13 +1007,13 @@ export default function HomePage() {
           <main className="flex-grow flex flex-col"> {/* Main content area */}
             <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow pb-32">
               <div className="text-center mb-12">
-                {/* Mobile menu icon */}
-                <div className="md:hidden fixed top-4 left-4 z-50">
-                  <Button variant="outline" size="icon" onClick={toggleMobileSidebar} aria-label="Toggle Menu">
-                    <MenuIcon className="h-6 w-6" />
-                  </Button>
-                </div>
-                <div className="flex items-center justify-center gap-8">
+                <div className="flex flex-col md:flex-row items-center md:justify-center gap-4 md:gap-8 relative"> {/* Added relative positioning here */}
+                  {/* Mobile menu icon - Positioned absolutely within this container for mobile */}
+                  <div className="md:hidden absolute top-0 left-0 mt-2 ml-2"> {/* Adjusted positioning */}
+                    <Button variant="outline" size="icon" onClick={toggleMobileSidebar} aria-label="Toggle Menu">
+                      <MenuIcon className="h-6 w-6" />
+                    </Button>
+                  </div>
                   <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
                     Who Said AI Is Gonna Take Over?
                   </h1>
