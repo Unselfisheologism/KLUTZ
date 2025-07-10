@@ -225,7 +225,7 @@ export default function LandingPage() {
           {/* Top Laptop-shaped Card */}
           <Card className="md:col-span-3 flex flex-col justify-between">
             <CardHeader className="pb-0">
-              <CardTitle className="text-lg md:text-xl font-semibold flex items-center whitespace-normal break-words">CHAT: Any AI Model, Any Webpage</CardTitle>
+              <CardTitle className="text-lg md:text-xl font-semibold flex items-center whitespace-normal break-words">Chat: Any AI Model, Any Webpage</CardTitle>
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-center p-4">
               {/* Placeholder for image/video */}
