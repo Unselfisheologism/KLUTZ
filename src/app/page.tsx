@@ -224,8 +224,8 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:grid-rows-2">
           {/* Top Laptop-shaped Card */}
           <Card className="md:col-span-3 flex flex-col justify-between">
-            <CardHeader className="text-lg font-semibold flex items-center">
-              <h2 className="w-6 h-6 mr-2">CHAT: Any AI Model, Any Webpage</h2>
+            <CardHeader className="whitespace-normal pb-2">
+              <h2 className="text-2xl font-semibold text-white">CHAT: Any AI Model, Any Webpage</h2>
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-center p-4">
               {/* Placeholder for image/video */}
