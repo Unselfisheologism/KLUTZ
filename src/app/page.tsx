@@ -225,14 +225,24 @@ export default function LandingPage() {
           {/* Top Laptop-shaped Card */}
           <Card className="md:col-span-3 flex flex-col justify-between">
             <CardHeader>
-              <CardTitle>AI-Powered Creativity Unleashed</CardTitle>
+              <CardTitle>CHAT: Any AI Model, Any Webpage</CardTitle>
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-center p-4">
               {/* Placeholder for image/video */}
               <div className="w-full h-64 md:h-96 bg-gray-700 rounded-md flex items-center justify-center text-gray-400">
-                <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png" alt="AI-Powered Creativity" className="w-full h-full object-cover rounded-md" />
+                <a href="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png" target="_blank" rel="noopener noreferrer">
+                  <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png" alt="AI-Powered Creativity" className="w-full h-full object-cover rounded-md" />
+                </a>
                 
+
               </div>
+            </CardContent>
+            <CardContent className="flex justify-center p-4">
+              {features[0].isImplemented ? (
+                <Link href={features[0].href} passHref>
+                  <Button size="lg">Try Now <ArrowRight className="ml-2 w-4 h-4" /></Button>
+                </Link>
+              ) : null}
             </CardContent>
           </Card>
           {/* Square Cards */}
@@ -246,14 +256,18 @@ export default function LandingPage() {
               </CardHeader>
               <CardContent className="flex-grow flex flex-col justify-between p-4">
                 <p className="text-sm text-gray-400 mb-4">{feature.description}</p>
-                {feature.imageUrl && (
-                  <div className="w-full h-32 mb-4 rounded-md overflow-hidden">
-                    <img
-                      src={feature.imageUrl}
-                      alt={feature.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                {feature.imageUrl && ( // Conditionally render the image if imageUrl exists
+                  <Link href={feature.imageUrl} passHref>
+                    <a target="_blank" rel="noopener noreferrer">
+                      <div className="w-full h-32 mb-4 rounded-md overflow-hidden"> {/* Adjust size as needed */}
+                        <img
+                          src={feature.imageUrl}
+                          alt={feature.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </a>
+                  </Link>
                 )}
                 {feature.isImplemented ? (
                   <Link href={feature.href} passHref>
