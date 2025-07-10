@@ -1006,16 +1006,13 @@ export default function HomePage() {
           {/* Main Content */}
           <main className="flex-grow flex flex-col"> {/* Main content area */}
             <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow pb-32">
-              <div className="text-center mb-12 relative">
-                <div className="flex flex-col md:flex-row items-center md:justify-center gap-4 md:gap-8 relative"> {/* Added relative positioning here */}
-                  {/* Mobile menu icon - Positioned absolutely within this container for mobile */}
-                  <div className="md:hidden absolute top-0 left-0 mt-2 ml-2"> {/* Adjusted positioning */}
-                    <Button variant="outline" size="icon" onClick={toggleMobileSidebar} aria-label="Toggle Menu">
-                      <MenuIcon className="h-6 w-6" />
-                    </Button>
-                  </div>
+              {/* Mobile menu button - Fixed at top-left, below header */}
+              <div className="md:hidden fixed top-16 left-4 z-50"> {/* Adjusted positioning, assuming header height is around 64px (top-16) */}
+                {/* Mobile menu icon - Positioned absolutely within this container for mobile */}
+                <Button variant="outline" size="icon" onClick={toggleMobileSidebar} aria-label="Toggle Menu">
+                  <MenuIcon className="h-6 w-6" />
+                </Button>
                   
-                </div>
                 
               </div>
 
