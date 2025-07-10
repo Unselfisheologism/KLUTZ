@@ -226,18 +226,24 @@ export default function LandingPage() {
           title="Made in Bolt.new (opens in a new window)"
           className="badge-wrapper-120x40"
         >
-          <Image src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185392/images-removebg-preview_j17by7.png" alt="Made in Bolt.new (Light Mode)">
+          {/* Light mode badge */}
+          <Image
+            src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185392/images-removebg-preview_j17by7.png"
+            alt="Made in Bolt.new (light mode)"
             width={120}
             height={40}
             unoptimized
             className="block dark:hidden"
-          </Image>
-          <Image src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185170/images_karyms.png" alt="Made in Bolt.new (Dark mode)">
+          />
+          {/* Dark mode badge */}
+          <Image
+            src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1749185170/images_karyms.png"
+            alt="Made in Bolt.new (dark mode)"
             width={120}
             height={40}
             unoptimized
             className="hidden dark:block"
-          </Image>
+          />
         </a>
       </div>
       {/* Footer (Optional, can be similar to your original footer) */}
