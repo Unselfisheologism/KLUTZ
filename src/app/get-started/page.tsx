@@ -1014,14 +1014,8 @@ export default function HomePage() {
                       <MenuIcon className="h-6 w-6" />
                     </Button>
                   </div>
-                  <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-4">
-                    Who Said AI Is Gonna Take Over?
-                  </h1>
                   
                 </div>
-                <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                  Make AI Your Slave (Audio, Chat, Infographics, Date-Time, Text, Image, Problem-Solving, Spreadsheets Tools)
-                </p>
                 
               </div>
 
