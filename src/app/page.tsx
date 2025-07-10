@@ -224,7 +224,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:grid-rows-2">
           {/* Top Laptop-shaped Card */}
           <Card className="md:col-span-3 flex flex-col justify-between">
-            <CardHeader>
+            <CardHeader className="whitespace-normal">
               <CardTitle>CHAT: Any AI Model, Any Webpage</CardTitle>
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-center p-4">
@@ -239,7 +239,7 @@ export default function LandingPage() {
             </CardContent>
             {features[0].isImplemented ? (
               <Link href="/get-started" passHref>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline">
                   Try Now <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
