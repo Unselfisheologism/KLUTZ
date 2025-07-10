@@ -215,7 +215,7 @@ export default function LandingPage() {
         </p>
       </div>
 
-      {/* You can add other landing page sections here */}
+      {/* add other landing page sections here */}
       <div className="flex flex-col items-center">
         <span className="text-sm font-medium mb-1">Made in</span>
         <a
