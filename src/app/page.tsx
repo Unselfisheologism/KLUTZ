@@ -224,8 +224,8 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:grid-rows-2">
           {/* Top Laptop-shaped Card */}
           <Card className="md:col-span-3 flex flex-col justify-between">
-            <CardHeader className="whitespace-normal">
-              <h2 className="text-2xl font-semibold text-white">CHAT: Any AI Model, Any Webpage</h2>
+            <CardHeader className="text-lg font-semibold flex items-center">
+              <h2 className="w-6 h-6 mr-2">CHAT: Any AI Model, Any Webpage</h2>
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-center p-4">
               {/* Placeholder for image/video */}
@@ -237,16 +237,14 @@ export default function LandingPage() {
 
               </div>
             </CardContent>
-            {features[0].isImplemented ? (
-              <Link href="/get-started" passHref>
-                {/* Wrap button in a div to center it */}
-                <div className="flex justify-center">
-                  <Button variant="outline" className="w-auto">
-                    Try Now <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </Link>
-            ) : null}
+            <Link href="/get-started" passHref>
+              {/* Wrap button in a div to center it */}
+              <div className="flex justify-center">
+                <Button variant="outline" className="w-auto">
+                  Try Now <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </div>
+            </Link>
           </Card>
           {/* Square Cards */}
           {features.map((feature, index) => (
