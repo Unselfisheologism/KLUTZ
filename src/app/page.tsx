@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import Footer from '@/components/layout/footer';
 import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, XIcon, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon, MenuIcon, Trash2Icon, Edit2Icon } from 'lucide-react'; // Import Edit2Icon
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SmoothCursor } from "@/components/ui/smooth-cursor";
 
 
 interface Feature {
@@ -178,6 +179,7 @@ export default function LandingPage() {
     >
       {/* Background Overlay for better text readability */}
       <div className="absolute inset-0 bg-black opacity-50 z-0"></div>
+      <SmoothCursor />
 
       {/* Content Layer */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">
@@ -237,13 +239,13 @@ export default function LandingPage() {
 
               </div>
             </CardContent>
-            <CardContent className="flex justify-center p-4">
-              {features[0].isImplemented ? (
-                <Link href={features[0].href} passHref>
-                  <Button size="lg">Try Now <ArrowRight className="ml-2 w-4 h-4" /></Button>
-                </Link>
-              ) : null}
-            </CardContent>
+            {features[0].isImplemented ? (
+              <Link href="/get-started" passHref>
+                <Button variant="outline" className="w-full">
+                  Try Now <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            ) : null}
           </Card>
           {/* Square Cards */}
           {features.map((feature, index) => (
