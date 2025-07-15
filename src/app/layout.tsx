@@ -38,8 +38,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <header className="fixed top-0 left-0 right-0 z-50 w-full p-4 sm:px-6 lg:px-8 rounded-lg">
-            <div className="bg-card/80 backdrop-blur-sm border-b border-border w-full h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 mx-auto max-w-screen-xl">
+          <header className="fixed top-0 left-0 right-0 z-50 w-full">
+            <div className="bg-card/80 backdrop-blur-sm rounded-xl border-b border-border w-full h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 mx-auto max-w-screen-xl mx-4 mt-4 sm:mx-6 lg:mx-8">
               <div className="flex items-center justify-between w-full h-full">
                 <Link href="/" className="flex items-center gap-2">
                   <img
