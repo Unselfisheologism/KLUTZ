@@ -7,7 +7,9 @@ import { ThemeProvider } from "@/components/providers";
 import { Button } from '@/components/ui/button';
 import LoginButton from '@/components/auth/login-button';
 import { ThemeToggle } from "@/components/theme-toggle";
-import { User } from 'lucide-react';
+import { User, MenuIcon } from 'lucide-react';
+import Sidebar from "@/components/layout/Sidebar";
+import { useState } from 'react';
 
 export const metadata: Metadata = {
   title: 'KLUTZ',
@@ -22,6 +24,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   return (
     <html lang="en\" suppressHydrationWarning>
       <head>
@@ -30,6 +33,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap\" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap\" rel="stylesheet" />
         <script src="https://js.puter.com/v2/"></script>
+        
         <meta name="google-site-verification" content="FVYY2_q5JUQa1Oqg8XGj4v2wqB4F1BcREDn_ZVlwNCA" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
@@ -53,6 +57,10 @@ export default function RootLayout({
                   </h1>
                 </Link>
                 <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
+                    <MenuIcon className="h-5 w-5" />
+                    <span className="sr-only">Toggle Sidebar</span>
+                  </Button>
                   <ThemeToggle />
                   <Button variant="ghost" size="icon" asChild>
                     <Link href="https://puter.com">
@@ -64,13 +72,16 @@ export default function RootLayout({
                 </div>
               </div>
             </div>
+
           </header>
+          {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
           <main className="flex-grow">
             {children}
           </main>
           <Toaster />
         </ThemeProvider>
       </body>
+
     </html>
   );
 }
