@@ -6,9 +6,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function AppHeader() {
   return (
-    <header className="w-full mt-4 px-4 sm:px-6 lg:px-8">
-      <div className="bg-card/80 backdrop-blur-sm rounded-b-lg border-b border-border w-full h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between w-full">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full p-4 sm:px-6 lg:px-8">
+      <div className="bg-card/80 backdrop-blur-sm rounded-b-lg border-b border-border w-full h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 mx-auto max-w-screen-xl">
+        <div className="flex items-center justify-between w-full h-full">
           <Link href="/" className="flex items-center gap-2">
             <img
               src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png"

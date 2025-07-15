@@ -35,7 +35,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AppHeader />
-          <main className="flex-grow">
+          <main className="flex-grow pt-16">
             {children}
           </main>
           <Toaster />
