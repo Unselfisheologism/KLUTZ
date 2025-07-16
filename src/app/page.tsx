@@ -53,46 +53,33 @@ export default function LandingPage() {
 
         {/* Horizontally Scrollable Carousels */}
         <HorizontalCarousel
-          title="Feature Section 1"
+          title="Chat"
           content={[
-            { title: "Title 1", description: "Description 1", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 2", description: "Description 2", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 3", description: "Description 3", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 4", description: "Description 4", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 5", description: "Description 5", imageUrl: "https://via.placeholder.com/400x300" },
+            { title: "With Any AI Model", description: "Choose From 20+ AI Models To Chat With", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678871/Screenshot_2025-07-16_204359_abdlvo.png" },
+            { title: "With Any Website", description: "Chat With The Content Of Any Website", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678916/Screenshot_2025-07-16_204503_ahsgxv.png" },
+            { title: "With Any Image", description: "Upload An Image & Chat About it", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678982/Screenshot_2025-07-16_204604_unp1p1.png" },
           ]}
         />
 
         <HorizontalCarousel
-          title="Feature Section 2"
+          title="Analyze"
           content={[
-            { title: "Title 6", description: "Description 6", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 7", description: "Description 7", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 8", description: "Description 8", imageUrl: "https://via.placeholder.com/400x300" },
+            { title: "To Solve Problems", description: "Description 6", imageUrl: "https://via.placeholder.com/400x300" },
+            { title: "For Neurodiversity", description: "Description 7", imageUrl: "https://via.placeholder.com/400x300" },
+            { title: "", description: "Description 8", imageUrl: "https://via.placeholder.com/400x300" },
             { title: "Title 9", description: "Description 9", imageUrl: "https://via.placeholder.com/400x300" },
             { title: "Title 10", description: "Description 10", imageUrl: "https://via.placeholder.com/400x300" },
           ]}
         />
 
         <HorizontalCarousel
-          title="Feature Section 3"
+          title="Generate"
           content={[
             { title: "Title 11", description: "Description 11", imageUrl: "https://via.placeholder.com/400x300" },
             { title: "Title 12", description: "Description 12", imageUrl: "https://via.placeholder.com/400x300" },
             { title: "Title 13", description: "Description 13", imageUrl: "https://via.placeholder.com/400x300" },
             { title: "Title 14", description: "Description 14", imageUrl: "https://via.placeholder.com/400x300" },
             { title: "Title 15", description: "Description 15", imageUrl: "https://via.placeholder.com/400x300" },
-          ]}
-        />
-
-        <HorizontalCarousel
-          title="Feature Section 4"
-          content={[
-            { title: "Title 16", description: "Description 16", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 17", description: "Description 17", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 18", description: "Description 18", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 19", description: "Description 19", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 20", description: "Description 20", imageUrl: "https://via.placeholder.com/400x300" },
           ]}
         />
 

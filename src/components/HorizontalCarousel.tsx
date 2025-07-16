@@ -102,13 +102,16 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
         >
           {content.map((item, index) => (
             <div key={index} className="flex-none w-full snap-center">
-              <div className="flex flex-col md:flex-row items-center bg-white rounded-lg shadow-md p-6 space-y-4 md:space-y-0 md:space-x-8">
-                <div className="md:w-1/2">
+              {/* Modified: Changed from flex-row to flex-col and adjusted spacing */}
+              <div className="flex flex-col items-center bg-white rounded-lg shadow-md p-6 space-y-4">
+                {/* Text Content */}
+                <div className="w-full text-center"> {/* Added text-center for centering */}
                   <h3 className="text-2xl font-bold mb-2 text-gray-800">{item.title}</h3>
                   <p className="text-gray-600">{item.description}</p>
                 </div>
-                <div className="md:w-1/2">
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-auto rounded-md object-cover" />
+                {/* Image */}
+                <div className="w-full"> {/* Image takes full width of its container */}
+                  <img src={item.imageUrl} alt={item.title} className="w-full h-48 object-cover rounded-md" /> {/* Adjusted height and object-cover */}
                 </div>
               </div>
             </div>
@@ -134,16 +137,13 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
         {/* Progress Indicator */}
         <div className="flex justify-center mt-4 space-x-2">
           {content.map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex
-                  ? 'w-8 bg-blue-500'
-                  : 'w-2 bg-gray-300'
-              }`}
-              style={{
-                width: index === currentIndex ? `${2 + (progress / 100) * 6}rem` : '0.5rem', // Animate width from 0.5rem to 2rem
-                backgroundColor: index === currentIndex ? 'var(--tw-bg-blue-500)' : 'var(--tw-bg-gray-300)',
+            <div key={index} className="h-2 rounded-full transition-all duration-300 relative" style={{ width: index === currentIndex ? '2rem' : '0.5rem', backgroundColor: 'rgba(209, 213, 219, 0.5)' }}> {/* Added relative for absolute progress bar */}
+                 {index === currentIndex && (
+                  <div
+                    className="h-full bg-blue-700 rounded-full absolute top-0 left-0"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                )}
                 transformOrigin: 'left',
                 transform: index === currentIndex ? `scaleX(${progress / 100})` : 'scaleX(1)',
               }}
