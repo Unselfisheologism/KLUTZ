@@ -46,15 +46,15 @@ export default function LandingPage() {
       <section className="relative h-[400px] overflow-hidden">
         {/* Second Background Image */}
         <img
-          src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png"
-          alt="Sky Background"
+          src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752689600/Image_fx_17_hpqoyi.png"
+          alt="faded glory blue Background"
           className="absolute inset-0 w-full h-full object-cover object-center z-0" // Ensure image is behind content
         />
         {/* Overlaid content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full">
           {/* Klutz logo and text */}
-          <div className="text-center mb-12">
-            <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752076900/Untitled_design__3_-removebg-preview_dydzqt.png" alt="Klutz Logo" className="mx-auto mb-4 w-24 h-24" />
+          <div className="flex items-center justify-center mb-12">
+            <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752076900/Untitled_design__3_-removebg-preview_dydzqt.png" alt="Klutz Logo" className="w-24 h-24 mr-4" />
             <p className="text-2xl font-semibold text-gray-700">Klutz</p>
           </div>
           {/* Heading and Subheading */}
