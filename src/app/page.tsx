@@ -33,16 +33,6 @@ export default function LandingPage() {
       </div>
       {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
 
-      {/* Background Image with Gradient */}
-      <section className="relative h-96 overflow-hidden">
-        <img
-          src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png"
-          alt="Background"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100"></div>
-      </section>
-
       {/* Section containing the second background image and overlaid content */}
       <section className="relative h-[400px] overflow-hidden">
         {/* Second Background Image */}
@@ -58,56 +48,54 @@ export default function LandingPage() {
             <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png" alt="Klutz Logo" className="mx-auto mb-4 w-24 h-24" />
             <p className="text-2xl font-semibold text-gray-700">Klutz</p>
           </div>
+        </div>
+      </section>
 
-        </section>
+      {/* Horizontally Scrollable Carousels */}
+      <HorizontalCarousel
+        title="Chat"
+        content={[
+          { title: "With Any AI Model", description: "Choose From 20+ AI Models To Chat With", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678871/Screenshot_2025-07-16_204359_abdlvo.png" },
+          { title: "With Any Website", description: "Chat With The Content Of Any Website", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678916/Screenshot_2025-07-16_204503_ahsgxv.png" },
+          { title: "With Any Image", description: "Upload An Image & Chat About it", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678982/Screenshot_2025-07-16_204604_unp1p1.png" },
+        ]}
+      />
 
-        {/* Horizontally Scrollable Carousels */}
-        <HorizontalCarousel
-          title="Chat"
-          content={[
-            { title: "With Any AI Model", description: "Choose From 20+ AI Models To Chat With", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678871/Screenshot_2025-07-16_204359_abdlvo.png" },
-            { title: "With Any Website", description: "Chat With The Content Of Any Website", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678916/Screenshot_2025-07-16_204503_ahsgxv.png" },
-            { title: "With Any Image", description: "Upload An Image & Chat About it", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678982/Screenshot_2025-07-16_204604_unp1p1.png" },
-          ]}
-        />
+      <HorizontalCarousel
+        title="Analyze"
+        content={[
+          { title: "To Solve Problems", description: "Description 6", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "For Neurodiversity", description: "Description 7", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "", description: "Description 8", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "Title 9", description: "Description 9", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "Title 10", description: "Description 10", imageUrl: "https://via.placeholder.com/400x300" },
+        ]}
+      />
 
-        <HorizontalCarousel
-          title="Analyze"
-          content={[
-            { title: "To Solve Problems", description: "Description 6", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "For Neurodiversity", description: "Description 7", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "", description: "Description 8", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 9", description: "Description 9", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 10", description: "Description 10", imageUrl: "https://via.placeholder.com/400x300" },
-          ]}
-        />
+      <HorizontalCarousel
+        title="Generate"
+        content={[
+          { title: "Title 11", description: "Description 11", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "Title 12", description: "Description 12", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "Title 13", description: "Description 13", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "Title 14", description: "Description 14", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "Title 15", description: "Description 15", imageUrl: "https://via.placeholder.com/400x300" },
+        ]}
+      />
 
-        <HorizontalCarousel
-          title="Generate"
-          content={[
-            { title: "Title 11", description: "Description 11", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 12", description: "Description 12", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 13", description: "Description 13", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 14", description: "Description 14", imageUrl: "https://via.placeholder.com/400x300" },
-            { title: "Title 15", description: "Description 15", imageUrl: "https://via.placeholder.com/400x300" },
-          ]}
-        />
-
-        {/* Testimonials */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">What Our Users Say</h2>
-          <div className="overflow-x-auto">
-            <div className="flex space-x-6 pb-4">
-              {[16, 17, 18, 19, 20].map((item) => (
-                <div key={item} className="flex-none w-80 h-60 bg-white rounded-lg shadow-md flex items-center justify-center text-gray-600">
-                  Carousel Item {item}
-                </div>
-              ))}
-            </div>
+      {/* Testimonials */}
+      <section className="mb-16">
+        <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">What Our Users Say</h2>
+        <div className="overflow-x-auto">
+          <div className="flex space-x-6 pb-4">
+            {[16, 17, 18, 19, 20].map((item) => (
+              <div key={item} className="flex-none w-80 h-60 bg-white rounded-lg shadow-md flex items-center justify-center text-gray-600">
+                Carousel Item {item}
+              </div>
+            ))}
           </div>
-        </section>
-
-      </main>
+        </div>
+      </section>
 
       {/* Footer */}
       <Footer />
