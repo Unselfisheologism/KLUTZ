@@ -39,9 +39,9 @@ export default function LandingPage() {
           alt="Background"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent" style={{ backgroundImage: 'url(https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
       </section>
-      
+
       {/* Section containing the second background image and overlaid content */}
       <section className="relative h-[400px] overflow-hidden">
         {/* Second Background Image */}
@@ -56,6 +56,11 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png" alt="Klutz Logo" className="mx-auto mb-4 w-24 h-24" />
             <p className="text-2xl font-semibold text-gray-700">Klutz</p>
+          </div>
+          {/* Heading and Subheading */}
+          <div className="text-center mb-16">
+            <h1 className="text-5xl font-bold text-gray-800 mb-4">Who Said AI Is Gonna Take Over?</h1>
+            <p className="text-xl text-gray-600">Make AI Your Slave, With KLUTZ!</p>
           </div>
         </div>
       </section>
