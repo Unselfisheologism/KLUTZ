@@ -39,7 +39,7 @@ export default function LandingPage() {
           alt="Background"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent" style={{ backgroundImage: 'url(https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-blue-500"></div>
       </section>
 
       {/* Section containing the second background image and overlaid content */}
@@ -54,7 +54,7 @@ export default function LandingPage() {
         <div className="relative z-10 flex flex-col items-center justify-center h-full">
           {/* Klutz logo and text */}
           <div className="text-center mb-12">
-            <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png" alt="Klutz Logo" className="mx-auto mb-4 w-24 h-24" />
+            <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752076900/Untitled_design__3_-removebg-preview_dydzqt.png" alt="Klutz Logo" className="mx-auto mb-4 w-24 h-24" />
             <p className="text-2xl font-semibold text-gray-700">Klutz</p>
           </div>
           {/* Heading and Subheading */}
