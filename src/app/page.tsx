@@ -43,18 +43,16 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100"></div>
       </section>
 
-      {/* Second Background Image Section */}
-      <section className="relative z-0 h-[400px]"> 
-        <div className="absolute inset-0 w-full h-full bg-cover bg-center overflow-hidden">
-          <img 
-            src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png"
-            alt="Sky Background"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-          />
-        </div>
-      </section>
-
       <main className="container mx-auto px-4 py-12 relative z-10">
+        <section className="relative z-0 h-[400px]"> 
+          <div className="absolute inset-0 w-full h-full bg-cover bg-center overflow-hidden">
+            <img 
+              src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png"
+              alt="Sky Background"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+          </div>
+        </section>
         {/* Klutz Logo and Text */}
         <div className="text-center mb-12">
           <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png" alt="Klutz Logo" className="mx-auto mb-4 w-24 h-24" />
