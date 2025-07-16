@@ -34,7 +34,12 @@ export default function LandingPage() {
       {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
 
       {/* Background Image with Gradient */}
-      <section className="relative h-[60vh] bg-cover bg-center" style={{ backgroundImage: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png" }}>
+      <section className="relative h-96 overflow-hidden">
+        <img
+          src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png"
+          alt="Background"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100"></div>
       </section>
 
