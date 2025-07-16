@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, XIcon, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon, MenuIcon, Trash2Icon, Edit2Icon, User } from 'lucide-react'; // Import Edit2Icon
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, XIcon, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon, MenuIcon, Trash2Icon, Edit2Icon, User, PanelLeft } from 'lucide-react'; // Import Edit2Icon
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
 declare global {
@@ -947,8 +947,8 @@ export default function HomePage() {
           {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
 
           {/* Sidebar */}
-          <div
-            // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16)
+          <div // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16)
+            // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16) and added mobile/desktop classes
             className={`fixed top-0 left-0 w-64 h-[calc(100vh-4rem)] bg-gray-800 text-white overflow-y-auto transition-transform transform md:relative md:translate-x-0 pt-16 md:pt-4 ${
               openMobile ? 'translate-x-0' : '-translate-x-full' // Use openMobile state for mobile transform
             } z-40 rounded-bl-xl`} // Added fixed positioning, z-index for mobile, and rounded bottom left corner
@@ -1025,12 +1025,12 @@ export default function HomePage() {
 
           {/* Main Content */}
           <main className="flex-grow flex flex-col"> {/* Main content area */}
-            <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow pb-32">
+            <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pt-24 md:pt-12 flex-grow pb-32">
               {/* Mobile menu button - Fixed at top-left, below header */}
-              <div className="md:hidden fixed top-16 left-4 z-50"> {/* Adjusted positioning, assuming header height is around 64px (top-16) */}
+              <div className="md:hidden fixed top-4 left-4 z-50"> {/* Adjusted positioning to top-4 */}
                 {/* Mobile menu icon - Positioned absolutely within this container for mobile */}
                 <Button variant="outline" size="icon" onClick={toggleMobileSidebar} aria-label="Toggle Menu">
-                  <MenuIcon className="h-6 w-6" />
+                  <PanelLeft className="h-6 w-6" />
                 </Button>
                   
                 
