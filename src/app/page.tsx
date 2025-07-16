@@ -54,7 +54,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12 relative z-10">
         {/* Klutz Logo and Text */}
         <div className="text-center mb-12">
           <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png" alt="Klutz Logo" className="mx-auto mb-4 w-24 h-24" />
