@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ThemeToggle } from '@/components/theme-toggle'; // Import ThemeToggle
+import LoginButton from '@/components/auth/login-button'; // Import LoginButton
 import Sidebar from "@/components/layout/Sidebar";
 import { preprocessImage } from '@/lib/image-utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
