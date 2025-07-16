@@ -47,10 +47,8 @@ export default function LayoutClient({
         </div>
       </header>
       {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
-      <main className="flex-grow">
-        <div className="pt-16">
-          {children}
-        </div>
+      <main className="flex-grow pt-16">
+        {children}
       </main>
     </>
   );
