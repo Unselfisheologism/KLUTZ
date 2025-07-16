@@ -714,7 +714,7 @@ function ChatComponent({ messages, setMessages, currentChatId, setCurrentChatId,
 
 
 export default function HomePage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -929,6 +929,23 @@ export default function HomePage() {
         {openMobile && <div className="md:hidden fixed inset-0 bg-black opacity-50 z-30" onClick={closeMobileSidebar}></div>}
 
         <div className="flex flex-grow"> {/* Use flex to arrange sidebar and main content */}
+          {/* Desktop Header Elements - Positioned at the top-right */}
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
+              <MenuIcon className="h-5 w-5" />
+              <span className="sr-only">Toggle Sidebar</span>
+            </Button>
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="https://puter.com">
+                <User className="h-5 w-5" />
+                <span className="sr-only">Account</span>
+              </Link>
+            </Button>
+            <LoginButton />
+          </div>
+          {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
+
           {/* Sidebar */}
           <div
             // Adjusted sidebar height to end before the footer (assuming footer height is around 64px or h-16)
@@ -1018,21 +1035,6 @@ export default function HomePage() {
                   
                 
               </div>
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
-                  <MenuIcon className="h-5 w-5" />
-                  <span className="sr-only">Toggle Sidebar</span>
-                </Button>
-                <ThemeToggle />
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href="https://puter.com">
-                    <User className="h-5 w-5" />
-                    <span className="sr-only">Account</span>
-                  </Link>
-                </Button>
-                <LoginButton />
-              </div>
-              {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
               <div className="mb-8">
                 {/* Pass down state and functions to ChatComponent */}
                 <ChatComponent
