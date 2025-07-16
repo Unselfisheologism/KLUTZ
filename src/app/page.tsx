@@ -44,8 +44,8 @@ export default function LandingPage() {
       </section>
 
       {/* Second Background Image Section */}
-      <section className="relative -mt-24 z-0"> {/* Adjust negative margin as needed */}
-        <div className="absolute inset-0 w-full h-full bg-cover bg-center">
+      <section className="relative z-0 h-[400px]"> 
+        <div className="absolute inset-0 w-full h-full bg-cover bg-center overflow-hidden">
           <img 
             src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png"
             alt="Sky Background"
