@@ -177,7 +177,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className="relative min-h-screen flex flex-col items-center justify-center text-white overflow-hidden"
+      className="relative min-h-screen flex flex-col items-center justify-center text-white overflow-hidden pt-16"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',

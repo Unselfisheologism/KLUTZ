@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import Image from 'next/image';
+import Sidebar from "@/components/layout/Sidebar";
 import { preprocessImage } from '@/lib/image-utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, XIcon, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon, MenuIcon, Trash2Icon, Edit2Icon } from 'lucide-react'; // Import Edit2Icon
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, XIcon, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon, MenuIcon, Trash2Icon, Edit2Icon, User } from 'lucide-react'; // Import Edit2Icon
 import { FaRegEnvelope, FaYoutube, FaXTwitter, FaLinkedin, FaMedium, FaDiscord } from 'react-icons/fa6';
 
 declare global {
@@ -1015,7 +1016,21 @@ export default function HomePage() {
                   
                 
               </div>
-
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
+                  <MenuIcon className="h-5 w-5" />
+                  <span className="sr-only">Toggle Sidebar</span>
+                </Button>
+                <ThemeToggle />
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href="https://puter.com">
+                    <User className="h-5 w-5" />
+                    <span className="sr-only">Account</span>
+                  </Link>
+                </Button>
+                <LoginButton />
+              </div>
+              {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
               <div className="mb-8">
                 {/* Pass down state and functions to ChatComponent */}
                 <ChatComponent
