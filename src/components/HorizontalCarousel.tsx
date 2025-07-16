@@ -97,17 +97,17 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
       <div className="relative">
         <div
           ref={carouselRef}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide md:scrollbar-hide"
           style={{ scrollBehavior: 'smooth' }}
         >
           {content.map((item, index) => (
             <div key={index} className="flex-none w-full snap-center">
-              <div className="flex flex-col md:flex-row items-center bg-white rounded-lg shadow-md p-6 space-y-4 md:space-y-0 md:space-x-8">
-                <div className="md:w-1/2">
+              <div className="flex flex-col items-center rounded-lg shadow-md p-6 space-y-4">
+                <div>
                   <h3 className="text-2xl font-bold mb-2 text-gray-800">{item.title}</h3>
                   <p className="text-gray-600">{item.description}</p>
                 </div>
-                <div className="md:w-1/2">
+                <div>
                   <img src={item.imageUrl} alt={item.title} className="w-full h-auto rounded-md object-cover" />
                 </div>
               </div>
