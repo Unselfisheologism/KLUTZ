@@ -46,13 +46,9 @@ export default function LayoutClient({
           </div>
         </div>
       </header>
-      <div className="h-16"></div> {/* Spacer div with the same height as the header */}
       {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
       <main className="flex-grow">
-        <div className="pt-16">
-
           {children}
-        </div>
       </main>
 
     </>
