@@ -1,10 +1,16 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import Footer from '@/components/layout/footer';
-import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, XIcon, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon, MenuIcon, Trash2Icon, Edit2Icon } from 'lucide-react'; // Import Edit2Icon
+import { ThemeToggle } from '@/components/theme-toggle'; // Import ThemeToggle
+import LoginButton from '@/components/auth/login-button'; // Import LoginButton
+import { ScanLine, Layers, ShieldCheck, Brain, ThermometerIcon, ArrowRight, Zap, Car, Ruler, Sparkles, Utensils, XIcon, FileText, Languages, Calculator, Calendar, Mail, Shield, Eye, Package, HelpCircle, Cookie, Github, FileSpreadsheet, BarChart, Speech, AudioWaveform, Wand, GlobeIcon, CheckIcon, MenuIcon, Trash2Icon, Edit2Icon, User } from 'lucide-react'; // Import Edit2Icon
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
+import Sidebar from "@/components/layout/Sidebar";
+import Footer from '@/components/layout/footer';
 
 
 interface Feature {
@@ -167,10 +173,11 @@ export default function LandingPage() {
   const backgroundImage = 'https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png'; // Replace with your image URL
   const videoBackground = 'YOUR_VIDEO_URL'; // Replace with your video URL
   const logoImage = 'https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752078136/Screenshot_2025-07-09_215114-removebg-preview_wgbree.png'; // Replace with your logo URL
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div
-      className="relative min-h-screen flex flex-col items-center justify-center text-white overflow-hidden pt-7"
+      className="relative min-h-screen flex flex-col items-center justify-center text-white overflow-hidden"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -179,6 +186,23 @@ export default function LandingPage() {
     >
       {/* Background Overlay for better text readability */}
       <div className="absolute inset-0 bg-black opacity-50 z-0"></div>
+
+      {/* Top Right Icons */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
+          <MenuIcon className="h-5 w-5" />
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+        <ThemeToggle />
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="https://puter.com">
+            <User className="h-5 w-5" />
+            <span className="sr-only">Account</span>
+          </Link>
+        </Button>
+        <LoginButton />
+      </div>
+      {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
 
       {/* Content Layer */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">

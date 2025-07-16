@@ -1005,7 +1005,7 @@ export default function HomePage() {
 
           {/* Main Content */}
           <main className="flex-grow flex flex-col"> {/* Main content area */}
-            <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 pt-7 flex-grow pb-32">
+            <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 flex-grow pb-32">
               {/* Mobile menu button - Fixed at top-left, below header */}
               <div className="md:hidden fixed top-16 left-4 z-50"> {/* Adjusted positioning, assuming header height is around 64px (top-16) */}
                 {/* Mobile menu icon - Positioned absolutely within this container for mobile */}
