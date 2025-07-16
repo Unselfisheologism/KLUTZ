@@ -43,7 +43,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100"></div>
       </section>
 
-      <main className="container mx-auto px-4 py-12 relative z-10">
+      <main className="container mx-auto px-4 pt-48 pb-12 relative z-10">
         <section className="relative z-0 h-[400px]"> 
           <div className="absolute inset-0 w-full h-full bg-cover bg-center overflow-hidden">
             <img 
