@@ -33,6 +33,15 @@ export default function LandingPage() {
       </div>
       {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
 
+      <section className="relative h-96 overflow-hidden">
+        <img
+          src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png"
+          alt="Background"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100"></div>
+      </section>
+      
       {/* Section containing the second background image and overlaid content */}
       <section className="relative h-[400px] overflow-hidden">
         {/* Second Background Image */}
