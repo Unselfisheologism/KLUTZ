@@ -431,26 +431,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-                    </a>
-                  </Link>
-                )}
-                {feature.isImplemented ? (
-                  <Link href={feature.href} passHref>
-                    <Button variant="outline" className="w-full">
-                      Try Now <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                  </Link>
-                ) : (
-                  <Button variant="outline" className="w-full" disabled>
-                    Coming Soon
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
