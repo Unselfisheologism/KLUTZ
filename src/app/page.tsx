@@ -43,26 +43,22 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-100"></div>
       </section>
 
-      <main className="container mx-auto px-4 pt-48 pb-12 relative z-10">
-        <section className="relative z-0 h-[400px]"> 
-          <div className="absolute inset-0 w-full h-full bg-cover bg-center overflow-hidden">
-            <img 
-              src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png"
-              alt="Sky Background"
-              className="absolute inset-0 w-full h-full object-cover object-center"
-            />
-          </div>
+      {/* Section containing the second background image and overlaid content */}
+      <section className="relative h-[400px] overflow-hidden">
+        {/* Second Background Image */}
+        <img
+          src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751263917/Image_fx_11_tmz9lo.png"
+          alt="Sky Background"
+          className="absolute inset-0 w-full h-full object-cover object-center z-0" // Ensure image is behind content
+        />
+        {/* Overlaid content */}
+        <div className="relative z-10 flex flex-col items-center justify-center h-full">
           {/* Klutz logo and text */}
           <div className="text-center mb-12">
             <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1751201919/Untitled_design_3_d8m11k.png" alt="Klutz Logo" className="mx-auto mb-4 w-24 h-24" />
             <p className="text-2xl font-semibold text-gray-700">Klutz</p>
           </div>
 
-          {/* Heading and Subheading */}
-          <div className="text-center mb-16">
-            <h1 className="text-5xl font-bold text-gray-800 mb-4">Who Said AI Is Gonna Take Over?</h1>
-            <p className="text-xl text-gray-600">Make AI Your Slave, With KLUTZ!</p>
-          </div>
         </section>
 
         {/* Horizontally Scrollable Carousels */}
