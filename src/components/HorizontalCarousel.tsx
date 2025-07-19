@@ -108,8 +108,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
             <div key={index} className="flex-none w-full snap-center">
               <div className="flex flex-col items-center p-6 space-y-4">
                 <div>
-                  <h3 className="text-2xl font-bold mb-2 text-gray-800">{item.title}</h3>
-                  <p className="text-gray-600">{item.description}</p>
+                  <p className="text-gray-600">{item.title}</p>
                 </div>
                 <div>
                   <img src={item.imageUrl} alt={item.title} className="w-full h-auto rounded-md object-cover" />

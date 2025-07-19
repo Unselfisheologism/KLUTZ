@@ -16,7 +16,7 @@ export default function LandingPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#7190be]">
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
           <MenuIcon className="h-5 w-5" />
@@ -39,7 +39,7 @@ export default function LandingPage() {
           alt="Background"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-blue-500"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#193067]"></div>
       </section>
 
       {/* Section containing the second background image and overlaid content */}
@@ -69,31 +69,38 @@ export default function LandingPage() {
       <HorizontalCarousel
         title="Chat"
         content={[
-          { title: "With Any AI Model", description: "Choose From 20+ AI Models To Chat With", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678871/Screenshot_2025-07-16_204359_abdlvo.png" },
-          { title: "With Any Website", description: "Chat With The Content Of Any Website", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678916/Screenshot_2025-07-16_204503_ahsgxv.png" },
-          { title: "With Any Image", description: "Upload An Image & Chat About it", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678982/Screenshot_2025-07-16_204604_unp1p1.png" },
+          { title: "With Any AI Model", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678871/Screenshot_2025-07-16_204359_abdlvo.png" },
+          { title: "With Any Website", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678916/Screenshot_2025-07-16_204503_ahsgxv.png" },
+          { title: "With Any Image", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678982/Screenshot_2025-07-16_204604_unp1p1.png" },
         ]}
       />
 
       <HorizontalCarousel
         title="Analyze"
         content={[
-          { title: "To Solve Problems", description: "Description 6", imageUrl: "https://via.placeholder.com/400x300" },
-          { title: "For Neurodiversity", description: "Description 7", imageUrl: "https://via.placeholder.com/400x300" },
-          { title: "", description: "Description 8", imageUrl: "https://via.placeholder.com/400x300" },
-          { title: "Title 9", description: "Description 9", imageUrl: "https://via.placeholder.com/400x300" },
-          { title: "Title 10", description: "Description 10", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "Date & Time", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162170/Screenshot_2025-07-10_205422_b7izxl.png" },
+          { title: "To Solve Problems", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162154/Screenshot_2025-07-10_205337_kq5abm.png" },
+          { title: "For Neurodiversity", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162282/Screenshot_2025-07-10_205717_puu2fg.png" },
+          { title: "For Engagement", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162305/Screenshot_2025-07-10_205841_fid3qo.png" },
+          { title: "For Ethnicity", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162264/Screenshot_2025-07-10_205639_u9wahe.png" },
+          { title: "For Consistency", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162202/Screenshot_2025-07-10_205602_iyegzx.png" },
         ]}
       />
 
       <HorizontalCarousel
         title="Generate"
         content={[
-          { title: "Title 11", description: "Description 11", imageUrl: "https://via.placeholder.com/400x300" },
-          { title: "Title 12", description: "Description 12", imageUrl: "https://via.placeholder.com/400x300" },
-          { title: "Title 13", description: "Description 13", imageUrl: "https://via.placeholder.com/400x300" },
-          { title: "Title 14", description: "Description 14", imageUrl: "https://via.placeholder.com/400x300" },
-          { title: "Title 15", description: "Description 15", imageUrl: "https://via.placeholder.com/400x300" },
+          { title: "Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162374/Screenshot_2025-07-10_210309_vn079l.png" },
+          { title: "Speech", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162567/Screenshot_2025-07-10_211048_ytodyc.png" },
+          { title: "Infographics", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162488/Screenshot_2025-07-10_210815_mb3xws.png" },
+        ]}
+      />
+
+      <HorizontalCarousel
+        title="AI-Native"
+        content={[
+          { title: "Audio Editor", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162547/screencapture-klutz-pi-vercel-app-ai-audio-editor-2025-07-10-21_09_22_isacwg.png" },
+          { title: "Spreadsheets", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162472/Screenshot_2025-07-10_210446_nutmko.png" },
         ]}
       />
 
