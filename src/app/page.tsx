@@ -11,6 +11,7 @@ import { MenuIcon, User } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle'; // Import ThemeToggle
 import LoginButton from '@/components/auth/login-button';
 import HorizontalCarousel from '@/components/HorizontalCarousel'; // Import the new component
+import AutoScrollMarquee from '@/components/AutoScrollMarquee'; // Import the new component
 
 export default function LandingPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -80,6 +81,9 @@ export default function LandingPage() {
         content={[
           { title: "Date & Time", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162170/Screenshot_2025-07-10_205422_b7izxl.png" },
           { title: "To Solve Problems", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162154/Screenshot_2025-07-10_205337_kq5abm.png" },
+          { title: "Medical Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162184/Screenshot_2025-07-10_205507_uw1suh.png" },
+          { title: "To Translate", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162142/Screenshot_2025-07-10_205222_z5xvzl.png" },
+          { title: "For Measuring", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162361/Screenshot_2025-07-10_210120_ylcsjo.png"},
           { title: "For Neurodiversity", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162282/Screenshot_2025-07-10_205717_puu2fg.png" },
           { title: "For Engagement", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162305/Screenshot_2025-07-10_205841_fid3qo.png" },
           { title: "For Ethnicity", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162264/Screenshot_2025-07-10_205639_u9wahe.png" },
@@ -93,6 +97,10 @@ export default function LandingPage() {
           { title: "Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162374/Screenshot_2025-07-10_210309_vn079l.png" },
           { title: "Speech", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162567/Screenshot_2025-07-10_211048_ytodyc.png" },
           { title: "Infographics", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162488/Screenshot_2025-07-10_210815_mb3xws.png" },
+          { title: "Prompts", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162456/Screenshot_2025-07-10_211722_orastr.png" },
+          { title: "Vehicle Diagnosis", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162348/Screenshot_2025-07-10_210037_ejmmzi.png" },
+          { title: "Device Diagnosis", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162334/Screenshot_2025-07-10_205941_wk8txn.png" },
+          { title: "Text From Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162119/Screenshot_2025-07-10_205138_nqzsrk.png" },
         ]}
       />
 
@@ -106,16 +114,15 @@ export default function LandingPage() {
 
       {/* Testimonials */}
       <section className="mb-16">
-        <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">What Our Users Say</h2>
-        <div className="overflow-x-auto">
-          <div className="flex space-x-6 pb-4">
-            {[16, 17, 18, 19, 20].map((item) => (
-              <div key={item} className="flex-none w-80 h-60 bg-white rounded-lg shadow-md flex items-center justify-center text-gray-600">
-                Carousel Item {item}
-              </div>
-            ))}
-          </div>
-        </div>
+        <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">What Users Say</h2>
+        <AutoScrollMarquee
+          content={[
+            <iframe key="1" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1275497?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+            <iframe key="2" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1279092?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+            <iframe key="3" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1279088?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+            <iframe key="4" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1277790?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+          ]}
+        />
       </section>
 
       {/* Footer */}
