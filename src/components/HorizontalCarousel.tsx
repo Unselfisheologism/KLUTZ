@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CarouselItem {
   title: string;
-  description: string;
+  description?: string; // Make description optional
   imageUrl: string;
 }
 
@@ -93,11 +93,11 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
 
   return (
     <section className="mb-16">
-      <h2 className="text-3xl font-semibold text-gray-800 mb-6">{title}</h2>
-      <div className="relative">
+      <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{title}</h2>
+      <div className="relative flex flex-col items-center">
         <div
           ref={carouselRef}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide md:scrollbar-hide"
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide md:scrollbar-hide w-full"
           style={{
             scrollBehavior: 'smooth',
             msOverflowStyle: 'none',  /* Internet Explorer 10+ */
@@ -108,7 +108,7 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
             <div key={index} className="flex-none w-full snap-center">
               <div className="flex flex-col items-center p-6 space-y-4">
                 <div>
-                  <p className="text-gray-600">{item.title}</p>
+                  <p className="text-xl font-medium text-gray-600">{item.title}</p>
                 </div>
                 <div>
                   <img src={item.imageUrl} alt={item.title} className="w-full h-auto rounded-md object-cover" />
@@ -118,44 +118,48 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
           ))}
         </div>
 
-        {/* Navigation Arrows */}
-        <button
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-md cursor-pointer"
-          onClick={handlePrev}
-          aria-label="Previous"
-        >
-          <ChevronLeft className="h-6 w-6 text-gray-700" />
-        </button>
-        <button
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-md cursor-pointer"
-          onClick={handleNext}
-          aria-label="Next"
-        >
-          <ChevronRight className="h-6 w-6 text-gray-700" />
-        </button>
-
-        {/* Progress Indicator */}
-        <div className="flex justify-center mt-4 space-x-2">
-          {content.map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex
-                  ? 'w-8 bg-blue-500'
-                  : 'w-2 bg-gray-300'
-              }`}
-              style={{
-                width: index === currentIndex ? `${2 + (progress / 100) * 6}rem` : '0.5rem', // Animate width from 0.5rem to 2rem
-                backgroundColor: index === currentIndex ? 'var(--tw-bg-blue-500)' : 'var(--tw-bg-gray-300)',
-                transformOrigin: 'left',
-                transform: index === currentIndex ? `scaleX(${progress / 100})` : 'scaleX(1)',
-              }}
+        {/* Navigation Arrows and Progress Indicator */}
+        <div className="flex justify-center items-center mt-4 space-x-2">
+            {/* Navigation Arrows */}
+            <button
+              className="bg-white rounded-full p-2 shadow-md cursor-pointer"
+              onClick={handlePrev}
+              aria-label="Previous"
             >
-                 {index === currentIndex && (
-                  <div className="h-full bg-blue-700 rounded-full" style={{ width: `${progress}%` }}></div>
-                )}
+              <ChevronLeft className="h-6 w-6 text-gray-700" />
+            </button>
+
+            {/* Progress Indicator */}
+            <div className="flex justify-center space-x-2">
+              {content.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === currentIndex
+                      ? 'w-8 bg-blue-500'
+                      : 'w-2 bg-gray-300'
+                  }`}
+                  style={{
+                    width: index === currentIndex ? `${0.5 + (progress / 100) * 1.5}rem` : '0.5rem', // Animate width from 0.5rem to 2rem
+                    backgroundColor: index === currentIndex ? 'var(--tw-bg-blue-500)' : 'var(--tw-bg-gray-300)',
+                    transformOrigin: 'left',
+                    transform: index === currentIndex ? `scaleX(1)` : 'scaleX(1)', // Remove scaleX transform
+                  }}
+                >
+                     {index === currentIndex && (
+                      <div className="h-full bg-blue-700 rounded-full" style={{ width: `${progress}%` }}></div>
+                    )}
+                </div>
+              ))}
             </div>
-          ))}
+
+            <button
+              className="bg-white rounded-full p-2 shadow-md cursor-pointer"
+              onClick={handleNext}
+              aria-label="Next"
+            >
+              <ChevronRight className="h-6 w-6 text-gray-700" />
+            </button>
         </div>
       </div>
     </section>
