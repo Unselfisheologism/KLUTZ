@@ -95,30 +95,6 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
     <section className="mb-16">
       <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">{title}</h2>
       <div className="relative flex flex-col items-center">
-        <div
-          ref={carouselRef}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide md:scrollbar-hide w-full"
-          style={{
-            scrollBehavior: 'smooth',
-            msOverflowStyle: 'none',  /* Internet Explorer 10+ */
-            scrollbarWidth: 'none',  /* Firefox */
-          }}
-        >
-          {content.map((item, index) => (
-            <div key={index} className="flex-none w-full snap-center">
-              <div className="flex flex-col items-center p-6 space-y-4">
-                <div>
-                  <p className="text-xl font-medium text-gray-600">{item.title}</p>
-                </div>
-                <div>
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-auto rounded-md object-cover" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Navigation Arrows and Progress Indicator */}
         <div className="flex justify-center items-center mt-4 space-x-2">
             {/* Navigation Arrows */}
             <button
@@ -161,6 +137,30 @@ const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({ title, content 
               <ChevronRight className="h-6 w-6 text-gray-700" />
             </button>
         </div>
+        <div
+          ref={carouselRef}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide md:scrollbar-hide w-full"
+          style={{
+            scrollBehavior: 'smooth',
+            msOverflowStyle: 'none',  /* Internet Explorer 10+ */
+            scrollbarWidth: 'none',  /* Firefox */
+          }}
+        >
+          {content.map((item, index) => (
+            <div key={index} className="flex-none w-full snap-center">
+              <div className="flex flex-col items-center p-6 space-y-4">
+                <div>
+                  <p className="text-xl font-medium text-gray-600">{item.title}</p>
+                </div>
+                <div>
+                  <img src={item.imageUrl} alt={item.title} className="w-full h-auto rounded-md object-cover" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+
       </div>
     </section>
   );

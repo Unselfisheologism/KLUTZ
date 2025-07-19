@@ -40,7 +40,7 @@ export default function LandingPage() {
           alt="Background"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#193067]"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#193067]/50 to-[#193067]"></div>
       </section>
 
       {/* Section containing the second background image and overlaid content */}
@@ -49,7 +49,7 @@ export default function LandingPage() {
         <img
           src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752689600/Image_fx_17_hpqoyi.png"
           alt="faded glory blue Background"
-          className="absolute inset-0 w-full h-full object-cover object-center z-0" // Ensure image is behind content
+          className="absolute inset-0 w-full h-full object-cover object-center z-0" 
         />
         {/* Overlaid content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full">
