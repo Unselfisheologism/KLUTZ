@@ -44,7 +44,7 @@ export default function LandingPage() {
       </section>
   
       <div className="absolute inset-x-0 ">
-      {/* Overlaid content */}
+        {/* Overlaid content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full">
           {/* Klutz logo and text */}
           <div className="flex items-center justify-center mb-12 pt-40">
@@ -59,67 +59,68 @@ export default function LandingPage() {
         </div>
 
 
-      {/* Horizontally Scrollable Carousels */}
-      <HorizontalCarousel
-        title="Chat"
-        content={[
-          { title: "With Any AI Model", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678871/Screenshot_2025-07-16_204359_abdlvo.png" },
-          { title: "With Any Website", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678916/Screenshot_2025-07-16_204503_ahsgxv.png" },
-          { title: "With Any Image", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678982/Screenshot_2025-07-16_204604_unp1p1.png" },
-        ]}
-      />
-
-      <HorizontalCarousel
-        title="Analyze"
-        content={[
-          { title: "Date & Time", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162170/Screenshot_2025-07-10_205422_b7izxl.png" },
-          { title: "To Solve Problems", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162154/Screenshot_2025-07-10_205337_kq5abm.png" },
-          { title: "Medical Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162184/Screenshot_2025-07-10_205507_uw1suh.png" },
-          { title: "To Translate", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162142/Screenshot_2025-07-10_205222_z5xvzl.png" },
-          { title: "For Measuring", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162361/Screenshot_2025-07-10_210120_ylcsjo.png"},
-          { title: "For Neurodiversity", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162282/Screenshot_2025-07-10_205717_puu2fg.png" },
-          { title: "For Engagement", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162305/Screenshot_2025-07-10_205841_fid3qo.png" },
-          { title: "For Ethnicity", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162264/Screenshot_2025-07-10_205639_u9wahe.png" },
-          { title: "For Consistency", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162202/Screenshot_2025-07-10_205602_iyegzx.png" },
-        ]}
-      />
-
-      <HorizontalCarousel
-        title="Generate"
-        content={[
-          { title: "Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162374/Screenshot_2025-07-10_210309_vn079l.png" },
-          { title: "Speech", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162567/Screenshot_2025-07-10_211048_ytodyc.png" },
-          { title: "Infographics", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162488/Screenshot_2025-07-10_210815_mb3xws.png" },
-          { title: "Prompts", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162456/Screenshot_2025-07-10_211722_orastr.png" },
-          { title: "Vehicle Diagnosis", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162348/Screenshot_2025-07-10_210037_ejmmzi.png" },
-          { title: "Device Diagnosis", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162334/Screenshot_2025-07-10_205941_wk8txn.png" },
-          { title: "Text From Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162119/Screenshot_2025-07-10_205138_nqzsrk.png" },
-        ]}
-      />
-
-      <HorizontalCarousel
-        title="AI-Native"
-        content={[
-          { title: "Audio Editor", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162547/screencapture-klutz-pi-vercel-app-ai-audio-editor-2025-07-10-21_09_22_isacwg.png" },
-          { title: "Spreadsheets", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162472/Screenshot_2025-07-10_210446_nutmko.png" },
-        ]}
-      />
-
-      {/* Testimonials */}
-      <section className="mb-16">
-        <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">What Users Say</h2>
-        <AutoScrollMarquee
+        {/* Horizontally Scrollable Carousels */}
+        <HorizontalCarousel
+          title="Chat"
           content={[
-            <iframe key="1" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1275497?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
-            <iframe key="2" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1279092?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
-            <iframe key="3" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1279088?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
-            <iframe key="4" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1277790?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+            { title: "With Any AI Model", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678871/Screenshot_2025-07-16_204359_abdlvo.png" },
+            { title: "With Any Website", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678916/Screenshot_2025-07-16_204503_ahsgxv.png" },
+            { title: "With Any Image", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752678982/Screenshot_2025-07-16_204604_unp1p1.png" },
           ]}
         />
-      </section>
 
-      {/* Footer */}
-      <Footer />
+        <HorizontalCarousel
+          title="Analyze"
+          content={[
+            { title: "Date & Time", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162170/Screenshot_2025-07-10_205422_b7izxl.png" },
+            { title: "To Solve Problems", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162154/Screenshot_2025-07-10_205337_kq5abm.png" },
+            { title: "Medical Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162184/Screenshot_2025-07-10_205507_uw1suh.png" },
+            { title: "To Translate", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162142/Screenshot_2025-07-10_205222_z5xvzl.png" },
+            { title: "For Measuring", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162361/Screenshot_2025-07-10_210120_ylcsjo.png"},
+            { title: "For Neurodiversity", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162282/Screenshot_2025-07-10_205717_puu2fg.png" },
+            { title: "For Engagement", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162305/Screenshot_2025-07-10_205841_fid3qo.png" },
+            { title: "For Ethnicity", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162264/Screenshot_2025-07-10_205639_u9wahe.png" },
+            { title: "For Consistency", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162202/Screenshot_2025-07-10_205602_iyegzx.png" },
+          ]}
+        />
+
+        <HorizontalCarousel
+          title="Generate"
+          content={[
+            { title: "Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162374/Screenshot_2025-07-10_210309_vn079l.png" },
+            { title: "Speech", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162567/Screenshot_2025-07-10_211048_ytodyc.png" },
+            { title: "Infographics", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162488/Screenshot_2025-07-10_210815_mb3xws.png" },
+            { title: "Prompts", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162456/Screenshot_2025-07-10_211722_orastr.png" },
+            { title: "Vehicle Diagnosis", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162348/Screenshot_2025-07-10_210037_ejmmzi.png" },
+            { title: "Device Diagnosis", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162334/Screenshot_2025-07-10_205941_wk8txn.png" },
+            { title: "Text From Images", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162119/Screenshot_2025-07-10_205138_nqzsrk.png" },
+          ]}
+        />
+
+        <HorizontalCarousel
+          title="AI-Native"
+          content={[
+            { title: "Audio Editor", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162547/screencapture-klutz-pi-vercel-app-ai-audio-editor-2025-07-10-21_09_22_isacwg.png" },
+            { title: "Spreadsheets", imageUrl: "https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752162472/Screenshot_2025-07-10_210446_nutmko.png" },
+          ]}
+        />
+
+        {/* Testimonials */}
+        <section className="mb-16">
+          <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">What Users Say</h2>
+          <AutoScrollMarquee
+            content={[
+              <iframe key="1" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1275497?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+              <iframe key="2" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1279092?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+              <iframe key="3" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1279088?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+              <iframe key="4" style={{ border: 'none' }} src="https://cards.producthunt.com/cards/reviews/1277790?v=1" width="500" height="405" frameBorder="0" scrolling="no" allowFullScreen></iframe>,
+            ]}
+          />
+        </section>
+
+        {/* Footer */}
+        <Footer />
+      </div>  
     </div>
   );
 }

@@ -1,7 +1,6 @@
-use client;
+'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-
 interface Message {
   id: number;
   text: string;
