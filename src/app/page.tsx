@@ -17,7 +17,7 @@ export default function LandingPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#7190be]">
+    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom, #193067, #7190be)' }}>
       <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
           <MenuIcon className="h-5 w-5" />
@@ -33,28 +33,21 @@ export default function LandingPage() {
         <LoginButton />
       </div>
       {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
-
+  
       <section className="relative h-96 overflow-hidden">
         <img
           src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752160444/Screenshot_2025-07-10_180305_kbaefl.png"
           alt="Background"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="absolute inset-0 w-full h-full object-cover object-center"  
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#193067]/50 to-[#193067]"></div>
       </section>
-
-      {/* Section containing the second background image and overlaid content */}
-      <section className="relative h-[400px] overflow-hidden">
-        {/* Second Background Image */}
-        <img
-          src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752689600/Image_fx_17_hpqoyi.png"
-          alt="faded glory blue Background"
-          className="absolute inset-0 w-full h-full object-cover object-center z-0" 
-        />
-        {/* Overlaid content */}
+  
+      <div className="absolute inset-x-0 ">
+      {/* Overlaid content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full">
           {/* Klutz logo and text */}
-          <div className="flex items-center justify-center mb-12">
+          <div className="flex items-center justify-center mb-12 pt-40">
             <img src="https://res.cloudinary.com/ddz3nsnq1/image/upload/v1752076900/Untitled_design__3_-removebg-preview_dydzqt.png" alt="Klutz Logo" className="w-24 h-24 mr-4" />
             <p className="text-2xl font-semibold text-gray-700">Klutz</p>
           </div>
@@ -64,7 +57,7 @@ export default function LandingPage() {
             <p className="text-xl text-gray-600">Make AI Your Slave, With KLUTZ!</p>
           </div>
         </div>
-      </section>
+
 
       {/* Horizontally Scrollable Carousels */}
       <HorizontalCarousel

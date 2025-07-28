@@ -52,6 +52,13 @@ const cleanJsonString = (rawString: string): string => {
 const features: Feature[] = [
   {
     icon: FileText,
+    title: 'OPenatore',
+    description: 'Extract and analyze all text content from images using AI-powered text recognition.',
+    href: '/ai-browser-agent',
+    isImplemented: true,
+  },
+  {
+    icon: FileText,
     title: 'Image to Text Converter',
     description: 'Extract and analyze all text content from images using AI-powered text recognition.',
     href: '/image-to-text',
