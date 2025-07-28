@@ -7,13 +7,15 @@
   packages = [
     pkgs.nodejs_20
     pkgs.zulu
+    pkgs.playwright-driver.browsers
     pkgs.playwright
   ];
   # Sets environment variables in the workspace
   env = {
     POLLINATIONS_API_KEY = "8pp_SurhBzcSzNtu";
-    PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright}/ms-playwright";
+    PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
   };
+
   # This adds a file watcher to startup the firebase emulators. The emulators will only start if
   # a firebase.json file is written into the user's directory
   services.firebase.emulators = {
