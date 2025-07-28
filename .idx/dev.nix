@@ -12,6 +12,7 @@
   # Sets environment variables in the workspace
   env = {
     POLLINATIONS_API_KEY = "8pp_SurhBzcSzNtu";
+    PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright}/ms-playwright";
   };
   # This adds a file watcher to startup the firebase emulators. The emulators will only start if
   # a firebase.json file is written into the user's directory
