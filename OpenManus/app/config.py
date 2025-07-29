@@ -19,15 +19,16 @@ WORKSPACE_ROOT = PROJECT_ROOT / "workspace"
 class LLMSettings(BaseModel):
     model: str = Field(..., description="Model name")
     base_url: str = Field(..., description="API base URL")
-    api_key: str = Field(..., description="API key")
+    api_key: str = Field(None, description="API key") # Make API key optional
     max_tokens: int = Field(4096, description="Maximum number of tokens per request")
     max_input_tokens: Optional[int] = Field(
         None,
         description="Maximum input tokens to use across all requests (None for unlimited)",
     )
     temperature: float = Field(1.0, description="Sampling temperature")
-    api_type: str = Field(..., description="Azure, Openai, or Ollama")
-    api_version: str = Field(..., description="Azure Openai version if AzureOpenai")
+    api_type: str = Field(..., description="Azure, Openai, Ollama, or Pollinations") # Added Pollinations
+    api_version: str = Field(None, description="Azure Openai version if AzureOpenai") # Make API version optional
+    # Add any other Pollinations.AI specific settings here
 
 
 class ProxySettings(BaseModel):
@@ -222,9 +223,16 @@ class Config:
             "max_tokens": base_llm.get("max_tokens", 4096),
             "max_input_tokens": base_llm.get("max_input_tokens"),
             "temperature": base_llm.get("temperature", 1.0),
-            "api_type": base_llm.get("api_type", ""),
-            "api_version": base_llm.get("api_version", ""),
+            "api_type": base_llm.get("api_type", ""), # Default to empty string
+            "api_version": base_llm.get("api_version"),
         }
+
+        llm_configs = {"default": LLMSettings(**default_settings)}
+
+        for name, override_config in llm_overrides.items():
+            # Merge default settings with overrides
+            merged_settings = {**default_settings, **override_config}
+            llm_configs[name] = LLMSettings(**merged_settings)
 
         # handle browser config.
         browser_config = raw_config.get("browser", {})
@@ -283,14 +291,9 @@ class Config:
             run_flow_settings = RunflowSettings(**run_flow_config)
         else:
             run_flow_settings = RunflowSettings()
+
         config_dict = {
-            "llm": {
-                "default": default_settings,
-                **{
-                    name: {**default_settings, **override_config}
-                    for name, override_config in llm_overrides.items()
-                },
-            },
+            "llm": llm_configs,
             "sandbox": sandbox_settings,
             "browser_config": browser_settings,
             "search_config": search_settings,

@@ -54,7 +54,7 @@ const features: Feature[] = [
     icon: FileText,
     title: 'OPenatore',
     description: 'Extract and analyze all text content from images using AI-powered text recognition.',
-    href: '/ai-browser-agent',
+    href: '/openmanusui',
     isImplemented: true,
   },
   {
