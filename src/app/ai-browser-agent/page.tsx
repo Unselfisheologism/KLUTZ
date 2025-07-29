@@ -114,7 +114,7 @@ const AiBrowserAgentPage = () => {
         </div>
       </div>
 
-      {/* Right side: Playwright browser preview (empty for now) */}
+      {/* Right side: Playwright browser preview (empty as of now) */}
       <div className="w-1/2 p-4">
         <h2 className="text-xl font-semibold mb-4">Browser Preview</h2>
         {/* Playwright browser preview will go here */}
