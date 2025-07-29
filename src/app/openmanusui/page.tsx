@@ -1,3 +1,5 @@
+'use client';
+
 // This is the new UI page for OpenManus.
 // It will use the Pollinations.AI API for AI features.
 
