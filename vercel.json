@@ -1,8 +1,8 @@
 {
-    "functions": {
-      "api/**": {
-        "excludeFiles": "{node_modules,.next,*.cache,public}/**"
-      }
+  "rewrites": [
+    {
+      "source": "/openmanus/(.*)",
+      "destination": "/api/index/:splat"
     }
-  }
-  
+  ]
+}
