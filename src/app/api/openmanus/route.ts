@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
 
 export async function POST(request: Request) {
   const { prompt } = await request.json();
@@ -8,29 +7,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
   }
 
-  // Sanitize the prompt to prevent command injection
-  const sanitizedPrompt = prompt.replace(/[$"'`]/g, '');  // Basic sanitization
+  // Call the internal Python Serverless Function
+  const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'; // Use VERCEL_URL in production
+  const pythonFunctionUrl = `${vercelUrl}/api/run-openmanus`;
 
-  // Construct the terminal command to run the OpenManus Python script
-  const command = `python OpenManus/main.py --prompt "${sanitizedPrompt}"`;
-
-  return new Promise((resolve) => {
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        return resolve(NextResponse.json({ error: `Failed to run OpenManus script: ${stderr || error.message}` }, { status: 500 }));
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        // You might want to return stderr as an error or part of the response depending on your needs
-        return resolve(NextResponse.json({ response: `Script ran with stderr:
-          ${stderr}
-          Output:
-          ${stdout}` 
-        }));
-      }
-      console.log(`stdout: ${stdout}`);
-      resolve(NextResponse.json({ response: stdout }));
+  try {
+    const response = await fetch(pythonFunctionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
     });
-  });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // If the Python function returned an error status code
+      const errorMessage = data.error || 'An error occurred in the Python function';
+      const stderr = data.stderr || '';
+      const stdout = data.stdout || '';
+      console.error('Error from Python function:', errorMessage, 'Stderr:', stderr, 'Stdout:', stdout);
+      return NextResponse.json({ error: errorMessage, stderr, stdout }, { status: response.status });
+    }
+
+    // Assuming the Python function returns a JSON object with a 'response' key
+    return NextResponse.json({ response: data.response });
+
+  } catch (error: any) {
+    console.error('Error calling Python Serverless Function:', error);
+    return NextResponse.json({ error: `Failed to call Python function: ${error.message}` }, { status: 500 });
+  }
 }

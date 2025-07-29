@@ -10,6 +10,7 @@
     pkgs.playwright
     pkgs.playwright-driver.browsers
     pkgs.uv
+    pkgs.python3
   ];
   # Sets environment variables in the workspace
   env = {
