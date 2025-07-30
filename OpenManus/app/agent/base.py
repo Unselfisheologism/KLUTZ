@@ -1,13 +1,13 @@
+import asyncio
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
 from app.llm import LLM
 from app.logger import logger
-from app.sandbox.client import SANDBOX_CLIENT
-from app.schema import ROLE_TYPE, AgentState, Memory, Message
+from app.schema import AgentState, Memory, Message
 
 
 class BaseAgent(BaseModel, ABC):
@@ -83,9 +83,8 @@ class BaseAgent(BaseModel, ABC):
 
     def update_memory(
         self,
-        role: ROLE_TYPE,  # type: ignore
+        role: Literal["user", "system", "assistant", "tool"],
         content: str,
-        base64_image: Optional[str] = None,
         **kwargs,
     ) -> None:
         """Add a message to the agent's memory.
@@ -93,7 +92,6 @@ class BaseAgent(BaseModel, ABC):
         Args:
             role: The role of the message sender (user, system, assistant, tool).
             content: The message content.
-            base64_image: Optional base64 encoded image.
             **kwargs: Additional arguments (e.g., tool_call_id for tool messages).
 
         Raises:
@@ -109,15 +107,18 @@ class BaseAgent(BaseModel, ABC):
         if role not in message_map:
             raise ValueError(f"Unsupported message role: {role}")
 
-        # Create message with appropriate parameters based on role
-        kwargs = {"base64_image": base64_image, **(kwargs if role == "tool" else {})}
-        self.memory.add_message(message_map[role](content, **kwargs))
+        msg_factory = message_map[role]
+        msg = msg_factory(content, **kwargs) if role == "tool" else msg_factory(content)
+        self.memory.add_message(msg)
 
-    async def run(self, request: Optional[str] = None) -> str:
+    async def run(
+        self, request: Optional[str] = None, cancel_event: asyncio.Event = None
+    ) -> str:
         """Execute the agent's main loop asynchronously.
 
         Args:
             request: Optional initial user request to process.
+            cancel_event: Optional asyncio event to signal cancellation.
 
         Returns:
             A string summarizing the execution results.
@@ -136,6 +137,10 @@ class BaseAgent(BaseModel, ABC):
             while (
                 self.current_step < self.max_steps and self.state != AgentState.FINISHED
             ):
+                # Check for cancellation
+                if cancel_event and cancel_event.is_set():
+                    return "操作已被取消"
+
                 self.current_step += 1
                 logger.info(f"Executing step {self.current_step}/{self.max_steps}")
                 step_result = await self.step()
@@ -147,10 +152,8 @@ class BaseAgent(BaseModel, ABC):
                 results.append(f"Step {self.current_step}: {step_result}")
 
             if self.current_step >= self.max_steps:
-                self.current_step = 0
-                self.state = AgentState.IDLE
                 results.append(f"Terminated: Reached max steps ({self.max_steps})")
-        await SANDBOX_CLIENT.cleanup()
+
         return "\n".join(results) if results else "No steps executed"
 
     @abstractmethod

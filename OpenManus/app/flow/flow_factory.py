@@ -1,13 +1,7 @@
-from enum import Enum
 from typing import Dict, List, Union
 
 from app.agent.base import BaseAgent
-from app.flow.base import BaseFlow
-from app.flow.planning import PlanningFlow
-
-
-class FlowType(str, Enum):
-    PLANNING = "planning"
+from app.flow.base import BaseFlow, FlowType
 
 
 class FlowFactory:
@@ -19,12 +13,12 @@ class FlowFactory:
         agents: Union[BaseAgent, List[BaseAgent], Dict[str, BaseAgent]],
         **kwargs,
     ) -> BaseFlow:
-        flows = {
-            FlowType.PLANNING: PlanningFlow,
-        }
+        """Create a flow of the specified type with the provided agents."""
+        # 根据flow_type参数创建相应的flow
+        if flow_type == FlowType.PLANNING:
+            from app.flow.planning import PlanningFlow
 
-        flow_class = flows.get(flow_type)
-        if not flow_class:
+            return PlanningFlow(agents, **kwargs)
+        # ...other flow types...
+        else:
             raise ValueError(f"Unknown flow type: {flow_type}")
-
-        return flow_class(agents, **kwargs)
