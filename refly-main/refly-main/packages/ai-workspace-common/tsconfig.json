@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "useDefineForClassFields": true,
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+
+    // path
+    "baseUrl": ".",
+    "rootDir": "./src",
+    "paths": {
+      "@refly-packages/ai-workspace-common/*": ["./src/*"],
+      "@refly/utils/*": ["../utils/src/*"],
+      "@/*": ["./src/*"]
+    },
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../utils/tsconfig.json" }]
+}

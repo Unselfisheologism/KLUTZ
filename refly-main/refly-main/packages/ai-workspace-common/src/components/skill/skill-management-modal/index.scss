@@ -1,0 +1,14 @@
+.modal-dialog {
+  @apply relative z-50;
+}
+
+.modal-panel {
+  @apply w-full max-w-md transform rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all;
+}
+
+.skill-management-modal-wrap {
+  .skill-management-modal-content {
+    height: calc(80vh - 48px - 48px);
+    overflow-y: auto;
+  }
+}

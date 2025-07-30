@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "useDefineForClassFields": true,
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // path
+    "paths": {
+      "@/*": ["./src/*"],
+      "@refly-packages/ai-workspace-common/*": ["../../packages/ai-workspace-common/src/*"],
+      "@refly/utils/*": ["../../packages/utils/src/*"]
+    },
+    "types": ["tailwindcss/nesting"]
+  },
+  "include": [
+    "src",
+    "tailwind.config.ts",
+    "../../packages/ai-workspace-common/src/components/workspace/content-panel",
+    "../../packages/ai-workspace-common/src/components/workspace/knowledge-keyword-list",
+    "../../packages/ai-workspace-common/src/components/workspace/left-assist-panel",
+    "tailwindcss-nesting.d.ts"
+  ],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "../../packages/ai-workspace-common" },
+    { "path": "../../packages/utils" }
+  ]
+}
