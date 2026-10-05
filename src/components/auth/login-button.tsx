@@ -103,7 +103,7 @@ export default function LoginButton() {
         toast({ title: "Login Successful", description: "Welcome to MediScan AI!" });
         if (window.location.pathname === '/login') {
           console.log("[LoginButton] handleLogin: Redirecting from /login to /");
-          router.replace('/');
+          router.replace('/get-started');
         }
       } else {
         // This case might indicate the popup closed without successful auth, or communication failed.
