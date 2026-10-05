@@ -54,7 +54,7 @@ export default function LoginPage() {
         console.log("[LoginPage] Auth check useEffect: Puter isSignedIn() returned:", isSignedIn);
         if (isSignedIn) {
           console.log("[LoginPage] Auth check useEffect: User is signed in, redirecting to /");
-          router.replace('/'); 
+          router.replace('/get-started'); 
         } else {
           console.log("[LoginPage] Auth check useEffect: User is not signed in. Auth check complete.");
           setAuthCheckComplete(true); 
