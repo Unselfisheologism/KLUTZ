@@ -30,6 +30,9 @@ export default function LandingPage() {
             <span className="sr-only">Account</span>
           </Link>
         </Button>
+        <Button asChild>
+          <Link href="/get-started">Get Started</Link>
+        </Button>
         <LoginButton />
       </div>
       {isSidebarOpen && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
@@ -62,6 +65,9 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h1 className="text-5xl font-bold text-gray-800 mb-4">Who Said AI Is Gonna Take Over?</h1>
             <p className="text-xl text-gray-600">Make AI Your Slave, With KLUTZ!</p>
+            <Button asChild size="lg" className="mt-6">
+              <Link href="/get-started">Get Started</Link>
+            </Button>
           </div>
         </div>
       </section>
